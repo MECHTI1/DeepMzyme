@@ -24,6 +24,27 @@ Every outer fold runs the same steps on its own training proteins only:
 - S4: the refit specification (a grid learning-rate setting, seeds 42-46).
 - Hash-chained step records and a null operating-characteristics simulator.
 
+Amendment 2 (pipeline ``amendment2_selection_v1``, recorded before any G2 measurement or fold-0 fit)
+adds a versioned pipeline beside the historical rules, which stay callable and replay unchanged:
+
+- Primary score (A2-S2): protein-level accuracy over the pooled proteins of EC classes 1-6
+  (``seed_mean_primary_points``); class-7 proteins leave the population and a class-7 prediction
+  for an EC class 1-6 protein is wrong. Balanced accuracy, seven-class balanced accuracy, macro-F1
+  and per-class recall are descriptive.
+- S1 (``best_inner_harm_guarded_v1``, ``s1_best_inner``): each family's learning rate by the
+  primary score (``s1_choose_learning_rate_primary``); among F2, F3, F4, F5 and F6 the eligible
+  family with the highest score wins, the simplicity order F2, F5, F3, F4, F6 deciding within 0.5
+  points. A family is ineligible if it gets no class of EC classes 1-6 right over both seeds while
+  F2 gets at least two (``harm_guard_v2``). No bootstrap, Holm family or minimum gain. F1 (fold 0
+  only), C-G and C-GF are scored and recorded, never selected.
+- S2 (``l9_tau_promote_primary_v1``, ``screen_logit_adjustment_primary``): L9 only, on the primary
+  metric, adopted through ``promote_primary`` (alpha 0.01, at least 1.0 point; a bootstrap abort
+  means tau 0). L1-L8 are not screened and S3 is not run.
+- S4 (``refit_spec_v2``, ``s4_refit_specification_v2``): 30 epochs, the raw-distance RBF default
+  for GVP families, F6 refit pretraining, bound to the S1 and S2 record hashes.
+- ``selection_policy_record_v2`` holds every amendment-2 constant, including the fold-0 futility
+  rule that ``ec_clean30.futility`` applies; amendment 2 binds its SHA-256.
+
 Values named ``*_points`` are percentage points. Definitions that Freeze 1 must confirm are
 explicit fields of ``PromotionConfig``; the other tie rules are stated where they apply.
 """
@@ -41,8 +62,9 @@ import numpy as np
 
 from ec_clean30.logit_adjustment import TAUS, adjust, validate_tau
 from ec_clean30.stats import (
-    DEFAULT_BOOTSTRAP_SEED, DEFAULT_MAX_SKIP_FRACTION, DEFAULT_N_DRAWS, BootstrapAbort, BootstrapResult, Contrast,
-    build_cluster_count_table, paired_cluster_bootstrap,
+    DEFAULT_BOOTSTRAP_SEED, DEFAULT_MAX_SKIP_FRACTION, DEFAULT_N_DRAWS, ENGINE_AMENDMENT2,
+    METRIC_EC_CLASSES_1_6_ACCURACY, BootstrapAbort, BootstrapResult, Contrast, build_cluster_count_table,
+    paired_cluster_bootstrap,
 )
 from training.ec_class_metrics import N_EC_CLASSES, PRIMARY_CLASS_INDICES, ec_class_metrics
 from training.ec_classes import EC_CLASS_TOKEN_TO_INDEX
@@ -90,6 +112,97 @@ S1_LEARNING_RATE_GRID = MappingProxyType(
     {"F1": _SINGLE_LR, "F2": _SINGLE_LR, "F3": _SPLIT_LR, "F4": _SPLIT_LR, "F5": _SINGLE_LR, "C-G": _SINGLE_LR}
 )
 
+# ---------------------------------------------------------------------------
+# Amendment 2 (rules A2-S1 to A2-S10, A2-T and A2-F). Additive: every name above keeps its Freeze-1
+# value (``freeze.live_constants`` reads them), and the historical rules stay callable for replay.
+
+SELECTION_PIPELINE_V2 = "amendment2_selection_v1"
+BEST_INNER_S1_RULE = "best_inner_harm_guarded_v1"
+L9_RULE_V2 = "l9_tau_promote_primary_v1"
+S4_RULE_V2 = "refit_spec_v2"
+FUTILITY_RULE_V2 = "futility_predictive_cluster_bootstrap_v1"
+PRIMARY_METRIC_V2 = "ec_classes_1_6_accuracy"
+PRIMARY_METRIC_DEFINITION_V2 = (
+    "protein-level accuracy over the pooled proteins of EC classes 1-6, in points: correct predictions among "
+    "those proteins divided by their number; class-7 proteins are not in the population and a prediction of "
+    "class 7 (or of any other wrong class) for a protein of EC classes 1-6 is wrong"
+)
+PREDICTION_RULE = "arg-max of the seven logits; exact ties go to the lowest class index"
+DESCRIPTIVE_METRICS_V2: tuple[str, ...] = (
+    "ec_classes_1_6_balanced_accuracy", "seven_class_balanced_accuracy", "ec_classes_1_6_macro_f1", "per_class_recall",
+)
+
+F6_FAMILY = "F6"
+WHOLE_PROTEIN_CONTROL = "C-GF"
+FAMILIES_V2: tuple[str, ...] = ("F1", "F2", "F3", "F4", "F5", F6_FAMILY, "C-G", WHOLE_PROTEIN_CONTROL)
+S1_V2_CANDIDATES: tuple[str, ...] = ("F2", "F3", "F4", "F5", F6_FAMILY)
+# Within the tie band the first eligible family of this order wins (smallest model first; F6 last because it is
+# the only family trained on non-metallo enzymes and it adds a pretraining stage).
+S1_V2_SIMPLICITY_ORDER: tuple[str, ...] = ("F2", "F5", "F3", "F4", F6_FAMILY)
+S1_V2_CONTROLS_FOLD0: tuple[str, ...] = ("F1", "C-G", WHOLE_PROTEIN_CONTROL)
+S1_V2_CONTROLS: tuple[str, ...] = ("C-G", WHOLE_PROTEIN_CONTROL)
+CONTROL_FAMILIES_V2: tuple[str, ...] = S1_V2_CONTROLS_FOLD0
+F1_CONTROL_FOLDS: tuple[int, ...] = (0,)
+GVP_FAMILIES_V2 = frozenset({"F1", "F3", "F4"})
+GLOBAL_BRANCH_FAMILIES_V2 = frozenset({"F4", "F5", F6_FAMILY, "C-G", WHOLE_PROTEIN_CONTROL})
+# Families whose whole-protein branch is trained on the fold's full official training file (disclosure).
+FULL_FILE_PRETRAINED_FAMILIES: tuple[str, ...] = (F6_FAMILY,)
+# Rule A2-SEL-4 (choice C1): a class with k_F2(c) >= 1 correct anchor predictions over both seeds is guarded.
+HARM_GUARD_MIN_ANCHOR_CORRECT = 1
+S1_V2_FAMILY_TIE_BAND_POINTS = 0.5
+# F6 fine-tunes on the metallo proteins with the F5 grid; C-GF has no metallo fine-tuning and no grid.
+S1_LEARNING_RATE_GRID_V2 = MappingProxyType({**S1_LEARNING_RATE_GRID, F6_FAMILY: _SINGLE_LR})
+
+# A2-T: fixed training settings. L9 is the only screened lever; the distance part of L2 becomes a GVP default.
+EPOCHS_V2 = 30
+TRAINING_SCHEDULE_V2 = "per-epoch cosine"
+CHECKPOINT_RULE_V2 = "terminal"
+SCREENED_LEVERS_V2: tuple[str, ...] = ("L9",)
+DROPPED_LEVERS_V2: tuple[str, ...] = ("L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8")
+# Rule A2-TRN-2: the GVP families read raw-distance RBFs (``Recipe.rbf_distances == "raw"``, rendered as
+# ``--rbf-use-raw-distances``); the plan, the identities and the S4 record carry the value, never a lever.
+RBF_DISTANCES_RAW_V2 = "raw"
+RBF_DISTANCES_NORMALIZED_V2 = "normalized"
+RBF_RAW_FAMILIES_V2: tuple[str, ...] = tuple(sorted(GVP_FAMILIES_V2))
+RBF_RAW_OPTION_V2 = "--rbf-use-raw-distances"
+GVP_EDGE_RADIUS_V2 = 6.0
+
+# A2-F: the fold-0 futility rule (the projection itself lives in ``ec_clean30.futility``).
+FUTILITY_FOLD = 0
+FUTILITY_REPLICATES = 2000
+FUTILITY_MIN_SUCCESSES = 400
+FUTILITY_SEED = 20261104
+# Rule A2-FUT-5: design-time targets of proteins of EC classes 1-6 (about 530 and 230, minus at most 4 class-7
+# test proteins); B1-NH30 copies are nested in the B1-all copies of the same replicate.
+FUTILITY_TARGET_SIZES: Mapping[str, int] = MappingProxyType({"P1": 526, "P2": 226})
+FUTILITY_NESTED_POPULATIONS = True
+FUTILITY_POPULATIONS: Mapping[str, str] = MappingProxyType({"P1": "B1-all", "P2": "B1-NH30"})
+FUTILITY_DESCRIPTIVE_REPLICATES = 500
+FUTILITY_SENSITIVITY_DIVISORS: tuple[float, ...] = (1.25, 1.5)
+# Seed streams of the descriptive projections: the generator of replicate r is seeded by (FUTILITY_SEED, stream, r);
+# the decision projection uses (FUTILITY_SEED, r).
+FUTILITY_DESCRIPTIVE_STREAMS: Mapping[str, int] = MappingProxyType(
+    {"conditional_power": 1, "targets_divided_by_1.25": 2, "targets_divided_by_1.5": 3, "independent_draws": 4}
+)
+FUTILITY_CONTINUE = "continue"
+FUTILITY_STOP = "stop_futility"
+CLAIM_SCOPE_PHRASE_V2 = (
+    "a conservative metalloenzyme subset of the official CLEAN split30 benchmark (AlphaFold models with "
+    "AlphaFill-transplanted, MAHOMES-catalytic metal sites; EC class = first EC digit"
+)
+FUTILITY_STOP_WORDING = (
+    "On a conservative metalloenzyme subset of the official CLEAN split30 benchmark (AlphaFold models with "
+    "AlphaFill-transplanted, MAHOMES-catalytic metal sites; EC class = first EC digit), DeepMzyme was not shown to "
+    "outperform retrained CLEAN in EC class prediction. The campaign stopped for futility after fold 0 under its "
+    "pre-declared rule; no test protein was scored."
+)
+# Rule A2-SEL-5 / A2-F6-3: stated in every S1 record.
+F6_HOLDOUT_ASYMMETRY_V2 = (
+    "F6 and C-GF pretraining may use non-metalloenzyme training proteins two or more homology hops from an "
+    "inner-validation protein, which F2-F5 never see; the F6 inner hold-out is one hop (the CLEAN R1-inner list) plus "
+    "exact sequence, letter-case alias and shared selected donor."
+)
+
 
 def learning_rate_label(setting: Iterable[tuple[str, float]] | Mapping[str, float]) -> str:
     """Stable label of one learning-rate setting, e.g. ``gvp_learning_rate=0.0003,learning_rate=0.0001``."""
@@ -97,18 +210,28 @@ def learning_rate_label(setting: Iterable[tuple[str, float]] | Mapping[str, floa
     return ",".join(f"{key}={float(value):g}" for key, value in sorted((str(k), v) for k, v in items))
 
 
-def s1_learning_rate_labels(family: str) -> tuple[str, ...]:
-    """The family's grid labels in listed order."""
-    return tuple(learning_rate_label(setting) for setting in S1_LEARNING_RATE_GRID[_check_family(family)])
+def _grid_entries(family: str, grid: Optional[Mapping[str, Any]]) -> Any:
+    if grid is None:
+        return S1_LEARNING_RATE_GRID[_check_family(family)]
+    if family not in grid:
+        raise ValueError(f"Family {family!r} has no learning-rate grid; expected one of {tuple(grid)}.")
+    return grid[family]
 
 
-def _grid_setting(family: str, setting: Mapping[str, float]) -> dict[str, float]:
+def s1_learning_rate_labels(family: str, grid: Optional[Mapping[str, Any]] = None) -> tuple[str, ...]:
+    """The family's grid labels in listed order (``grid`` defaults to the Freeze-1 grid)."""
+    return tuple(learning_rate_label(setting) for setting in _grid_entries(family, grid))
+
+
+def _grid_setting(family: str, setting: Mapping[str, float],
+                  grid: Optional[Mapping[str, Any]] = None) -> dict[str, float]:
     """The grid entry equal to ``setting``; anything outside the family's grid is refused."""
     given = {str(key): float(value) for key, value in setting.items()}
-    for entry in S1_LEARNING_RATE_GRID[_check_family(family)]:
+    for entry in _grid_entries(family, grid):
         if dict(entry) == given:
             return dict(entry)
-    raise ValueError(f"{family}: learning-rate setting {given} is not in the S1 grid {s1_learning_rate_labels(family)}.")
+    raise ValueError(f"{family}: learning-rate setting {given} is not in the S1 grid "
+                     f"{s1_learning_rate_labels(family, grid)}.")
 
 LEVERS: tuple[str, ...] = ("L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9")
 EPOCH_LEVER = "L7"
@@ -366,6 +489,69 @@ def seed_mean_ba_points(pooled: PooledOof) -> float:
     return _summarise(pooled).ba_points
 
 
+@dataclass(frozen=True, eq=False)
+class _PrimarySummary:
+    """Amendment-2 per-seed scores of one pooled configuration (rule A2-S2).
+
+    ``points_by_seed`` holds the primary metric; the other ``*_by_seed`` values are descriptive. ``recall``,
+    ``correct`` and ``support`` have the layout of ``_SeedSummary``, so the historical recall guard reads them.
+    """
+
+    points_by_seed: tuple[float, ...]
+    ba_points_by_seed: tuple[float, ...]
+    seven_class_ba_points_by_seed: tuple[float, ...]
+    macro_f1_points_by_seed: tuple[float, ...]
+    recall: np.ndarray
+    correct: np.ndarray
+    support: np.ndarray
+
+    @property
+    def points(self) -> float:
+        return float(np.mean(self.points_by_seed))
+
+    @property
+    def ba_points(self) -> float:
+        return float(np.mean(self.ba_points_by_seed))
+
+    def record(self) -> dict[str, Any]:
+        """Scores in points and per-class counts (no protein identifier)."""
+        return to_jsonable({
+            "primary_points": self.points,
+            "primary_points_by_seed": self.points_by_seed,
+            "ec_classes_1_6_balanced_accuracy_points": self.ba_points,
+            "ec_classes_1_6_balanced_accuracy_points_by_seed": self.ba_points_by_seed,
+            "seven_class_balanced_accuracy_points": float(np.mean(self.seven_class_ba_points_by_seed)),
+            "ec_classes_1_6_macro_f1_points": float(np.mean(self.macro_f1_points_by_seed)),
+            "per_class_recall_seed_mean": self.recall.mean(axis=0),
+            "per_class_correct_by_seed": self.correct,
+            "per_class_support": self.support,
+        })
+
+
+def _summarise_primary(pooled: PooledOof) -> _PrimarySummary:
+    """Rule A2-S2: per seed, correct predictions among the pooled proteins of EC classes 1-6 over their number."""
+    rows = [ec_class_metrics(pooled.true_idx, predicted) for predicted in pooled.predictions]
+    support = np.asarray(rows[0]["per_class_support"], dtype=np.float64)
+    primary = list(PRIMARY_CLASS_INDICES)
+    denominator = float(support[primary].sum())
+    if denominator <= 0:
+        raise ValueError(f"{pooled.name}: no protein of EC classes 1-6 in the pooled predictions.")
+    correct = np.array([np.diag(np.asarray(row["confusion_matrix"])) for row in rows])
+    points = tuple(POINTS * float(values[primary].sum()) / denominator for values in correct)
+    ba = tuple(POINTS * row["ec_classes_1_6_balanced_accuracy"] for row in rows)
+    seven = tuple(POINTS * row["seven_class_balanced_accuracy"] for row in rows)
+    macro_f1 = tuple(POINTS * row["ec_classes_1_6_macro_f1"] for row in rows)
+    if not all(math.isfinite(value) for value in (*points, *ba, *seven, *macro_f1)):
+        raise ValueError(f"{pooled.name}: a score is not finite.")
+    return _PrimarySummary(points, ba, seven, macro_f1, np.array([row["per_class_recall"] for row in rows]),
+                           correct, support)
+
+
+def seed_mean_primary_points(pooled: PooledOof) -> float:
+    """Rule A2-S2: the mean over the screening seeds of the accuracy over EC classes 1-6, in points."""
+    return _summarise_primary(pooled).points
+
+
 # ---------------------------------------------------------------------------
 # Promotion rule
 
@@ -584,12 +770,180 @@ def promote(
 
 
 # ---------------------------------------------------------------------------
+# Amendment 2: harm guard and the primary-metric promotion rule of L9
+
+
+def _harm_guard_rows(anchor: _PrimarySummary, candidate: _PrimarySummary,
+                     min_anchor_correct: int = HARM_GUARD_MIN_ANCHOR_CORRECT) -> tuple[tuple[dict[str, Any], ...], bool]:
+    rows = []
+    for index in PRIMARY_CLASS_INDICES:
+        if anchor.support[index] <= 0:
+            continue
+        anchor_correct = int(round(float(anchor.correct[:, index].sum())))
+        candidate_correct = int(round(float(candidate.correct[:, index].sum())))
+        rows.append({
+            "ec_class": index + 1,
+            "pooled_proteins": int(anchor.support[index]),
+            "anchor_correct_both_seeds": anchor_correct,
+            "candidate_correct_both_seeds": candidate_correct,
+            "vetoed": candidate_correct == 0 and anchor_correct >= int(min_anchor_correct),
+        })
+    return tuple(rows), not any(row["vetoed"] for row in rows)
+
+
+def harm_guard_v2(anchor: PooledOof, candidate: PooledOof) -> tuple[tuple[dict[str, Any], ...], bool]:
+    """Rule A2-S4: ``candidate`` is ineligible if, for an EC class c of 1-6 with pooled proteins, its correct
+    predictions summed over both screening seeds are 0 while the anchor F2 has at least 2. Class 7 is exempt.
+
+    Returns the per-class rows and whether the candidate is eligible.
+    """
+    _require_paired(anchor, candidate)
+    return _harm_guard_rows(_summarise_primary(anchor), _summarise_primary(candidate))
+
+
+@dataclass(frozen=True)
+class PrimaryPromotionDecision:
+    """``promote`` on the amendment-2 primary metric (accuracy over EC classes 1-6), used by L9 only.
+
+    A bootstrap abort is recorded in ``bootstrap_abort`` and means not promoted.
+    """
+
+    incumbent: str
+    challenger: str
+    promoted: bool
+    metric: str
+    gain_points: float
+    incumbent_points: float
+    challenger_points: float
+    incumbent_points_by_seed: tuple[float, ...]
+    challenger_points_by_seed: tuple[float, ...]
+    seeds: tuple[int, ...]
+    lower_bound_points: Optional[float]
+    p_value: Optional[float]
+    checks: Mapping[str, Optional[bool]]
+    vetoes: tuple[str, ...]
+    recall_guard: tuple[Mapping[str, Any], ...]
+    zero_recall_ec_classes: tuple[int, ...]
+    bootstrap: Optional[Mapping[str, Any]]
+    bootstrap_abort: Optional[str]
+    bootstrap_population: str
+    config: Mapping[str, Any]
+    inputs: Mapping[str, str]
+
+    def to_record(self) -> dict[str, Any]:
+        return to_jsonable(asdict(self))
+
+
+PRIMARY_BOOTSTRAP_POPULATION = (
+    "the pooled proteins of EC classes 1-6 (class-7 rows removed), scored by the primary metric "
+    "(ec_classes_1_6_accuracy, presence-free: no draw is skipped for a missing EC class) under engine "
+    "stratified_rao_wu_v2, unstratified (one stratum of all inner components, k - 1 of k draws)"
+)
+# Rule A2-SEL-8: the L9 adoption bootstrap runs on engine v2 with the presence-free primary metric.
+PRIMARY_BOOTSTRAP_ENGINE = ENGINE_AMENDMENT2
+PRIMARY_BOOTSTRAP_METRIC = METRIC_EC_CLASSES_1_6_ACCURACY
+
+
+def _primary_bootstrap(
+    incumbent: PooledOof, challenger: PooledOof, component_of: Mapping[str, str], config: PromotionConfig
+) -> BootstrapResult:
+    keep = np.isin(incumbent.true_idx, PRIMARY_CLASS_INDICES)
+    ids = [pid for pid, kept in zip(incumbent.protein_ids, keep) if kept]
+    arms: dict[str, np.ndarray] = {}
+    systems: dict[str, list[str]] = {"incumbent": [], "challenger": []}
+    for role, pooled in (("incumbent", incumbent), ("challenger", challenger)):
+        for position, seed in enumerate(pooled.seeds):
+            arm = f"{role}/seed_{seed}"
+            arms[arm] = pooled.predictions[position][keep]
+            systems[role].append(arm)
+    table = build_cluster_count_table(ids, incumbent.true_idx[keep], arms, component_of)
+    return paired_cluster_bootstrap(
+        table,
+        [Contrast.difference(GAIN_CONTRAST, "challenger", "incumbent")],
+        systems=systems,
+        metric=PRIMARY_BOOTSTRAP_METRIC,
+        n_draws=config.n_draws,
+        seed=config.bootstrap_seed,
+        stratified=config.stratified,
+        max_skip_fraction=config.max_skip_fraction,
+        engine=PRIMARY_BOOTSTRAP_ENGINE,
+    )
+
+
+def promote_primary(
+    incumbent: PooledOof,
+    challenger: PooledOof,
+    *,
+    component_of: Mapping[str, str],
+    training_class_counts: Sequence[int] | np.ndarray,
+    config: PromotionConfig = promotion_config_for(LOGIT_ADJUSTMENT_LEVER),
+) -> PrimaryPromotionDecision:
+    """Rule A2-S8 adoption test: ``promote`` with the gain and its paired component bootstrap on the primary
+    metric. The historical recall guard and the seed-mean zero-recall check apply unchanged. Every check is
+    evaluated; a bootstrap abort records its reason and is not promoted."""
+    _require_paired(incumbent, challenger)
+    _require_components(component_of, incumbent)
+    counts = _training_counts(training_class_counts)
+    incumbent_summary, challenger_summary = _summarise_primary(incumbent), _summarise_primary(challenger)
+    gain = challenger_summary.points - incumbent_summary.points
+    gain_ok = gain >= config.min_gain_points - FLOAT_TOLERANCE
+    guard_rows, guard_ok = _recall_guard(incumbent_summary, challenger_summary, counts, config)
+    zero_classes = _zero_recall_classes(incumbent_summary, challenger_summary, config.zero_recall_unit)
+    zero_ok = not zero_classes
+    bootstrap_record, lower_bound, p_value, bound_ok, abort = None, None, None, None, None
+    try:
+        result = _primary_bootstrap(incumbent, challenger, component_of, config)
+    except BootstrapAbort as exc:
+        abort = str(exc)
+    else:
+        test = result.test(GAIN_CONTRAST, config.alpha)
+        lower_bound, p_value, bound_ok = POINTS * test.lower_bound, test.p_value, test.passed
+        bootstrap_record = result.to_record()
+    checks = {"gain": gain_ok, "lower_bound": bound_ok, "recall_guard": guard_ok, "zero_recall": zero_ok}
+    vetoes = tuple(name for name, passed in checks.items() if passed is not True)
+    return PrimaryPromotionDecision(
+        incumbent=incumbent.name,
+        challenger=challenger.name,
+        promoted=bool(gain_ok and guard_ok and zero_ok and bound_ok),
+        metric=PRIMARY_METRIC_V2,
+        gain_points=gain,
+        incumbent_points=incumbent_summary.points,
+        challenger_points=challenger_summary.points,
+        incumbent_points_by_seed=incumbent_summary.points_by_seed,
+        challenger_points_by_seed=challenger_summary.points_by_seed,
+        seeds=incumbent.seeds,
+        lower_bound_points=lower_bound,
+        p_value=p_value,
+        checks=checks,
+        vetoes=vetoes,
+        recall_guard=guard_rows,
+        zero_recall_ec_classes=zero_classes,
+        bootstrap=bootstrap_record,
+        bootstrap_abort=abort,
+        bootstrap_population=PRIMARY_BOOTSTRAP_POPULATION,
+        config=config.to_record(),
+        inputs={
+            "incumbent_predictions_sha256": predictions_sha256(incumbent),
+            "challenger_predictions_sha256": predictions_sha256(challenger),
+            "component_table_sha256": component_table_sha256(component_of, incumbent.protein_ids),
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
 # S1: learning rate per family and family escalation
 
 
 def _check_family(family: str) -> str:
     if family not in FAMILIES:
         raise ValueError(f"Unknown family {family!r}; expected one of {FAMILIES}.")
+    return family
+
+
+def _check_family_v2(family: str) -> str:
+    """Amendment-2 family names (F6 and C-GF added); used by the amendment-2 call sites only."""
+    if family not in FAMILIES_V2:
+        raise ValueError(f"Unknown family {family!r}; expected one of {FAMILIES_V2}.")
     return family
 
 
@@ -603,9 +957,10 @@ class LearningRateChoice:
     band_points: float
     setting_predictions_sha256: tuple[tuple[str, str], ...]
     winner: PooledOof = field(repr=False)
+    metric: Optional[str] = None  # None: the Freeze-1 score (balanced accuracy over EC classes 1-6)
 
     def to_record(self) -> dict[str, Any]:
-        return to_jsonable({
+        record = {
             "family": self.family,
             "chosen": self.chosen,
             "best": self.best,
@@ -614,7 +969,40 @@ class LearningRateChoice:
             "band_points": self.band_points,
             "setting_predictions_sha256": self.setting_predictions_sha256,
             "winner_predictions_sha256": predictions_sha256(self.winner),
-        })
+        }
+        if self.metric is not None:
+            record["metric"] = self.metric
+        return to_jsonable(record)
+
+
+def _choose_learning_rate(
+    family: str, settings: Mapping[str, PooledOof], *, scorer: Any, grid: Mapping[str, Any], band_points: float,
+    metric: Optional[str] = None,
+) -> LearningRateChoice:
+    labels = tuple(learning_rate_label(setting) for setting in grid[family])
+    given = [str(label) for label in settings]
+    if sorted(given) != sorted(labels):
+        raise ValueError(f"{family}: learning-rate settings must be keyed by exactly the grid labels {labels}, got {given}.")
+    ordered = [settings[label] for label in labels]
+    for pooled in ordered[1:]:
+        _require_paired(ordered[0], pooled)
+    scores = [scorer(pooled) for pooled in ordered]
+    if not all(math.isfinite(score) for score in scores):
+        raise ValueError(f"{family}: a learning-rate score is not finite.")
+    top = max(scores)
+    best = next(k for k, score in enumerate(scores) if score >= top - FLOAT_TOLERANCE)
+    chosen = next(k for k, score in enumerate(scores) if top - score <= band_points + FLOAT_TOLERANCE)
+    return LearningRateChoice(
+        family=family,
+        chosen=labels[chosen],
+        best=labels[best],
+        chosen_setting=dict(grid[family][chosen]),
+        scores_points=tuple(zip(labels, scores)),
+        band_points=float(band_points),
+        setting_predictions_sha256=tuple((label, predictions_sha256(pooled)) for label, pooled in zip(labels, ordered)),
+        winner=ordered[chosen],
+        metric=metric,
+    )
 
 
 def s1_choose_learning_rate(
@@ -625,27 +1013,24 @@ def s1_choose_learning_rate(
     Scores are read in the grid's listed order, whatever the mapping order; the first-listed
     setting within ``band_points`` of the best wins.
     """
-    labels = s1_learning_rate_labels(family)
-    given = [str(label) for label in settings]
-    if sorted(given) != sorted(labels):
-        raise ValueError(f"{family}: learning-rate settings must be keyed by exactly the grid labels {labels}, got {given}.")
-    ordered = [settings[label] for label in labels]
-    for pooled in ordered[1:]:
-        _require_paired(ordered[0], pooled)
-    scores = [seed_mean_ba_points(pooled) for pooled in ordered]
-    top = max(scores)
-    best = next(k for k, score in enumerate(scores) if score >= top - FLOAT_TOLERANCE)
-    chosen = next(k for k, score in enumerate(scores) if top - score <= band_points + FLOAT_TOLERANCE)
-    return LearningRateChoice(
-        family=family,
-        chosen=labels[chosen],
-        best=labels[best],
-        chosen_setting=dict(S1_LEARNING_RATE_GRID[family][chosen]),
-        scores_points=tuple(zip(labels, scores)),
-        band_points=float(band_points),
-        setting_predictions_sha256=tuple((label, predictions_sha256(pooled)) for label, pooled in zip(labels, ordered)),
-        winner=ordered[chosen],
-    )
+    _check_family(family)
+    return _choose_learning_rate(family, settings, scorer=seed_mean_ba_points, grid=S1_LEARNING_RATE_GRID,
+                                 band_points=band_points)
+
+
+def s1_choose_learning_rate_primary(
+    family: str, settings: Mapping[str, PooledOof], *, band_points: float = LR_TIE_BAND_POINTS
+) -> LearningRateChoice:
+    """Rule A2-S3: ``s1_choose_learning_rate`` on the amendment-2 grid, scored by the primary metric.
+
+    The chosen setting is the first-listed one within ``band_points`` of the family maximum (inclusive,
+    tolerance 1e-9). F6 uses the F5 grid; C-GF has none (it has no metallo fine-tuning).
+    """
+    _check_family_v2(family)
+    if family not in S1_LEARNING_RATE_GRID_V2:
+        raise ValueError(f"{family} has no learning-rate grid; it is scored as one configuration.")
+    return _choose_learning_rate(family, settings, scorer=seed_mean_primary_points, grid=S1_LEARNING_RATE_GRID_V2,
+                                 band_points=band_points, metric=PRIMARY_METRIC_V2)
 
 
 @dataclass(frozen=True, eq=False)
@@ -854,6 +1239,331 @@ def s1_family_screen(
 
 
 # ---------------------------------------------------------------------------
+# Amendment 2: the canonical policy record and the best-inner S1 rule
+
+
+LIMITATIONS_FUTILITY_V2: tuple[str, ...] = (
+    "Inner-validation proteins have no D3 edge to their inner training proteins, so B1-all is projected from a "
+    "population that resembles B1-NH30.",
+    "Inner components are finer than the claim clusters.",
+    "Inner fits use three quarters of the training proteins and two seeds, against five full refits.",
+    "One R1-inner seed stands for the R1 ensemble.",
+    "The selected configuration's inner score carries selection optimism.",
+    "The projection is a stop rule, not an estimate of test performance.",
+)
+
+
+def futility_policy_block_v2() -> dict[str, Any]:
+    """Rule A2-F as data (the futility block of ``selection_policy_record_v2``)."""
+    return {
+        "rule_id": FUTILITY_RULE_V2,
+        "fold": FUTILITY_FOLD,
+        "when": ("once, after the fold-0 S1 and S2 records and after the training-only CLEAN R1-inner sanity record "
+                 "has passed, before any fit of folds 1-4"),
+        "population": ("fold-0 inner-validation proteins of EC classes 1-6 whose full EC numbers all occur among the "
+                       "R1-inner training centres of their inner fold, excluding proteins whose sequence equals a "
+                       "protein kept in their inner fold's R1-inner training set (count reported)"),
+        "deepmzyme_arm": ("mean of the two screening-seed logits of the selected S1 configuration, adjusted with the S2 "
+                          "tau and that inner fit's training priors, then arg-max"),
+        "clean_arm": ("R1-inner of the protein's inner fold (one seed), nearest-centre EC class; a distance tie counts "
+                      "as wrong; it stands for both the R1 seed mean and the R1 ensemble"),
+        "units": ("inner identity components of the fold-0 overlay copy restricted to the population; each "
+                  "component's stratum is its rarest EC class 1-6 by total protein count in the population"),
+        "replicates": FUTILITY_REPLICATES,
+        "seed": FUTILITY_SEED,
+        "replicate_generator": "numpy default_rng seeded by (seed, r) for r = 0..replicates-1",
+        "step_a": "resample the components with replacement within each stratum, to its component count k_s",
+        "step_b": ("synthetic B1-all: draw n1_s = max(1, floor(k_s * N1 / n_U + 0.5)) components with replacement, "
+                   "in draw order, from each stratum of the step-(a) sample; each drawn copy is its own cluster"),
+        "step_c": ("synthetic B1-NH30 (nested): in each stratum take the first n2_s = max(1, floor(n1_s * N2 / N1 + "
+                   "0.5)) copies of step (b), so that every B1-NH30 cluster is also a B1-all cluster"),
+        "nested_populations": FUTILITY_NESTED_POPULATIONS,
+        "target_sizes": dict(FUTILITY_TARGET_SIZES),
+        "populations": dict(FUTILITY_POPULATIONS),
+        "claim_engine": {
+            "metric": PRIMARY_METRIC_V2,
+            "n_draws": DEFAULT_N_DRAWS,
+            "bootstrap_seed": DEFAULT_BOOTSTRAP_SEED,
+            "stratified": True,
+            "max_skip_fraction": DEFAULT_MAX_SKIP_FRACTION,
+            "stratum_gate": "the amended stratum gate of the claim engine",
+            "unavailable": "a gated or aborted population is unavailable, with p = 1, and keeps its Holm slot",
+            "intersection_union": "over the two R1 components (seed mean and ensemble)",
+            "holm": "two populations, the smaller p at 0.025, the other at 0.05 only if the first passes",
+        },
+        "success": "at least one co-primary population reads Outperforms CLEAN",
+        "continue_if_successes_at_least": FUTILITY_MIN_SUCCESSES,
+        "projected_probability_threshold": FUTILITY_MIN_SUCCESSES / FUTILITY_REPLICATES,
+        "comparison": "integers; Monte Carlo intervals are descriptive only",
+        "decisions": [FUTILITY_CONTINUE, FUTILITY_STOP],
+        "binding": True,
+        "stop_wording": FUTILITY_STOP_WORDING,
+        "override": ("none toward continuing; once a stop_futility record exists in this campaign, under any chain, "
+                     "no class-(b) amendment may rerun S1, S2 or FUT, and any stop_futility pointer file wins"),
+        "pointer_files": "<campaign root>/amendment2/futility/fut_seq<n>.json, write-once, read by exact name",
+        "descriptive": {
+            "replicates": FUTILITY_DESCRIPTIVE_REPLICATES,
+            "sensitivity_divisors": list(FUTILITY_SENSITIVITY_DIVISORS),
+            "seed_streams": dict(FUTILITY_DESCRIPTIVE_STREAMS),
+            "items": [
+                "projected probabilities per population, for both and for either, with Wilson 95% intervals",
+                "the observed inner primary difference and its component-bootstrap bound",
+                "conditional power at the observed difference (step (a) omitted)",
+                "the projection with target sizes divided by 1.25 and by 1.5",
+                "the same projection with independent (non-nested) draws",
+                "historical_rule_outcome: the Freeze-1 gap computation (EC classes 1-6 balanced-accuracy gap "
+                "against -3.0, seven-class and R2-inner gaps, denominators)",
+            ],
+            "decides": False,
+        },
+        "record_content": "totals only; no protein identifier",
+        "limitations": list(LIMITATIONS_FUTILITY_V2),
+    }
+
+
+def selection_policy_record_v2() -> dict[str, Any]:
+    """Fresh canonical descriptor of the amendment-2 rules A2-S1 to A2-S10, A2-T and A2-F.
+
+    The amendment-2 record binds the SHA-256 of this record (``selection_policy_sha256_v2``); every amendment-2
+    step, futility and fit identity carries it. ``s1_policy_record`` (amendment 1) is unchanged.
+    """
+    l9 = promotion_config_for(LOGIT_ADJUSTMENT_LEVER)
+    return {
+        "selection_pipeline": SELECTION_PIPELINE_V2,
+        "historical_rules": {"freeze1": HISTORICAL_S1_RULE, "amendment1": AMENDED_S1_RULE, "replayable": True},
+        "primary_metric": {"id": PRIMARY_METRIC_V2, "definition": PRIMARY_METRIC_DEFINITION_V2,
+                           "prediction_rule": PREDICTION_RULE, "unit": "percentage points"},
+        "s1": {
+            "rule_id": BEST_INNER_S1_RULE,
+            "screening_seeds": list(SCREENING_SEEDS),
+            "n_inner_folds": N_INNER_FOLDS,
+            "seed_score": "primary metric over the pooled out-of-fold predictions of the seed's four inner fits",
+            "configuration_score": "mean of the two seed scores",
+            "descriptive_metrics": list(DESCRIPTIVE_METRICS_V2),
+            "learning_rate_grid": {family: [dict(setting) for setting in grid]
+                                   for family, grid in S1_LEARNING_RATE_GRID_V2.items()},
+            "learning_rate_tie_band_points": LR_TIE_BAND_POINTS,
+            "learning_rate_tie_rule": "first listed grid setting within the band of the family maximum (inclusive)",
+            "anchor_family": ANCHOR_FAMILY,
+            "candidate_families": list(S1_V2_CANDIDATES),
+            "simplicity_order": list(S1_V2_SIMPLICITY_ORDER),
+            "family_tie_band_points": S1_V2_FAMILY_TIE_BAND_POINTS,
+            "family_rule": ("M is the highest score among eligible candidates; the selected family is the first family "
+                            "of the simplicity order that is eligible and scores at least M - 0.5 points"),
+            "harm_guard": {
+                "anchor": ANCHOR_FAMILY,
+                "counts": "correct predictions of the class summed over both screening seeds",
+                "veto": "k_X(c) == 0 and k_F2(c) >= min_anchor_correct",
+                "min_anchor_correct": HARM_GUARD_MIN_ANCHOR_CORRECT,
+                "classes": "EC classes 1-6 with at least one pooled inner protein",
+                "class_7": "exempt",
+                "anchor_always_eligible": True,
+            },
+            "descriptive_recall_guard": {
+                "reference": ANCHOR_FAMILY,
+                "min_training_proteins": GUARD_MIN_TRAINING_PROTEINS,
+                "recall_drop_points": GUARD_RECALL_DROP_POINTS,
+                "net_proteins": GUARD_NET_PROTEINS,
+                "decides": False,
+            },
+            "controls": {"fold_0": list(S1_V2_CONTROLS_FOLD0), "folds_1_4": list(S1_V2_CONTROLS),
+                         "selectable": False, "refit": False},
+            "significance_test": None,
+            "minimum_gain_points": None,
+            "bootstrap": None,
+            "float_tolerance": FLOAT_TOLERANCE,
+            "failure_handling": ("a missing, duplicated, foreign or unverifiable fit, a configuration that does not "
+                                 "pool, a missing candidate family or a score that is not finite refuses the step; "
+                                 "no record is written and no family is dropped"),
+            "incremental_superiority_claim": False,
+        },
+        "s2": {
+            "rule_id": L9_RULE_V2,
+            "screened_levers": list(SCREENED_LEVERS_V2),
+            "dropped_levers": list(DROPPED_LEVERS_V2),
+            "fits": 0,
+            "taus": list(TAUS),
+            "challenger": ("the tau other than 0 with the highest primary score; equal scores go to the smaller |tau|, "
+                           "then to the negative value"),
+            "priors": "add-one smoothed training priors of each row's own inner fit",
+            "adoption": {
+                "min_gain_points": l9.min_gain_points,
+                "alpha": l9.alpha,
+                "n_draws": l9.n_draws,
+                "bootstrap_seed": l9.bootstrap_seed,
+                "stratified": l9.stratified,
+                "max_skip_fraction": l9.max_skip_fraction,
+                "engine": PRIMARY_BOOTSTRAP_ENGINE,
+                "metric": PRIMARY_BOOTSTRAP_METRIC,
+                "bootstrap_population": PRIMARY_BOOTSTRAP_POPULATION,
+                "recall_guard": "historical (at least 5 recall points and at least 3 net proteins, classes with at "
+                                "least 30 training proteins)",
+                "zero_recall": "no EC class 1-6 seed-mean recall falls to zero",
+                "bootstrap_abort": "not adopted (tau 0); the abort is recorded",
+            },
+            "promotion_config": l9.to_record(),
+        },
+        "s3": {"run": False},
+        "s4": {
+            "rule_id": S4_RULE_V2,
+            "epochs": EPOCHS_V2,
+            "seeds": list(REFIT_SEEDS),
+            "levers": list(SCREENED_LEVERS_V2),
+            "tau": "from S2 (0 if not adopted)",
+            "recompute_on_refit_training_set": ["normalisation", "class_weights", "class_priors"],
+            "rbf_distances": {family: RBF_DISTANCES_RAW_V2 for family in RBF_RAW_FAMILIES_V2},
+            "f6_refit_pretraining": ("each refit pretrains its whole-protein branch inside the fit on the fold's whole "
+                                     "corpus (no inner exclusions), on an isolated stream seeded from its refit seed "
+                                     "plus a fixed offset"),
+            "fold0_requires_futility": "the fold-0 S4 record is appended only after a verified FUT = continue",
+            "freeze2": "every refit identity and the scoring tau must equal this record",
+            "final_system": "mean of the five refit logits, then L9 with the refit priors",
+            "controls_refit": False,
+        },
+        "training": {
+            "epochs": EPOCHS_V2,
+            "schedule": TRAINING_SCHEDULE_V2,
+            "checkpoint_rule": CHECKPOINT_RULE_V2,
+            "final_epoch_learning_rate_positive": True,
+            "rbf_distances_raw_families": list(RBF_RAW_FAMILIES_V2),
+            "rbf_raw_option": RBF_RAW_OPTION_V2,
+            "gvp_families": sorted(GVP_FAMILIES_V2),
+            "edge_radius": GVP_EDGE_RADIUS_V2,
+        },
+        "futility": futility_policy_block_v2(),
+    }
+
+
+def selection_policy_sha256_v2() -> str:
+    """SHA-256 of the canonical ``selection_policy_record_v2``."""
+    return sha256_canonical(selection_policy_record_v2())
+
+
+@dataclass(frozen=True, eq=False)
+class BestInnerScreen:
+    """Result of the amendment-2 S1 rule ``best_inner_harm_guarded_v1`` (no bootstrap, no significance test)."""
+
+    winner_family: str
+    maximum_points: float
+    eligible_families: tuple[str, ...]
+    tied_families: tuple[str, ...]
+    candidates: Mapping[str, Mapping[str, Any]]
+    controls: Mapping[str, Mapping[str, Any]]
+    inputs: Mapping[str, Any]
+    winner: PooledOof = field(repr=False)
+    clean_sanity_record_sha256: Optional[str] = None
+
+    @property
+    def candidate_scores_points(self) -> dict[str, float]:
+        return {family: float(item["primary_points"]) for family, item in self.candidates.items()}
+
+    @property
+    def control_scores_points(self) -> dict[str, float]:
+        return {family: float(item["primary_points"]) for family, item in self.controls.items()}
+
+    def to_record(self) -> dict[str, Any]:
+        return to_jsonable({
+            "rule_id": BEST_INNER_S1_RULE,
+            "selection_pipeline": SELECTION_PIPELINE_V2,
+            "policy_sha256": selection_policy_sha256_v2(),
+            "metric": PRIMARY_METRIC_V2,
+            "anchor_family": ANCHOR_FAMILY,
+            "winner_family": self.winner_family,
+            "maximum_points": self.maximum_points,
+            "tie_band_points": S1_V2_FAMILY_TIE_BAND_POINTS,
+            "simplicity_order": list(S1_V2_SIMPLICITY_ORDER),
+            "eligible_families": self.eligible_families,
+            "tied_families": self.tied_families,
+            "candidate_scores_points": self.candidate_scores_points,
+            "control_scores_points": self.control_scores_points,
+            "candidates": self.candidates,
+            "controls": self.controls,
+            "significance_test": None,
+            "bootstrap": None,
+            "f6_holdout_asymmetry": F6_HOLDOUT_ASYMMETRY_V2,
+            "clean_sanity_record_sha256": self.clean_sanity_record_sha256,
+            "inputs": self.inputs,
+        })
+
+
+def s1_best_inner(
+    winners: Mapping[str, PooledOof],
+    *,
+    controls: Optional[Mapping[str, PooledOof]] = None,
+    training_class_counts: Optional[Sequence[int] | np.ndarray] = None,
+    clean_sanity_record_sha256: Optional[str] = None,
+) -> BestInnerScreen:
+    """Rules A2-S4 to A2-S6: the eligible candidate with the highest primary score, simplicity order in the band.
+
+    ``winners`` maps each candidate F2, F3, F4, F5 and F6 to its pooled predictions at its chosen learning rate
+    (``s1_choose_learning_rate_primary``); every candidate is required. ``controls`` (F1, C-G, C-GF) are scored and
+    recorded, never selected. ``training_class_counts`` (default: the pooled true classes) only decides which
+    classes the descriptive recall-guard rows cover. The rule selects a model; it does not establish that the
+    selected family is better than F2 or any other family.
+    """
+    controls = dict(controls or {})
+    foreign = sorted(set(winners) - set(S1_V2_CANDIDATES))
+    if foreign:
+        raise ValueError(f"S1 candidates are {S1_V2_CANDIDATES}; {foreign} cannot be selected (controls are reported "
+                         "through 'controls').")
+    missing = [family for family in S1_V2_CANDIDATES if family not in winners]
+    if missing:
+        raise ValueError(f"The best-inner S1 rule needs every candidate {S1_V2_CANDIDATES}; missing {missing}.")
+    unknown = sorted(set(controls) - set(CONTROL_FAMILIES_V2))
+    if unknown:
+        raise ValueError(f"Unknown S1 controls {unknown}; expected a subset of {CONTROL_FAMILIES_V2}.")
+    anchor = winners[ANCHOR_FAMILY]
+    for pooled in (*winners.values(), *controls.values()):
+        _require_paired(anchor, pooled)
+    counts = _training_counts(np.bincount(anchor.true_idx, minlength=N_EC_CLASSES)
+                              if training_class_counts is None else training_class_counts)
+    guard_config = PromotionConfig()
+    summaries = {family: _summarise_primary(winners[family]) for family in S1_V2_CANDIDATES}
+    anchor_summary = summaries[ANCHOR_FAMILY]
+    candidates: dict[str, dict[str, Any]] = {}
+    for family in S1_V2_CANDIDATES:
+        summary = summaries[family]
+        harm_rows, eligible = _harm_guard_rows(anchor_summary, summary)
+        if family == ANCHOR_FAMILY:
+            eligible = True
+        recall_rows, recall_ok = _recall_guard(anchor_summary, summary, counts, guard_config)
+        candidates[family] = {
+            **summary.record(),
+            "eligible": bool(eligible),
+            "harm_guard": harm_rows,
+            "descriptive_recall_guard": {"rows": recall_rows, "would_veto": not recall_ok, "decides": False},
+            "predictions_sha256": predictions_sha256(winners[family]),
+        }
+    scores = {family: summaries[family].points for family in S1_V2_CANDIDATES}
+    if not all(math.isfinite(value) for value in scores.values()):
+        raise ValueError("An S1 candidate score is not finite.")
+    eligible = tuple(family for family in S1_V2_CANDIDATES if candidates[family]["eligible"])
+    maximum = max(scores[family] for family in eligible)
+    tied = tuple(family for family in S1_V2_SIMPLICITY_ORDER if family in eligible
+                 and scores[family] >= maximum - S1_V2_FAMILY_TIE_BAND_POINTS - FLOAT_TOLERANCE)
+    winner = tied[0]
+    control_records = {}
+    for family in (name for name in CONTROL_FAMILIES_V2 if name in controls):
+        summary = _summarise_primary(controls[family])
+        control_records[family] = {**summary.record(), "selectable": False,
+                                   "predictions_sha256": predictions_sha256(controls[family])}
+    return BestInnerScreen(
+        winner_family=winner,
+        maximum_points=maximum,
+        eligible_families=eligible,
+        tied_families=tied,
+        candidates=candidates,
+        controls=control_records,
+        inputs={"predictions_sha256": {family: predictions_sha256(pooled) for family, pooled in
+                                       (*winners.items(), *controls.items())},
+                "training_class_counts": counts},
+        winner=winners[winner],
+        clean_sanity_record_sha256=(None if clean_sanity_record_sha256 is None
+                                    else _check_sha256(clean_sanity_record_sha256, "clean_sanity_record_sha256")),
+    )
+
+
+# ---------------------------------------------------------------------------
 # S2: lever screen
 
 
@@ -1027,6 +1737,48 @@ def screen_logit_adjustment(
                        training_class_counts=training_class_counts, config=config)
     details = {"tau_scores_points": {f"{tau:+.1f}": score for tau, score in scores.items()}, "chosen_tau": chosen}
     return _promotion_outcome(LOGIT_ADJUSTMENT_LEVER, decision, challenger, details)
+
+
+def screen_logit_adjustment_primary(
+    family: str,
+    s1_winner: PooledOof,
+    *,
+    component_of: Mapping[str, str],
+    training_class_counts: Sequence[int] | np.ndarray,
+    config: PromotionConfig = promotion_config_for(LOGIT_ADJUSTMENT_LEVER),
+) -> LeverOutcome:
+    """Rule A2-S8 (``l9_tau_promote_primary_v1``): L9 on the S1 winner, scored by the primary metric.
+
+    The challenger is the tau other than 0 with the highest primary score (equal scores: the smaller |tau|, then
+    the negative value). It is adopted only if ``promote_primary`` passes against tau = 0 at alpha 0.01 with a
+    gain of at least 1.0 point. A bootstrap abort means not adopted (tau 0) and is recorded. ``details`` holds
+    the tau scores, the challenger tau and ``adopted_tau`` (the tau the S4 refit scores with).
+    """
+    if family not in S1_V2_CANDIDATES:
+        raise ValueError(f"L9 v2 applies to the S1 candidates {S1_V2_CANDIDATES}, not {family!r}.")
+    scores = {tau: seed_mean_primary_points(apply_tau(s1_winner, tau)) for tau in TAUS}
+    if not all(math.isfinite(score) for score in scores.values()):
+        raise ValueError("An L9 tau score is not finite.")
+    candidates = sorted((tau for tau in TAUS if tau != 0.0), key=lambda tau: (abs(tau), tau))
+    top = max(scores[tau] for tau in candidates)
+    chosen = next(tau for tau in candidates if scores[tau] >= top - FLOAT_TOLERANCE)
+    challenger = apply_tau(s1_winner, chosen)
+    decision = promote_primary(s1_winner, challenger, component_of=component_of,
+                               training_class_counts=training_class_counts, config=config)
+    status = LEVER_PASSED if decision.promoted else LEVER_FAILED
+    details = {
+        "rule_id": L9_RULE_V2,
+        "metric": PRIMARY_METRIC_V2,
+        "tau_scores_points": {f"{tau:+.1f}": score for tau, score in scores.items()},
+        "chosen_tau": chosen,
+        "adopted_tau": chosen if decision.promoted else 0.0,
+        "bootstrap_abort": decision.bootstrap_abort is not None,
+    }
+    reason = "" if decision.promoted else (
+        "bootstrap aborted; not adopted (tau 0)" if decision.bootstrap_abort is not None
+        else f"not adopted (tau 0): {', '.join(decision.vetoes)}")
+    return LeverOutcome(LOGIT_ADJUSTMENT_LEVER, status, reason=reason, decision=decision, details=details,
+                        challenger=challenger)
 
 
 def lever_not_applicable(lever: str, family: str) -> LeverOutcome:
@@ -1224,6 +1976,87 @@ def s4_refit_specification(
         "logit_adjustment_tau": tau,
         "seeds": seeds,
         "recompute_on_refit_training_set": recompute,
+    }
+
+
+def s4_refit_specification_v2(
+    *,
+    family: str,
+    learning_rate_setting: Mapping[str, float],
+    adopted_levers: Sequence[str],
+    s1_record_sha256: str,
+    s2_record_sha256: str,
+    epochs: int = EPOCHS_V2,
+    tau: float = 0.0,
+    seeds: Sequence[int] = REFIT_SEEDS,
+    fold: Optional[int] = None,
+    futility_decision: Optional[str] = None,
+    futility_record_sha256: Optional[str] = None,
+) -> dict[str, Any]:
+    """Rule A2-S9 (``refit_spec_v2``): the S4 refit specification of one outer fold, bound to its S1 and S2 records.
+
+    Refused: a control family, a learning-rate setting outside the family's amendment-2 grid, epochs other than
+    30, a lever other than L9, a tau that disagrees with the adopted levers, seeds other than 42-46 and, in fold 0,
+    a missing FUT = continue (rule A2-SEL-9). GVP families carry ``rbf_distances = "raw"``; F6 pretrains inside
+    each refit on the fold's whole corpus (no inner exclusions).
+    """
+    _check_family_v2(family)
+    if family not in S1_V2_CANDIDATES:
+        raise ValueError(f"{family} is a control and is never refit as the selected model.")
+    setting = _grid_setting(family, learning_rate_setting, S1_LEARNING_RATE_GRID_V2)
+    if isinstance(epochs, bool) or int(epochs) != EPOCHS_V2:
+        raise ValueError(f"Amendment 2 fixes {EPOCHS_V2} epochs; got {epochs!r}.")
+    levers = [str(lever) for lever in adopted_levers]
+    if len(set(levers)) != len(levers) or not set(levers) <= set(SCREENED_LEVERS_V2):
+        raise ValueError(f"Amendment 2 adopts only {list(SCREENED_LEVERS_V2)}; got {levers}.")
+    tau = validate_tau(tau)
+    if (LOGIT_ADJUSTMENT_LEVER in levers) != (tau != 0.0):
+        raise ValueError(f"tau {tau} does not match the adopted levers {levers}.")
+    seeds = [int(seed) for seed in seeds]
+    if tuple(seeds) != REFIT_SEEDS:
+        raise ValueError(f"The refit uses seeds {list(REFIT_SEEDS)}, got {seeds}.")
+    for name, value in (("s1_record_sha256", s1_record_sha256), ("s2_record_sha256", s2_record_sha256)):
+        _check_sha256(value, name)
+    rbf_distances = RBF_DISTANCES_RAW_V2 if family in RBF_RAW_FAMILIES_V2 else RBF_DISTANCES_NORMALIZED_V2
+    if fold is not None and (isinstance(fold, bool) or not isinstance(fold, int)):
+        raise ValueError(f"fold must be an integer, got {fold!r}.")
+    if fold == FUTILITY_FOLD:
+        if futility_decision != FUTILITY_CONTINUE:
+            raise ValueError(f"The fold-{FUTILITY_FOLD} S4 record needs a verified FUT = {FUTILITY_CONTINUE}, got "
+                             f"{futility_decision!r}.")
+        _check_sha256(futility_record_sha256, "futility_record_sha256")
+    elif futility_decision is not None or futility_record_sha256 is not None:
+        raise ValueError(f"Only the fold-{FUTILITY_FOLD} S4 record binds a futility record.")
+    pretraining = None
+    if family == F6_FAMILY:
+        pretraining = {
+            "location": "inside each refit, before the model is built",
+            "corpus": "the fold's whole corpus, without inner exclusions",
+            "pretraining_seeds": seeds,
+            "pretraining_seed_rule": "an isolated stream seeded from the refit seed plus a fixed offset",
+            "branch": "frozen; every checkpoint's branch equals the branch recorded at pretraining",
+        }
+    return {
+        "rule_id": S4_RULE_V2,
+        "selection_pipeline": SELECTION_PIPELINE_V2,
+        "policy_sha256": selection_policy_sha256_v2(),
+        "family": family,
+        "learning_rate_setting": setting,
+        "learning_rate_label": learning_rate_label(setting),
+        "adopted_levers": levers,
+        "epochs": EPOCHS_V2,
+        "schedule": TRAINING_SCHEDULE_V2,
+        "checkpoint_rule": CHECKPOINT_RULE_V2,
+        "rbf_distances": rbf_distances,
+        "logit_adjustment_tau": tau,
+        "seeds": seeds,
+        "recompute_on_refit_training_set": ["normalisation", "class_weights", "class_priors"],
+        "whole_protein_pretraining": pretraining,
+        "final_system": "mean of the five refit logits, then L9 with the refit priors",
+        "s1_record_sha256": s1_record_sha256,
+        "s2_record_sha256": s2_record_sha256,
+        "fold": fold,
+        "futility_record_sha256": futility_record_sha256,
     }
 
 

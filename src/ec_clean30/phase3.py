@@ -272,7 +272,7 @@ def _main_model_checkpoint(output_directory: Path) -> tuple[Path, dict[str, Any]
                   "model_state_dict": {}, "checkpoint_rule": "terminal"}
     kwargs = export.factory_kwargs(REPO_ROOT / "src/training/run.py", config, checkpoint, METAL_TARGET_LABELS, labels)
     model = build_pocket_classifier(**kwargs)
-    graphs = [pocket_to_pyg_data(pocket, **export._graph_options(config)) for pocket in pockets]
+    graphs = [pocket_to_pyg_data(pocket, **export.graph_options(config)) for pocket in pockets]
     batch = Batch.from_data_list(graphs)
     model.train()
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
@@ -310,8 +310,8 @@ def main_model_probe(profile: str, output_directory: Path) -> dict[str, Any]:
             model, _ = export.rebuild_model_from_checkpoint(path, device=device)
             _require(all(parameter.device.type == device for parameter in model.parameters()),
                      "Reconstructed qualification model is on the wrong device.")
-            loader = export._prediction_loader(pockets, config, None)
-            prediction = export._predict(model, loader, pockets, device)
+            loader = export.prediction_loader(pockets, config, None)
+            prediction = export.predict(model, loader, pockets, device)
             pocket_rows, protein_rows, conflicts = export.build_prediction_rows(pockets, prediction["ec_logits"], identity)
             _require(conflicts == 0, "Synthetic qualification identities conflict.")
             exported[device] = {"pockets": pocket_rows, "proteins": protein_rows}
@@ -546,12 +546,12 @@ def unpack_view(archive_path: Path, destination: Path, *, expected_sha256: str,
                 (stage / views.CACHE_DIR / name).mkdir(exist_ok=True)
             # Existing permission and verification hooks enforce the relocated view contract.
             try:
-                modes = views._set_permissions(stage)
+                modes = views.set_permissions(stage)
                 _require(modes["outcome"] == views.FILE_MODES_ENFORCED,
                          "The extraction filesystem does not enforce required view permissions.")
                 views.verify_view(stage, require_chain_means=("final", "block26"), write_receipt=False)
             except BaseException:
-                views._remove_tree(stage)
+                views.remove_tree(stage)
                 raise
             _require(_sha(stage / views.RECEIPTS_DIR / views.DRY_RUN_RECEIPT_NAME)
                      == manifest["original_dry_run_sha256"], "Original dry-run receipt changed.")

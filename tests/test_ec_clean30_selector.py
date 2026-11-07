@@ -1009,8 +1009,12 @@ def test_runner_arguments_parse():
                                                                           for k in range(4)), []),
                               *sum((["--clean-r2-inner", f"r2_{k}.npz"] for k in range(4)), []), "--out", "g.json"])
     assert len(args.clean_r1_inner) == len(args.clean_r2_inner) == 4 and args.handler is selector.action_gap_gate
+    # Amendment 2 adds S4 (the refit specification) to the parser; run_select refuses it under the historical
+    # pipelines (test_ec_clean30_selector_amendment2) and refuses S3 under amendment 2.
+    assert parser.parse_args(["select", "--fold", "0", "--step", "S4", "--plan", "p", "--runs", "r", "--components",
+                              "c", "--freeze1-sha256", FREEZE1, "--out", "o"]).step == "S4"
     with pytest.raises(SystemExit):
-        parser.parse_args(["select", "--fold", "0", "--step", "S4", "--plan", "p", "--runs", "r", "--components", "c",
+        parser.parse_args(["select", "--fold", "0", "--step", "S5", "--plan", "p", "--runs", "r", "--components", "c",
                            "--freeze1-sha256", FREEZE1, "--out", "o"])
     assert issubclass(SelectionInputError, ValueError)
     assert hashlib.sha256(b"").hexdigest() != FREEZE1

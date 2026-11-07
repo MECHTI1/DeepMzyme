@@ -1,4 +1,5 @@
 """Paired cluster bootstrap, one-sided bounds, intersection-union and Holm (synthetic; no dataset access)."""
+import hashlib
 import inspect
 import json
 from pathlib import Path
@@ -32,8 +33,15 @@ def test_frozen_bootstrap_defaults():
     }
     assert defaults == {
         "systems": None, "metric": "ec_classes_1_6_balanced_accuracy", "n_draws": 10_000, "seed": 20261023,
-        "stratified": True, "max_skip_fraction": 0.01,
+        "stratified": True, "max_skip_fraction": 0.01, "engine": "stratified_k_of_k_v1",
     }
+    # The Freeze-1 list is unchanged (freeze.live_constants reads it); engine v2 adds the primary metric.
+    assert stats.BOOTSTRAP_METRICS == ("ec_classes_1_6_balanced_accuracy", "ec_classes_1_6_macro_f1", "accuracy")
+    assert stats.BOOTSTRAP_METRICS_V2 == (*stats.BOOTSTRAP_METRICS, "ec_classes_1_6_accuracy")
+    assert stats.ENGINE_METRICS == {"stratified_k_of_k_v1": stats.BOOTSTRAP_METRICS,
+                                    "stratified_rao_wu_v2": stats.BOOTSTRAP_METRICS_V2}
+    assert stats.BOOTSTRAP_ENGINES == ("stratified_k_of_k_v1", "stratified_rao_wu_v2")
+    assert stats.PRESENCE_FREE_METRICS == ("ec_classes_1_6_accuracy",)
 
 
 def _wrong(true):
@@ -99,14 +107,16 @@ def test_large_true_difference_gives_positive_bound():
 
 
 @pytest.mark.parametrize(
-    ("metric", "key"),
+    ("metric", "key", "engine"),
     [
-        ("ec_classes_1_6_balanced_accuracy", "ec_classes_1_6_balanced_accuracy"),
-        ("ec_classes_1_6_macro_f1", "ec_classes_1_6_macro_f1"),
-        ("accuracy", "accuracy"),
+        ("ec_classes_1_6_balanced_accuracy", "ec_classes_1_6_balanced_accuracy", stats.ENGINE_FREEZE1),
+        ("ec_classes_1_6_macro_f1", "ec_classes_1_6_macro_f1", stats.ENGINE_FREEZE1),
+        ("accuracy", "accuracy", stats.ENGINE_FREEZE1),
+        ("ec_classes_1_6_balanced_accuracy", "ec_classes_1_6_balanced_accuracy", stats.ENGINE_AMENDMENT2),
+        ("ec_classes_1_6_accuracy", "ec_classes_1_6_accuracy", stats.ENGINE_AMENDMENT2),
     ],
 )
-def test_point_estimate_matches_ec_class_metrics(metric, key):
+def test_point_estimate_matches_ec_class_metrics(metric, key, engine):
     rng = np.random.default_rng(5)
     true = rng.choice(7, size=120, p=[0.2, 0.2, 0.3, 0.1, 0.05, 0.1, 0.05])
     pred = np.where(rng.random(true.size) < 0.6, true, rng.integers(0, 7, true.size))
@@ -115,9 +125,12 @@ def test_point_estimate_matches_ec_class_metrics(metric, key):
     clusters = {pid: f"g{k // 3}" for k, pid in enumerate(ids)}
     table = build_cluster_count_table(ids, true, {"a": pred}, clusters, weights=weights)
     result = paired_cluster_bootstrap(
-        table, [Contrast("a_value", ((1.0, "a", "all"),))], metric=metric, n_draws=50, max_skip_fraction=1.0
+        table, [Contrast("a_value", ((1.0, "a", "all"),))], metric=metric, n_draws=50, max_skip_fraction=1.0,
+        engine=engine,
     )
     assert result.system_value("a") == pytest.approx(ec_class_metrics(true, pred, weights=weights)[key])
+    assert confusion_metric(table.counts.sum(axis=0)[0, 0], metric, list(range(6))) == pytest.approx(
+        ec_class_metrics(true, pred, weights=weights)[key])
 
 
 def test_resampled_confusion_metric_matches_expanded_rows():
@@ -559,6 +572,15 @@ def test_record_is_json_ready():
     assert record["averaged_ec_classes"] == {"all": [1, 2, 3, 4, 5, 6]}
     assert len(record["contrast_draws_sha256"]) == 64
     json.dumps(record)
+    # Engine v1 records keep their Freeze-1 format; engine v2 records add the amendment-2 fields.
+    assert not {"engine", "strata_merges", "class_absence_probability", "multiplicities_dyadic"} & set(record)
+    v2 = _difference(table, n_draws=100, metric=stats.METRIC_EC_CLASSES_1_6_ACCURACY,
+                     engine=stats.ENGINE_AMENDMENT2).to_record()
+    assert v2["engine"] == stats.ENGINE_AMENDMENT2 and v2["resampling"] == stats.RESAMPLING_RAO_WU
+    assert v2["strata_merges"] == [] and v2["multiplicities_dyadic"] is True  # k = 5 strata: 5 / 4 is dyadic
+    # Every class fills its own stratum, so it is in every draw.
+    assert v2["class_absence_probability"] == {"all": {str(k): 0.0 for k in range(1, 7)}}
+    json.dumps(v2)
 
 
 def test_record_names_the_generator_and_whether_sums_are_exact():
@@ -570,6 +592,249 @@ def test_record_names_the_generator_and_whether_sums_are_exact():
     halves = build_cluster_count_table(ids, true, arms, clusters, weights=np.full(len(ids), 0.5))
     thirds = build_cluster_count_table(ids, true, arms, clusters, weights=np.full(len(ids), 1 / 3))
     assert halves.dyadic_counts and not thirds.dyadic_counts
+    # Rao-Wu multipliers k / (k - 1) are dyadic only when k - 1 is a power of two.
+    sizes = {1: True, 2: True, 3: True, 4: False, 5: True, 6: False, 9: True, 10: False}
+    for size, dyadic in sizes.items():
+        members = [np.arange(size)]
+        assert stats.multiplicities_are_dyadic(members, stats.RESAMPLING_RAO_WU) is dyadic
+        assert stats.multiplicities_are_dyadic(members, stats.RESAMPLING_K_OF_K) is True
+    v2 = _difference(build_cluster_count_table(ids, true, arms, {pid: pid[:4] for pid in ids}), n_draws=50,
+                     metric=stats.METRIC_EC_CLASSES_1_6_ACCURACY, engine=stats.ENGINE_AMENDMENT2).to_record()
+    assert v2["numpy_version"] == np.__version__ and v2["bit_generator"] == "PCG64"
+
+
+# ---------------------------------------------------------------- engine v2 (amendment 2)
+
+# contrast_draws_sha256 of engine v1 runs recorded at commit c163995, before any amendment-2 edit.
+GOLDEN_V1_DRAWS_C163995 = {
+    "ba_cluster2_seed11_1500": "21ba74d1d6ba7c800308a37c3932f6b9a9ae13d92628d1072d632a2c28cae859",
+    "accuracy_cluster2_seed11_1500": "94a9fc3048741024405da5064ced665b3693845bbcf51616aeb047784abd7aa4",
+    "macro_f1_weighted_seed11_1500": "5750cd4f587b5df8d4a1e44fafb1d166e5c74642c5a5e1c779e4ebe3a4b8aa0b",
+    "ba_rare_class_default_2000": "9c7d87294de0610ce1ba95775bb9e8ae510ec6e3b29772fa9d31f0a01fa99de3",
+}
+GOLDEN_V1_RECORDS_C163995 = {
+    "ba_cluster2_seed11_1500": "65a6d8e596341fc8700a0fb86943cc4532b68d42118ed6d637b0a96f3ddd3ca4",
+    "accuracy_cluster2_seed11_1500": "1d5f2a42ae5f77d03a6826ea7cf60a71e5b4d09a0f62e81a526e817a6c494f8a",
+    "macro_f1_weighted_seed11_1500": "5ab8099748766b2a26791d4c43081ca25d548bc7db3c199068374dede311df09",
+    "ba_rare_class_default_2000": "940b1040a6e289bc6096a741a69fa78fce1ac0f5f57a754fc79b8a604adffdf8",
+}
+
+
+def _golden_runs(**kwargs):
+    ids, true, clusters = _population(cluster_size=2)
+    a, b = _predictions(true, 0.8, 8), _predictions(true, 0.7, 9)
+    plain = build_cluster_count_table(ids, true, {"a": a, "b": b}, clusters)
+    weighted = build_cluster_count_table(ids, true, {"a": a, "b": b}, clusters,
+                                         weights=np.where(np.arange(len(ids)) % 2 == 0, 0.5, 1.0))
+    contrast = [Contrast.difference("d", "a", "b")]
+    return {
+        "ba_cluster2_seed11_1500": paired_cluster_bootstrap(plain, contrast, n_draws=1500, seed=11, **kwargs),
+        "accuracy_cluster2_seed11_1500": paired_cluster_bootstrap(plain, contrast, n_draws=1500, seed=11,
+                                                                  metric="accuracy", **kwargs),
+        "macro_f1_weighted_seed11_1500": paired_cluster_bootstrap(weighted, contrast, n_draws=1500, seed=11,
+                                                                  metric="ec_classes_1_6_macro_f1", **kwargs),
+        "ba_rare_class_default_2000": paired_cluster_bootstrap(_rare_class_table(), contrast, n_draws=2000, **kwargs),
+    }
+
+
+def test_engine_v1_replays_freeze1_draws():
+    for kwargs in ({}, {"engine": stats.ENGINE_FREEZE1}):
+        for name, result in _golden_runs(**kwargs).items():
+            assert result.draws_sha256() == GOLDEN_V1_DRAWS_C163995[name], name
+            record = hashlib.sha256(json.dumps(result.to_record(), sort_keys=True).encode()).hexdigest()
+            assert record == GOLDEN_V1_RECORDS_C163995[name], name
+    # Engine v2 draws differently (the small-stratum rule), from the same seed.
+    v2 = _golden_runs(engine=stats.ENGINE_AMENDMENT2)
+    assert v2["ba_cluster2_seed11_1500"].draws_sha256() != GOLDEN_V1_DRAWS_C163995["ba_cluster2_seed11_1500"]
+
+
+def test_rao_wu_draws_k_minus_1_and_keep_stratum_totals():
+    strata = ("a",) * 4 + ("b",) * 7 + ("c",) + ("d",) * 2
+    members = stratum_members(strata)
+    multiplicity = stratified_multiplicities(np.random.default_rng(0), list(members.values()), len(strata), 500,
+                                             stats.RESAMPLING_RAO_WU)
+    for name, indices in members.items():
+        k = indices.size
+        assert np.allclose(multiplicity[:, indices].sum(axis=1), k)
+        if k > 1:
+            picks = multiplicity[:, indices] * (k - 1) / k
+            assert np.allclose(picks, np.round(picks)) and np.allclose(picks.sum(axis=1), k - 1)
+            assert (multiplicity[:, indices] == 0).any()  # some cluster is left out of some draw
+    assert np.all(multiplicity[:, members["c"]] == 1)
+    # A one-cluster stratum uses no random numbers: adding one leaves the other strata's draws unchanged.
+    without = stratified_multiplicities(np.random.default_rng(0), [members["a"], members["b"]], len(strata), 50,
+                                        stats.RESAMPLING_RAO_WU)
+    with_single = stratified_multiplicities(np.random.default_rng(0), [members["a"], members["c"], members["b"]],
+                                            len(strata), 50, stats.RESAMPLING_RAO_WU)
+    assert np.array_equal(without[:, members["b"]], with_single[:, members["b"]])
+    with pytest.raises(ValueError, match="Unknown resampling"):
+        stratified_multiplicities(np.random.default_rng(0), list(members.values()), len(strata), 5, "half")
+
+
+@pytest.mark.parametrize("k", [2, 3])
+def test_rao_wu_variance_matches_unbiased_stratified_variance(k):
+    rng = np.random.default_rng(100 + k)
+    values = rng.normal(size=k)
+    members = [np.arange(k)]
+    unbiased = k * values.var(ddof=1)  # unbiased variance estimate of the stratum total
+    n = 400_000
+    rao_wu = stratified_multiplicities(np.random.default_rng(1), members, k, n, stats.RESAMPLING_RAO_WU) @ values
+    k_of_k = stratified_multiplicities(np.random.default_rng(1), members, k, n) @ values
+    assert rao_wu.var() == pytest.approx(unbiased, rel=0.02)
+    assert k_of_k.var() == pytest.approx((k - 1) / k * unbiased, rel=0.02)
+    assert rao_wu.mean() == pytest.approx(values.sum(), abs=0.02) and k_of_k.mean() == pytest.approx(values.sum(),
+                                                                                                      abs=0.02)
+
+
+def _no_own_stratum_table():
+    """EC class 6 (rarest) shares clusters with every EC class 5 protein; class 5 has no stratum of its own."""
+    ids, true, clusters = [], [], {}
+    for cls in range(4):
+        for k in range(10):
+            ids.append(f"c{cls}_{k}")
+            true.append(cls)
+            clusters[ids[-1]] = ids[-1]
+    for k in range(6):  # class 5: six proteins in two mixed clusters
+        ids.append(f"c4_{k}")
+        true.append(4)
+        clusters[ids[-1]] = f"mixed{k // 3}"
+    for k in range(5):  # class 6: two in the mixed clusters, three alone
+        ids.append(f"c5_{k}")
+        true.append(5)
+        clusters[ids[-1]] = f"mixed{k}" if k < 2 else ids[-1]
+    true = np.array(true)
+    return build_cluster_count_table(ids, true, {"a": true.copy(), "b": _wrong(true)}, clusters)
+
+
+def test_primary_metric_needs_engine_v2_never_skips_and_never_aborts():
+    table = _no_own_stratum_table()
+    contrast = [Contrast.difference("d", "a", "b")]
+    with pytest.raises(BootstrapAbort, match="lacked an EC class"):
+        paired_cluster_bootstrap(table, contrast, n_draws=2000)  # engine v1, balanced accuracy
+    with pytest.raises(BootstrapAbort):
+        paired_cluster_bootstrap(table, contrast, n_draws=2000, engine=stats.ENGINE_AMENDMENT2)
+    result = paired_cluster_bootstrap(table, contrast, n_draws=2000, metric=stats.METRIC_EC_CLASSES_1_6_ACCURACY,
+                                      engine=stats.ENGINE_AMENDMENT2)
+    assert result.n_skipped == 0 and result.n_valid == 2000
+    assert result.estimate("d") == pytest.approx(1.0)
+    for engine in (stats.ENGINE_FREEZE1,):
+        with pytest.raises(ValueError, match="defined for bootstrap engine"):
+            paired_cluster_bootstrap(table, contrast, metric=stats.METRIC_EC_CLASSES_1_6_ACCURACY, engine=engine)
+        with pytest.raises(ValueError, match="defined for bootstrap engine"):
+            stats.inference_gate(table, stats.METRIC_EC_CLASSES_1_6_ACCURACY, engine)
+    with pytest.raises(ValueError, match="Unknown bootstrap engine"):
+        paired_cluster_bootstrap(table, contrast, engine="stratified_k_of_k_v3")
+
+
+def test_rarity_order_matches_the_strata():
+    support = np.zeros((6, 7))
+    support[0, [0, 6]] = (6, 1)
+    support[1, [0, 1]] = (4, 4)
+    support[2, [1, 2]] = (6, 1)
+    support[3, [2, 3]] = (2, 3)
+    support[4, [4, 0]] = (1, 0)
+    support[5, 6] = 1
+    assert stats.rarity_order(support) == (4, 2, 3, 0, 1)
+    strata = assign_cluster_strata(support)
+    for row, name in zip(support, strata):
+        contained = [index for index in stats.rarity_order(support) if row[index] > 0]
+        assert name == (rarest_class_stratum(contained[0]) if contained else CLASS_7_ONLY_STRATUM)
+
+
+def test_single_cluster_strata_merge_to_next_more_common_class():
+    def support_of(classes_per_cluster):
+        support = np.zeros((len(classes_per_cluster), 7))
+        for row, classes in enumerate(classes_per_cluster):
+            for cls, weight in classes.items():
+                support[row, cls] = weight
+        return support
+
+    # Rarity: class 5 (index 4, weight 1) < class 6 (2) < class 2 (3) < class 1 (10); class 7 alone.
+    support = support_of([{4: 1}, {5: 1}, {5: 1}, {1: 3}, {0: 5}, {0: 5}, {6: 1}])
+    strata, merges = stats.merge_single_cluster_strata(assign_cluster_strata(support), support)
+    assert merges == ({"from_stratum": "rarest_ec_class_5", "to_stratum": "rarest_ec_class_6", "n_clusters": 1},
+                      {"from_stratum": "rarest_ec_class_2", "to_stratum": "rarest_ec_class_1", "n_clusters": 1})
+    assert strata == ("rarest_ec_class_6",) * 3 + ("rarest_ec_class_1",) * 3 + (CLASS_7_ONLY_STRATUM,)
+    # Cascading: a one-cluster stratum that receives a cluster is no longer single.
+    support = support_of([{4: 1}, {5: 2}, {0: 5}, {0: 5}])
+    strata, merges = stats.merge_single_cluster_strata(assign_cluster_strata(support), support)
+    assert [item["from_stratum"] for item in merges] == ["rarest_ec_class_5"]
+    assert strata == ("rarest_ec_class_6", "rarest_ec_class_6", "rarest_ec_class_1", "rarest_ec_class_1")
+    # The most common non-empty stratum gives its single cluster to the next rarer one.
+    support = support_of([{4: 1}, {4: 1}, {0: 5}])
+    strata, merges = stats.merge_single_cluster_strata(assign_cluster_strata(support), support)
+    assert merges == ({"from_stratum": "rarest_ec_class_1", "to_stratum": "rarest_ec_class_5", "n_clusters": 1},)
+    assert set(strata) == {"rarest_ec_class_5"}
+    # A single non-empty stratum with one cluster stays (the gate asks for two clusters); class 7 is untouched.
+    support = support_of([{2: 1}, {6: 1}])
+    strata, merges = stats.merge_single_cluster_strata(assign_cluster_strata(support), support)
+    assert merges == () and strata == ("rarest_ec_class_3", CLASS_7_ONLY_STRATUM)
+    # bootstrap_strata merges only for the presence-free metric under engine v2.
+    support = support_of([{4: 1}, {5: 1}, {5: 1}, {0: 5}, {0: 5}])
+    for metric, engine, merged in ((stats.METRIC_EC_CLASSES_1_6_ACCURACY, stats.ENGINE_AMENDMENT2, True),
+                                   (stats.METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY, stats.ENGINE_AMENDMENT2, False),
+                                   (stats.METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY, stats.ENGINE_FREEZE1, False)):
+        _, merges = stats.bootstrap_strata(support, metric, engine)
+        assert bool(merges) is merged
+
+
+@pytest.mark.parametrize("resampling", [stats.RESAMPLING_K_OF_K, stats.RESAMPLING_RAO_WU])
+def test_class_absence_probability_is_exact(resampling):
+    table = _no_own_stratum_table()
+    strata = assign_cluster_strata(table.class_support)
+    probability = stats.class_absence_probability(table.class_support, strata, resampling)
+    # Class 5 (index 4) is in 2 of the 5 clusters of the class-6 stratum.
+    exponent = 4 if resampling == stats.RESAMPLING_RAO_WU else 5
+    assert probability[4] == pytest.approx((3 / 5) ** exponent)
+    assert all(probability[index] == 0.0 for index in (0, 1, 2, 3, 5))
+    members = stratum_members(strata)
+    rng = np.random.default_rng(7)
+    n = 200_000
+    multiplicity = stratified_multiplicities(rng, list(members.values()), len(strata), n, resampling)
+    holds = table.class_support[:, 4] > 0
+    empirical = float(np.mean((multiplicity[:, holds] == 0).all(axis=1)))
+    assert empirical == pytest.approx(probability[4], abs=4 * np.sqrt(probability[4] / n) + 1e-4)
+    single = stats.class_absence_probability(np.array([[1.0, 0, 0, 0, 0, 0, 0], [0, 1.0, 0, 0, 0, 0, 0]]),
+                                             ("x", "y"), resampling)
+    assert single == {0: 0.0, 1: 0.0}
+
+
+def test_inference_gate_v2():
+    ba, macro_f1, primary = (stats.METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY, stats.METRIC_EC_CLASSES_1_6_MACRO_F1,
+                             stats.METRIC_EC_CLASSES_1_6_ACCURACY)
+    v1, v2 = stats.ENGINE_FREEZE1, stats.ENGINE_AMENDMENT2
+    table = _no_own_stratum_table()
+    assert stats.inference_gate(table, ba, v1) == ()  # the Freeze-1 gate only sees single-cluster strata
+    assert stats.inference_gate(table, ba, v2) == ("ec_class_5_not_guaranteed",)
+    assert stats.inference_gate(table, macro_f1, v2) == ("ec_class_5_not_guaranteed",)
+    assert stats.inference_gate(table, primary, v2) == ()
+    absence = stats.table_absence_probabilities(table, ba, v2)
+    assert absence["all"][4] == pytest.approx((3 / 5) ** 4)
+    # A single-cluster stratum of an EC class 1-6 gates balanced accuracy (SA1) but not the primary metric.
+    ids = [f"p{i}" for i in range(12)]
+    true = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5])
+    clusters = {pid: ("family5" if true[i] == 4 else pid) for i, pid in enumerate(ids)}
+    lone = build_cluster_count_table(ids, true, {"ours": true, "other": np.where(true == 4, 0, true)}, clusters)
+    assert stats.inference_gate(lone, ba, v1) == stats.inference_gate(lone, ba, v2) == (rarest_class_stratum(4),)
+    assert stats.inference_gate(lone, primary, v2) == ()
+    # Macro-F1 follows SA1-c: a one-cluster class-7-only family predicted as an averaged class.
+    ids7 = [f"q{i}" for i in range(6)]
+    true7 = np.array([0, 0, 1, 1, 6, 6])
+    family = {pid: ("family7" if true7[i] == 6 else pid) for i, pid in enumerate(ids7)}
+    leaking = build_cluster_count_table(ids7, true7, {"a": true7, "b": np.where(true7 == 6, 1, true7)}, family)
+    plain = build_cluster_count_table(ids7, true7, {"a": true7, "b": true7}, family)
+    assert stats.inference_gate(leaking, macro_f1, v2) == (CLASS_7_ONLY_STRATUM,)
+    assert stats.inference_gate(plain, macro_f1, v2) == () and stats.inference_gate(leaking, ba, v2) == ()
+    # The primary metric is gated only below two clusters with EC class 1-6 support.
+    two = build_cluster_count_table(["x", "y"], np.array([0, 1]), {"a": np.array([0, 1])}, {"x": "g", "y": "g"})
+    assert stats.inference_gate(two, primary, v2) == (stats.GATE_TOO_FEW_CLUSTERS,)
+    # Per subset: a class present in a subset must be guaranteed within that subset.
+    subset = np.array([i % 2 == 0 for i in range(len(ids))])
+    halves = build_cluster_count_table(ids, true, {"ours": true}, {pid: pid for pid in ids},
+                                       subsets={"even": subset, "odd": ~subset})
+    reasons = stats.inference_gate(halves, ba, v2)
+    assert len(reasons) == 12 and "ec_class_1_not_guaranteed in even" in reasons
+    assert stats.table_absence_probabilities(halves, ba, v2)["odd"][5] == pytest.approx(0.5)
 
 
 def test_campaign_statistics_modules_do_not_import_torch():
@@ -580,3 +845,30 @@ def test_campaign_statistics_modules_do_not_import_torch():
     )
     output = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True).stdout
     assert output.strip() == "False"
+
+
+def test_co_primary_population_test_turns_a_gate_or_abort_into_unavailable(monkeypatch):
+    from ec_clean30 import stats
+
+    ids, true, clusters = _population(cluster_size=2)
+    table = build_cluster_count_table(ids, true, {"a": _predictions(true, 0.9, 1), "b": _predictions(true, 0.6, 2)},
+                                      clusters)
+    result, reason = stats.co_primary_population_test(table, [Contrast.difference("d", "a", "b")], n_draws=300)
+    assert reason is None and result.engine == stats.ENGINE_AMENDMENT2 and result.lower_bound("d", 0.025) > 0
+    one = build_cluster_count_table(ids[:2], true[:2], {"a": true[:2], "b": true[:2]}, {ids[0]: "g", ids[1]: "g"})
+    result, reason = stats.co_primary_population_test(one, [Contrast.difference("d", "a", "b")], n_draws=50)
+    assert result is None and reason.startswith("stratum gate")
+    original = stats.paired_cluster_bootstrap
+
+    def aborting(*args, **kwargs):
+        raise stats.BootstrapAbort("synthetic abort")
+
+    monkeypatch.setattr(stats, "paired_cluster_bootstrap", aborting)
+    result, reason = stats.co_primary_population_test(table, [Contrast.difference("d", "a", "b")], n_draws=50)
+    assert result is None and reason == "bootstrap aborted: synthetic abort"
+    monkeypatch.setattr(stats, "paired_cluster_bootstrap", original)
+    policy = stats.engine_policy_record_v2()
+    assert policy["rule_id"] == "stratified_rao_wu_v2" and policy["historical_metrics"] == list(stats.BOOTSTRAP_METRICS)
+    with pytest.raises(ValueError, match="engine 'stratified_rao_wu_v2' only"):
+        paired_cluster_bootstrap(table, [Contrast.difference("d", "a", "b")], metric=stats.METRIC_EC_CLASSES_1_6_ACCURACY,
+                                 n_draws=10)

@@ -1,0 +1,54 @@
+{
+  "answers": {
+    "C1": {
+      "accepted_default": true,
+      "choice": "k_F2(c) >= 1",
+      "topic": "harm-guard threshold"
+    },
+    "C2": {
+      "accepted_default": true,
+      "choice": "primary metric; BA-scored tau descriptive",
+      "topic": "L9 tau metric"
+    },
+    "C3": {
+      "accepted_default": true,
+      "choice": "Rao-Wu, k-1 of k",
+      "topic": "within-stratum resampling"
+    },
+    "C4": {
+      "accepted_default": true,
+      "choice": "none toward continuing; a stop takes precedence",
+      "topic": "futility override"
+    },
+    "C5": {
+      "accepted_default": true,
+      "choice": "narrowed class of A2-GOV-7",
+      "topic": "analysis completion class (a2)"
+    },
+    "C6": {
+      "accepted_default": true,
+      "choice": "every comparison it enters reads No superiority inference",
+      "topic": "CLEAN fit recorded as proceed, disclosed"
+    },
+    "C6b": {
+      "accepted_default": true,
+      "choice": "one status and disposition per held-out arm; R1-inner removes both co-primaries and the R1 secondaries and FUT stops with 0 successes; R2-inner removes only hypotheses 3 and 4",
+      "topic": "held-out CLEAN arm recorded as proceed, disclosed"
+    },
+    "C7": {
+      "accepted_default": true,
+      "choice": "S1 configuration with the S2 tau applied",
+      "topic": "futility DeepMzyme arm"
+    },
+    "C8": {
+      "accepted_default": true,
+      "choice": "one hop plus exact sequence, case alias and shared selected donor",
+      "topic": "F6 inner exclusion"
+    }
+  },
+  "campaign_id": "ec_class_vs_clean30_2026-10",
+  "decided": "2026-11-04",
+  "format": "deepmzyme_ec_clean30_amendment2_decisions_v1",
+  "maintainer": "mechti",
+  "statement": "The maintainer accepts every recommended default of amendment 2; no provisional marker remains."
+}

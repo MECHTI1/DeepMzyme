@@ -1,0 +1,838 @@
+{
+ "amendment_record": {
+  "base_amendment": {
+   "amendment_id": "s1-fixed-anchor-holm-v1",
+   "commit": "3154a7f3b0ad44e8dffbc66072990cfb7d9c9030",
+   "sequence": 1,
+   "sha256": "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea"
+  },
+  "header": {
+   "amendment_id": "amendment-2-pre-g2-v1",
+   "change_class": "pre_data",
+   "format": "deepmzyme_ec_clean30_amendment_v2",
+   "schema_version": 1,
+   "sequence": 2
+  },
+  "link_path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment<n>/amendment.json",
+  "log_line": "Amendment chain link <n>: `<sha256>`",
+  "log_rules": "The campaign log at HEAD names each link of sequence 2 to the tip in exactly one line of this form (an optional leading '- '), committed together with the link file and its rendering; no line names a link beyond the tip or another link of a sequence, and every line holding the marker 'Amendment chain link' has this form. Link 1 needs no line. On the history reachable from HEAD a link file is added once and never modified or deleted.",
+  "path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/amendment.json",
+  "record_shape": {
+   "built_keys": [
+    "confirmation_status",
+    "provisional_markers_settled",
+    "decisions_file",
+    "bound_files",
+    "rule_text",
+    "rule_policy_sha256"
+   ],
+   "description": "How a link of sequence 2 or higher holds its fields: the keys beyond required_keys that every such link carries (built_keys), the shape of each field the verifier reads (fields), the sections whose file bindings are hashed (C8), the link-2 data state (C13) and the fold-0 record list of later links. The record builder writes this shape and the verifier reads it; each side is tested against this fixture and neither copies the other's values.",
+   "fields": {
+    "amendment_id": "string",
+    "base_amendment": {
+     "keys": {
+      "amendment_id": "string",
+      "commit": "commit",
+      "path": "relative_path",
+      "sequence": "integer",
+      "sha256": "sha256"
+     }
+    },
+    "base_freeze1": {
+     "keys": {
+      "path": "relative_path",
+      "sha256": "sha256"
+     }
+    },
+    "base_freeze1b_sha256": "sha256",
+    "bound_files": {
+     "keys": {
+      "decisions": "file_binding"
+     }
+    },
+    "campaign_id": {
+     "const": "ec_class_vs_clean30_2026-10"
+    },
+    "chain_before": {
+     "list": "sha256"
+    },
+    "change_class": "string",
+    "confirmation_status": {
+     "const": "confirmed"
+    },
+    "data_state": {
+     "keys": {
+      "attestation_at_build": "file_binding",
+      "fold0_records_at_draft": {
+       "list": "sha256"
+      },
+      "g2_completed_units": "integer"
+     }
+    },
+    "decisions": "object",
+    "decisions_file": {
+     "keys": {
+      "answers": "object",
+      "maintainer": "string",
+      "sha256": "sha256"
+     }
+    },
+    "deferred_bindings": "object",
+    "deviations": "list",
+    "dry_runs": {
+     "keys": {
+      "in_view_receipts_unchanged": {
+       "key": "fold",
+       "map": "sha256"
+      },
+      "receipts": {
+       "key": "fold",
+       "map": "file_binding"
+      },
+      "rule": {
+       "const": "r_cmd_v2"
+      },
+      "source_commit": "commit",
+      "v1_resolved_config": "file_binding"
+     }
+    },
+    "evidence": {
+     "keys": {
+      "futility_oc": "file_binding",
+      "interface_contract": "file_binding",
+      "power_simulation": "file_binding",
+      "verification": "file_binding"
+     }
+    },
+    "execution_file_set": {
+     "keys": {
+      "files": {
+       "list": "relative_path"
+      },
+      "names_sha256": "sha256"
+     }
+    },
+    "fixtures": {
+     "keys": {
+      "decisions": "file_binding",
+      "refusals": "file_binding"
+     }
+    },
+    "format": {
+     "const": "deepmzyme_ec_clean30_amendment_v2"
+    },
+    "inputs": {
+     "keys": {
+      "clean_tie_exposure": "file_binding",
+      "f6_corpus": "object",
+      "f6_holdout": "object"
+     }
+    },
+    "live_constants_sha256": "sha256",
+    "pinned_analysis_functions": {
+     "key": "function",
+     "map": "sha256"
+    },
+    "pinned_execution_functions": {
+     "key": "function",
+     "map": "sha256"
+    },
+    "plans": {
+     "keys": {
+      "v1_plan_sha256": {
+       "key": "fold",
+       "map": "sha256"
+      },
+      "v2_plan_sha256": {
+       "key": "fold",
+       "map": "sha256"
+      }
+     }
+    },
+    "post_fit_analysis_files": {
+     "list": "relative_path"
+    },
+    "previous_sha256": "sha256",
+    "provisional_markers_settled": {
+     "const": true
+    },
+    "publication": {
+     "const": "required_before_execution"
+    },
+    "rule_policy_sha256": {
+     "key": "rule_id",
+     "map": "sha256"
+    },
+    "rule_text": {
+     "keys": {
+      "sha256": "sha256",
+      "source": "relative_path",
+      "text": "string"
+     }
+    },
+    "rules": {
+     "key": "rule_id",
+     "map": {
+      "keys": {
+       "analysis": "boolean",
+       "policy_function": "string"
+      }
+     }
+    },
+    "schema_version": {
+     "const": 1
+    },
+    "sequence": "integer",
+    "source_changes": {
+     "key": "relative_path",
+     "map": {
+      "keys": {
+       "after": "sha256",
+       "before": "sha256_or_null"
+      }
+     }
+    },
+    "source_parent_commit": "commit",
+    "supersedes": "list",
+    "timestamps": "object",
+    "unchanged_scientific_files": {
+     "list": "relative_path"
+    }
+   },
+   "file_binding_sections": [
+    "bound_files",
+    "fixtures",
+    "evidence",
+    "inputs",
+    "plans",
+    "dry_runs",
+    "data_state"
+   ],
+   "later_links": {
+    "analysis_completion": {
+     "checkout_extra_paths": [
+      "/tests/*.py",
+      "/tests/fixtures/ec_clean30_amendment2_*"
+     ],
+     "decision_fixture_test": "test_ec_clean30_amendment2_bound_fixtures.py::test_the_decision_fixture_is_reproduced",
+     "freeze2_path": "docs/campaigns/ec_class_vs_clean30_2026-10/freeze2.json",
+     "reruns": "Every test the bound refusal fixture names and the decision-fixture test pass at the link's commit (a fresh pytest), every test the previous link's fixture names keeps its function-closure SHA-256, and every rule policy, the analysis rule included, is recomputed in a fresh interpreter."
+    },
+    "fold0_records": {
+     "list": {
+      "keys": {
+       "kind": "string",
+       "sha256": "sha256"
+      }
+     }
+    },
+    "fut_decision_field": "decision",
+    "fut_decisions": [
+     "continue",
+     "stop_futility"
+    ],
+    "fut_entry": {
+     "keys": {
+      "decision": "string",
+      "kind": {
+       "const": "FUT"
+      },
+      "pointer": "file_binding",
+      "record": "file_binding",
+      "sha256": "sha256"
+     }
+    },
+    "fut_files": "A FUT entry binds the binding pointer file fut_seq<k>.json (format deepmzyme_ec_clean30_futility_pointer_v1, binding true, k from 2 to below the link's sequence, its fit chain a prefix of the chain before the link, the futility record's SHA-256) and the futility record it names (format deepmzyme_ec_clean30_futility_record_v1, the same decision, binding, the same fit chain) as repository files at the link's commit; a FUT record is never taken from the link's own statement.",
+    "fut_kind": "FUT",
+    "pin_keeping_classes": [
+     "execution",
+     "analysis_completion"
+    ],
+    "required_fields": [
+     "change_class",
+     "timestamps",
+     "fold0_records"
+    ]
+   },
+   "link2": {
+    "data_state": {
+     "fold0_records_at_draft": [],
+     "g2_completed_units": 0
+    },
+    "fold0_records": "absent, or an empty list"
+   },
+   "named": {
+    "file_binding": {
+     "keys": {
+      "path": "relative_path",
+      "sha256": "sha256"
+     }
+    }
+   },
+   "required_bindings": {
+    "description": "Role table (finding: bound-at-build notes become required bindings): every link of sequence 2 or higher binds each role by SHA-256 at the link's commit; the record builder refuses a record without one, and the verifier refuses the link (C8). The bound files hash also on the live tree of the tip.",
+    "roles": {
+     "data_state.attestation_at_build": "file_binding",
+     "dry_runs.v1_resolved_config": "file_binding",
+     "evidence.futility_oc": "file_binding",
+     "evidence.interface_contract": "file_binding",
+     "evidence.power_simulation": "file_binding",
+     "evidence.verification": "file_binding",
+     "inputs.clean_tie_exposure": "file_binding",
+     "inputs.f6_corpus": "corpus_bindings",
+     "inputs.f6_holdout": "fold_bindings"
+    },
+    "shapes": {
+     "corpus_bindings": "{tables, union_fasta}: tables are fold_bindings, union_fasta is a file binding",
+     "file_binding": "{path, sha256}: a repository file and its SHA-256",
+     "fold_bindings": "folds '0' to '4' exactly, each a file binding or a non-empty object of file bindings"
+    }
+   },
+   "types": {
+    "boolean": "true or false",
+    "commit": "a full commit SHA (40 lower-case hexadecimal digits)",
+    "const": "exactly this value",
+    "file_binding": "{path, sha256}: a repository file at the link's commit and its SHA-256",
+    "fold": "key kind: exactly the outer folds '0' to '4'",
+    "function": "key kind: '<relative_path>::<top-level name>'",
+    "integer": "an integer (not a boolean)",
+    "keys": "an object holding at least these keys, each of the given shape",
+    "list": "a JSON list",
+    "map": "an object whose keys are of the given key kind and whose values are of the given shape",
+    "object": "a JSON object",
+    "relative_path": "a repository-relative path without '..'; a folder ends in '/'",
+    "rule_id": "key kind: a rule identifier",
+    "sha256": "64 lower-case hexadecimal digits",
+    "sha256_or_null": "a sha256 value, or null for a file that is new in the link",
+    "string": "a non-empty string"
+   }
+  },
+  "rendering_path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment<n>/amendment.md",
+  "required_keys": [
+   "format",
+   "schema_version",
+   "amendment_id",
+   "sequence",
+   "change_class",
+   "base_freeze1",
+   "base_freeze1b_sha256",
+   "base_amendment",
+   "previous_sha256",
+   "chain_before",
+   "timestamps",
+   "data_state",
+   "decisions",
+   "rules",
+   "supersedes",
+   "plans",
+   "dry_runs",
+   "source_parent_commit",
+   "execution_file_set",
+   "pinned_execution_functions",
+   "post_fit_analysis_files",
+   "pinned_analysis_functions",
+   "live_constants_sha256",
+   "source_changes",
+   "unchanged_scientific_files",
+   "inputs",
+   "deferred_bindings",
+   "fixtures",
+   "evidence",
+   "deviations",
+   "publication"
+  ],
+  "rule_text_source": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment<n>/amendment_draft.md"
+ },
+ "attached_folder": {
+  "created_by": "the execution side at unpack, writable, before the view root becomes 0o555",
+  "filled_by": "pretrain-corpus attach",
+  "in_view_manifest": false,
+  "name": "whole_protein_pretrain",
+  "packed": false,
+  "required_check": "pretrain-corpus verify"
+ },
+ "change_class_examples": [
+  {
+   "changed_files": [
+    "src/ec_clean30/scoring.py"
+   ],
+   "expected_problems": 0,
+   "fut_record_exists": true,
+   "link": {
+    "change_class": "analysis_completion",
+    "fold0_records": [],
+    "sequence": 3,
+    "timestamps": {}
+   },
+   "name": "analysis completion after FUT",
+   "stop_futility_exists": false
+  },
+  {
+   "changed_files": [
+    "src/ec_clean30/scoring.py",
+    "src/ec_clean30/stats.py"
+   ],
+   "expected_problems": 1,
+   "fut_record_exists": true,
+   "link": {
+    "change_class": "analysis_completion",
+    "fold0_records": [],
+    "sequence": 3,
+    "timestamps": {}
+   },
+   "name": "analysis completion that edits a scientific file",
+   "stop_futility_exists": false
+  },
+  {
+   "changed_files": [
+    "src/ec_clean30/scoring.py"
+   ],
+   "expected_problems": 1,
+   "fut_record_exists": false,
+   "link": {
+    "change_class": "analysis_completion",
+    "fold0_records": [],
+    "sequence": 3,
+    "timestamps": {}
+   },
+   "name": "analysis completion before FUT",
+   "stop_futility_exists": false
+  },
+  {
+   "changed_files": [
+    "src/ec_clean30/phase4.py"
+   ],
+   "execution_files": [
+    "src/ec_clean30/phase4.py"
+   ],
+   "expected_problems": 0,
+   "fut_record_exists": true,
+   "link": {
+    "change_class": "execution",
+    "fold0_records": [],
+    "sequence": 4,
+    "timestamps": {}
+   },
+   "name": "execution change",
+   "stop_futility_exists": false
+  },
+  {
+   "changed_files": [
+    "src/ec_clean30/selection.py"
+   ],
+   "expected_problems": 1,
+   "fut_record_exists": true,
+   "link": {
+    "change_class": "defect",
+    "defect": "d",
+    "failing_test": "t",
+    "fold0_records": [],
+    "found_through_record_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "inner_score_viewed_before_identification": false,
+    "reruns": [
+     "S1"
+    ],
+    "sequence": 3,
+    "timestamps": {}
+   },
+   "name": "defect amendment after a stop",
+   "stop_futility_exists": true
+  },
+  {
+   "changed_files": [
+    "src/ec_clean30/selection.py"
+   ],
+   "expected_problems": 5,
+   "fut_record_exists": true,
+   "link": {
+    "change_class": "defect",
+    "fold0_records": [],
+    "sequence": 3,
+    "timestamps": {}
+   },
+   "name": "defect amendment without its fields",
+   "stop_futility_exists": false
+  },
+  {
+   "changed_files": [],
+   "expected_problems": 2,
+   "fut_record_exists": false,
+   "link": {
+    "change_class": "execution",
+    "sequence": 3
+   },
+   "name": "link without its required fields",
+   "stop_futility_exists": false
+  },
+  {
+   "changed_files": [],
+   "expected_problems": 1,
+   "fut_record_exists": true,
+   "link": {
+    "change_class": "retune",
+    "fold0_records": [],
+    "sequence": 3,
+    "timestamps": {}
+   },
+   "name": "other change",
+   "stop_futility_exists": false
+  },
+  {
+   "changed_files": [
+    "src/ec_clean30/phase3.py"
+   ],
+   "execution_files": [
+    "src/ec_clean30/phase3.py"
+   ],
+   "expected_problems": 1,
+   "fut_record_exists": false,
+   "link": {
+    "change_class": "execution",
+    "fold0_records": [],
+    "pinned_analysis_functions": {
+     "src/ec_clean30/scoring.py::parse_label_table": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    "pinned_execution_functions": {
+     "src/ec_clean30/phase3.py::lane_gate": "3333333333333333333333333333333333333333333333333333333333333333"
+    },
+    "sequence": 3,
+    "timestamps": {}
+   },
+   "name": "execution change that repins the frozen gate",
+   "previous": {
+    "pinned_analysis_functions": {
+     "src/ec_clean30/scoring.py::parse_label_table": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    "pinned_execution_functions": {
+     "src/ec_clean30/phase3.py::lane_gate": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+   },
+   "stop_futility_exists": false
+  },
+  {
+   "changed_files": [
+    "src/ec_clean30/scoring.py"
+   ],
+   "expected_problems": 1,
+   "fut_record_exists": true,
+   "link": {
+    "change_class": "analysis_completion",
+    "fold0_records": [],
+    "pinned_analysis_functions": {
+     "src/ec_clean30/scoring.py::parse_label_table": "4444444444444444444444444444444444444444444444444444444444444444"
+    },
+    "pinned_execution_functions": {
+     "src/ec_clean30/phase3.py::lane_gate": "2222222222222222222222222222222222222222222222222222222222222222"
+    },
+    "sequence": 3,
+    "timestamps": {}
+   },
+   "name": "analysis completion that repins an analysis channel",
+   "previous": {
+    "pinned_analysis_functions": {
+     "src/ec_clean30/scoring.py::parse_label_table": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    "pinned_execution_functions": {
+     "src/ec_clean30/phase3.py::lane_gate": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+   },
+   "stop_futility_exists": false
+  },
+  {
+   "changed_files": [
+    "src/ec_clean30/phase3.py"
+   ],
+   "execution_files": [
+    "src/ec_clean30/phase3.py"
+   ],
+   "expected_problems": 0,
+   "fut_record_exists": false,
+   "link": {
+    "change_class": "execution",
+    "fold0_records": [],
+    "pinned_analysis_functions": {
+     "src/ec_clean30/scoring.py::parse_label_table": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    "pinned_execution_functions": {
+     "src/ec_clean30/phase3.py::lane_gate": "2222222222222222222222222222222222222222222222222222222222222222"
+    },
+    "sequence": 3,
+    "timestamps": {}
+   },
+   "name": "execution change that keeps the pins",
+   "previous": {
+    "pinned_analysis_functions": {
+     "src/ec_clean30/scoring.py::parse_label_table": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    "pinned_execution_functions": {
+     "src/ec_clean30/phase3.py::lane_gate": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+   },
+   "stop_futility_exists": false
+  }
+ ],
+ "description": "Interface contract of amendment 2 between the science files and the execution files (contract X1-X15). Both sides test against these names; a change here is a change of the contract.",
+ "execution_api": {
+  "cpu_replay": {
+   "absolute_tolerance": 1e-05,
+   "argmax_agreement": true,
+   "near_tie_tolerance": 2e-05,
+   "path": "src/ec_clean30/phase4.py",
+   "qualname": "replay_cpu_logits",
+   "status": "proposed name; the execution side implements it and the science side pins its source"
+  },
+  "runtime_precision": [
+   "configure_and_record",
+   "validate_policy",
+   "read_policy_log",
+   "execution_environment",
+   "bootstrap_code"
+  ]
+ },
+ "futility": {
+  "decisions": [
+   "continue",
+   "stop_futility"
+  ],
+  "pointer_path": "<campaign root>/amendment2/futility/fut_seq<n>.json",
+  "step_chain_order_fold0": [
+   "S1",
+   "S2",
+   "FUT",
+   "S4"
+  ],
+  "step_chain_order_folds_1_4": [
+   "S1",
+   "S2",
+   "S4"
+  ]
+ },
+ "record_builder": {
+  "bind_roles": "--bind NAME=PATH with a dotted NAME (a role of required_bindings, or a key below one such as inputs.f6_holdout.0 or inputs.f6_corpus.union_fasta) places the binding at that record path",
+  "build_inputs": {
+   "dry_run_receipts": "fold -> the dry-run-v2 receipt inside the repository (a passed, real plan-v2 dry run of that fold on a clean tree); fills dry_runs.receipts, and the receipts' common HEAD, an ancestor of HEAD, fills dry_runs.source_commit",
+   "plan_v2": "fold -> the plan-v2 record written by plan-v2 (format deepmzyme_ec_clean30_fold_plan_v2); fills plans.v2_plan_sha256, and each plan_sha256 equals campaign.build_fold_plan_v2 in the live tree"
+  },
+  "computed_at_build": {
+   "bound_files": "every bound file inside the repository; bound_files.decisions is the decisions file",
+   "confirmation_status": "confirmed",
+   "decisions_file": "check_decisions_file: sha256, maintainer and answers",
+   "execution_file_set": "every tracked src/ and scripts/ file that neither the composite pins before link 2 (Freeze 1 and link 1) nor source_changes name, from the live tree; amendment_rules.partition refuses a scientific or post-fit analysis role and the set must equal the draft's execution_file_set.declared",
+   "format": "deepmzyme_ec_clean30_amendment_v2",
+   "live_constants_sha256": "amendment_rules.live_constants_sha256()",
+   "pinned_analysis_functions": "amendment_rules.function_closure_sha256 of each draft name in the live tree; the draft names equal amendment_rules.PINNED_ANALYSIS_FUNCTIONS and lie in post-fit analysis files",
+   "pinned_execution_functions": "amendment_rules.function_closure_sha256 of each draft name in the live tree; the draft names equal amendment_rules.PINNED_EXECUTION_FUNCTIONS and lie in execution files",
+   "provisional_markers_settled": true,
+   "rule_policy_sha256": "amendment_rules.rule_policy_sha256() (every registered rule, the analysis rule included)",
+   "rule_text": "the rule text of the reviewed document amendment_draft.md, its repository path and its SHA-256",
+   "selection_policy_sha256_v2": "selection.selection_policy_sha256_v2() (no verifier check reads it)"
+  },
+  "declared_execution_files": "execution_file_set.declared of the draft is the closed list of execution files; the execution file set derived from the live tree must equal it, and execution_file_set.pending must be empty at build (a file outside the declared list is never an execution file)",
+  "description": "How ec_clean30.amendment2.build_amendment2 writes link 2 (amendment.json) once from the reviewed draft, the decisions file, the rule text and the build inputs (contract section Record builder).",
+  "draft_format": "deepmzyme_ec_clean30_amendment_v2_draft",
+  "draft_function_names": {
+   "pinned_analysis_functions": "ec_clean30.amendment_rules:PINNED_ANALYSIS_FUNCTIONS",
+   "pinned_execution_functions": "ec_clean30.amendment_rules:PINNED_EXECUTION_FUNCTIONS"
+  },
+  "draft_keys": [
+   "schema_version",
+   "campaign_id",
+   "amendment_id",
+   "sequence",
+   "change_class",
+   "base_freeze1",
+   "base_freeze1b_sha256",
+   "base_amendment",
+   "previous_sha256",
+   "chain_before",
+   "timestamps",
+   "data_state",
+   "decisions",
+   "rules",
+   "supersedes",
+   "plans",
+   "dry_runs",
+   "source_parent_commit",
+   "pinned_execution_functions",
+   "post_fit_analysis_files",
+   "pinned_analysis_functions",
+   "source_changes",
+   "unchanged_scientific_files",
+   "inputs",
+   "deferred_bindings",
+   "fixtures",
+   "evidence",
+   "deviations",
+   "publication",
+   "execution_file_set"
+  ],
+  "draft_subkeys": {
+   "base_amendment": [
+    "sequence",
+    "amendment_id",
+    "path",
+    "sha256",
+    "commit"
+   ],
+   "base_freeze1": [
+    "path",
+    "sha256"
+   ],
+   "data_state": [
+    "fold0_records_at_draft",
+    "g2_completed_units"
+   ],
+   "dry_runs": [
+    "rule",
+    "in_view_receipts_unchanged"
+   ],
+   "execution_file_set": [
+    "declared",
+    "pending"
+   ],
+   "fixtures": [
+    "refusals",
+    "decisions"
+   ],
+   "plans": [
+    "v1_plan_sha256"
+   ]
+  },
+  "function": "ec_clean30.amendment2:build_amendment2",
+  "keyword_arguments": [
+   "draft_path",
+   "decisions_path",
+   "amendment_draft_md",
+   "repo",
+   "bound_files",
+   "out",
+   "plan_v2",
+   "dry_run_receipts"
+  ],
+  "removed_draft_keys": [
+   "status_note",
+   "source_changes_pending"
+  ],
+  "rendering": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/amendment.md",
+  "rule_text_source": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/amendment_draft.md"
+ },
+ "science_api": {
+  "clean_sanity": [
+   "ec_clean30.clean_sanity:held_out_binding",
+   "ec_clean30.clean_sanity:require_passed_or_disposed",
+   "ec_clean30.clean_sanity:verify_record",
+   "ec_clean30.clean_sanity:load_comparator"
+  ],
+  "futility": [
+   "ec_clean30.futility:verify_futility_decision",
+   "ec_clean30.futility:pointer_path",
+   "ec_clean30.futility:run_futility",
+   "ec_clean30.futility:futility_allows_continuation"
+  ],
+  "plan": [
+   "ec_clean30.campaign:build_fold_plan_v2",
+   "ec_clean30.campaign:plan_units",
+   "ec_clean30.campaign:s1_units_for_plan",
+   "ec_clean30.campaign:plan_version_for_chain",
+   "ec_clean30.campaign:fold_units_v2",
+   "ec_clean30.campaign:timing_recipes_v2",
+   "ec_clean30.campaign:STEP_FIT_CAPS_V2",
+   "ec_clean30.campaign:MAX_FITS_PER_FOLD_V2",
+   "ec_clean30.campaign:FAMILIES_BY_FOLD_V2"
+  ],
+  "pretrain_corpus": [
+   "ec_clean30.pretrain_corpus:build_holdout_lists",
+   "ec_clean30.pretrain_corpus:verify_whole_protein_pretrain",
+   "ec_clean30.pretrain_corpus:parity_sample_keys",
+   "ec_clean30.pretrain_corpus:compare_sequence_mean_samples"
+  ],
+  "rules": [
+   "ec_clean30.amendment_rules:partition",
+   "ec_clean30.amendment_rules:r_cmd_v2_check",
+   "ec_clean30.amendment_rules:check_change_class",
+   "ec_clean30.amendment_rules:check_analysis_completion",
+   "ec_clean30.amendment_rules:scientific_identity",
+   "ec_clean30.amendment_rules:function_closure_sha256",
+   "ec_clean30.amendment_rules:policy_records"
+  ],
+  "selector": [
+   "ec_clean30.selector:verified_refit_recipe",
+   "ec_clean30.selector:run_select"
+  ],
+  "views": [
+   "ec_clean30.views:ATTACHED_DIRS",
+   "ec_clean30.views:verify_view"
+  ]
+ },
+ "verifier": {
+  "full_clone_only": "verify_chain refuses a partial clone (promisor remote, partial-clone filter or promisor packs) and names check_chain_receipt",
+  "function": "ec_clean30.amendment_chain:verify_chain",
+  "keyword_arguments": [
+   "expected_freeze1_sha256",
+   "expected_freeze1b_sha256",
+   "repo",
+   "require_published",
+   "expected_chain"
+  ],
+  "live_tree": "only the tip is compared with the live tree",
+  "per_link_authentication": "a detached checkout of the link's published source commit (phase3._baseline_authentication pattern); link 1 by the unchanged freeze.verify_s1_amendment there",
+  "precedence_helpers": "ec_clean30.amendment_chain:record_precedence_problems and require_record_precedence (keyword repo): a record under a chain is made at the commit that published the chain's last scientific link or a descendant (git_head or provenance.git.head) that is published on origin/main; its created_utc is a secondary check",
+  "receipt_check": {
+   "code_files": [
+    "src/ec_clean30/amendment_chain.py",
+    "src/ec_clean30/amendment_rules.py",
+    "src/ec_clean30/freeze.py",
+    "src/ec_clean30/provenance.py"
+   ],
+   "format": "deepmzyme_ec_clean30_amendment_chain_receipt_v1",
+   "function": "ec_clean30.amendment_chain:check_chain_receipt",
+   "key": [
+    "tip_sha256",
+    "head",
+    "status_sha256",
+    "origin_main",
+    "code_sha256",
+    "require_published",
+    "expected_chain"
+   ],
+   "keyword_arguments": [
+    "repo",
+    "expected_chain"
+   ],
+   "partial_clone": "works in a git clone --filter=blob:none (checked-out files, commits and trees only)",
+   "rechecks": [
+    "HEAD is the receipt's HEAD, or a published descendant that changes only execution files",
+    "the tree is clean",
+    "every link file and rendering has its receipt bytes",
+    "the live scientific and post-fit analysis pins and the pinned execution functions hold",
+    "every file the tip binds hashes on the live tree",
+    "the verifier files equal the receipt's",
+    "receipt_sha256 over the canonical rest",
+    "expected_chain, when given"
+   ],
+   "refuses": "a receipt made with require_published=False (draft) and any receipt of an unpublished chain",
+   "returns": "the same keys as verify_chain, read from the receipt",
+   "schema_version": 2,
+   "written_by": "ec_clean30.amendment2:write_chain_receipt (runner action verify-amendment-chain) through ec_clean30.amendment_chain:chain_receipt_record"
+  },
+  "returns": [
+   "links",
+   "chain",
+   "fit_chain",
+   "tip_sequence",
+   "composite_scientific_pins",
+   "analysis_pins",
+   "execution_file_set",
+   "post_fit_analysis_files",
+   "pinned_execution_functions",
+   "pinned_analysis_functions",
+   "policies",
+   "plan_records",
+   "dry_run_evidence",
+   "scientific_identity_sha256",
+   "published"
+  ],
+  "shared_rules": "ec_clean30.amendment_rules (r_cmd_v2_check, partition, function_closure_sha256, check_change_class, check_analysis_completion, scientific_identity)",
+  "torch_free": true
+ }
+}

@@ -39,10 +39,36 @@ Conventions:
   matrix-product sums are exact; with other weights (for example 1/3 for an accession listed
   three times) the summation order of the linear-algebra library can change the last bits, and
   with them ``contrast_draws_sha256``. The record says which case applies.
+
+Engine v2 (amendment 2 of 2026-11-04, ``stratified_rao_wu_v2``; engine v1, ``stratified_k_of_k_v1``,
+is the default and the historical rule, kept unchanged for replay):
+- Within-stratum resampling (small-stratum rule): a stratum of k >= 2 clusters draws k - 1
+  clusters uniformly with replacement and multiplies each pick's count by k / (k - 1), so its
+  total multiplicity stays k (the Rao-Wu rescaled bootstrap). For a linear statistic its
+  variance equals the unbiased stratified estimate; drawing k of k understates it by the factor
+  (k - 1) / k. A one-cluster stratum keeps multiplicity 1 and consumes no random numbers.
+- Accuracy over the proteins of EC classes 1-6 (``ec_classes_1_6_accuracy``) is presence-free: it
+  is defined whenever the draw's rows of EC classes 1-6 have positive weight, so the skip rule
+  above (a draw lacking a present EC class) does not apply to it; a draw is valid when every
+  subset keeps positive weight on EC classes 1-6. For it, a stratum of an EC class 1-6 holding a
+  single cluster gives that cluster to the next more common non-empty stratum (the next rarer
+  one when it is the most common), visiting strata from the rarest class; the receiving stratum
+  keeps its name and every merge is recorded. The class-7-only stratum is never merged. Its
+  inference gate asks only for two clusters with EC class 1-6 support. Engine v1 refuses it.
+- Balanced accuracy and macro-F1 over EC classes 1-6 keep the skip rule and the single-cluster
+  gate, and are also gated when a class present in a (sub)population is not guaranteed in every
+  draw, i.e. no stratum consists only of clusters containing it. The exact absence probability
+  is the product over strata of ((k - m) / k) ** d, with m the clusters containing the class,
+  d = k - 1 (Rao-Wu) or k (k of k), and a factor of 1 or 0 for a one-cluster stratum without
+  or with the class. No class or cluster is removed to restore eligibility.
+- k / (k - 1) is a dyadic number only when k - 1 is a power of two, so with other stratum sizes
+  the multiplicities are not dyadic and the summation order can change the last bits of the
+  draws; the record carries ``multiplicities_dyadic``. Records of engine v1 keep their format.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
+from fractions import Fraction
 import hashlib
 import math
 from typing import Any, Mapping, Optional, Sequence
@@ -55,11 +81,27 @@ from training.ec_class_metrics import N_EC_CLASSES, PRIMARY_CLASS_INDICES
 METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY = "ec_classes_1_6_balanced_accuracy"
 METRIC_EC_CLASSES_1_6_MACRO_F1 = "ec_classes_1_6_macro_f1"
 METRIC_ACCURACY = "accuracy"
+# Accuracy over the proteins of EC classes 1-6 (amendment 2 primary metric; engine v2 only).
+METRIC_EC_CLASSES_1_6_ACCURACY = "ec_classes_1_6_accuracy"
+# The Freeze-1 metric list (``freeze.live_constants`` reads it; never edited). Engine v2 adds the primary metric.
 BOOTSTRAP_METRICS = (
     METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY,
     METRIC_EC_CLASSES_1_6_MACRO_F1,
     METRIC_ACCURACY,
 )
+BOOTSTRAP_METRICS_V2 = (*BOOTSTRAP_METRICS, METRIC_EC_CLASSES_1_6_ACCURACY)
+# Metrics defined in every draw with positive EC class 1-6 weight (no class-presence skip rule).
+PRESENCE_FREE_METRICS = (METRIC_EC_CLASSES_1_6_ACCURACY,)
+
+ENGINE_FREEZE1 = "stratified_k_of_k_v1"
+ENGINE_AMENDMENT2 = "stratified_rao_wu_v2"
+BOOTSTRAP_ENGINES = (ENGINE_FREEZE1, ENGINE_AMENDMENT2)
+RESAMPLING_K_OF_K = "k_of_k"
+RESAMPLING_RAO_WU = "rao_wu_k_minus_1_of_k"
+ENGINE_RESAMPLING = {ENGINE_FREEZE1: RESAMPLING_K_OF_K, ENGINE_AMENDMENT2: RESAMPLING_RAO_WU}
+ENGINE_METRICS = {ENGINE_FREEZE1: BOOTSTRAP_METRICS, ENGINE_AMENDMENT2: BOOTSTRAP_METRICS_V2}
+# Inference-gate reason name of engine v2 for a presence-free metric.
+GATE_TOO_FEW_CLUSTERS = "fewer_than_two_clusters_with_ec_classes_1_6"
 
 DEFAULT_N_DRAWS = 10_000
 DEFAULT_BOOTSTRAP_SEED = 20261023
@@ -243,6 +285,103 @@ def stratum_sizes(class_support: np.ndarray) -> dict[str, int]:
     return {name: int(indices.size) for name, indices in stratum_members(assign_cluster_strata(class_support)).items()}
 
 
+def rarity_order(class_support: np.ndarray) -> tuple[int, ...]:
+    """Present EC classes 1-6 (indices) from the rarest to the most common, as ``assign_cluster_strata``
+    ranks them: by total protein weight in the population, equal weights to the lower class number."""
+    support = np.asarray(class_support, dtype=np.float64)
+    if support.ndim != 2 or support.shape[1] != N_EC_CLASSES:
+        raise ValueError(f"class_support must have shape (n_clusters, {N_EC_CLASSES}), got {support.shape}.")
+    population = support.sum(axis=0)
+    present = [index for index in PRIMARY_CLASS_INDICES if population[index] > 0]
+    return tuple(sorted(present, key=lambda c: (population[c], c)))
+
+
+def merge_single_cluster_strata(strata: Sequence[str], class_support: np.ndarray
+                                ) -> tuple[tuple[str, ...], tuple[dict[str, Any], ...]]:
+    """Engine v2, presence-free metrics: give each one-cluster stratum of an EC class 1-6 away.
+
+    Strata are visited from the rarest class to the most common. A stratum holding exactly one
+    cluster gives it to the next more common non-empty stratum; the most common non-empty one
+    gives it to the next rarer non-empty stratum instead. The receiver keeps its name. The
+    class-7-only stratum is never touched. Returns the new strata and the merges in order.
+    """
+    labels = list(strata)
+    if len(labels) != np.asarray(class_support).shape[0]:
+        raise ValueError("strata and class_support disagree in the number of clusters.")
+    order = [rarest_class_stratum(index) for index in rarity_order(class_support)]
+    merges: list[dict[str, Any]] = []
+
+    def size(name: str) -> int:
+        return sum(label == name for label in labels)
+
+    for position, name in enumerate(order):
+        if size(name) != 1:
+            continue
+        receiver = next((other for other in order[position + 1:] if size(other) > 0), None)
+        if receiver is None:
+            receiver = next((other for other in reversed(order[:position]) if size(other) > 0), None)
+        if receiver is None:
+            continue  # the only non-empty stratum: the inference gate asks for two clusters
+        labels[labels.index(name)] = receiver
+        merges.append({"from_stratum": name, "to_stratum": receiver, "n_clusters": 1})
+    return tuple(labels), tuple(merges)
+
+
+def _check_engine(engine: str, metric: Optional[str] = None) -> None:
+    if engine not in BOOTSTRAP_ENGINES:
+        raise ValueError(f"Unknown bootstrap engine {engine!r}; expected one of {BOOTSTRAP_ENGINES}.")
+    if metric is not None and metric not in BOOTSTRAP_METRICS_V2:
+        raise ValueError(f"Unknown bootstrap metric {metric!r}; expected one of {BOOTSTRAP_METRICS_V2}.")
+    if metric in PRESENCE_FREE_METRICS and engine != ENGINE_AMENDMENT2:
+        raise ValueError(f"Metric {metric!r} is defined for bootstrap engine {ENGINE_AMENDMENT2!r} only.")
+
+
+def bootstrap_strata(class_support: np.ndarray, metric: str, engine: str = ENGINE_FREEZE1
+                     ) -> tuple[tuple[str, ...], tuple[dict[str, Any], ...]]:
+    """Strata that a stratified bootstrap of ``metric`` uses under ``engine``, and the merges made."""
+    _check_engine(engine, metric)
+    strata = assign_cluster_strata(class_support)
+    if engine == ENGINE_AMENDMENT2 and metric in PRESENCE_FREE_METRICS:
+        return merge_single_cluster_strata(strata, class_support)
+    return strata, ()
+
+
+def _absence_fractions(support_by_cluster: np.ndarray, strata: Sequence[str], resampling: str) -> dict[int, Fraction]:
+    if resampling not in (RESAMPLING_K_OF_K, RESAMPLING_RAO_WU):
+        raise ValueError(f"Unknown resampling {resampling!r}.")
+    support = np.asarray(support_by_cluster, dtype=np.float64)
+    if support.ndim != 2 or support.shape[1] != N_EC_CLASSES or support.shape[0] != len(strata):
+        raise ValueError(f"support_by_cluster must have shape (n_clusters, {N_EC_CLASSES}), one row per stratum label.")
+    members = stratum_members(strata)
+    result: dict[int, Fraction] = {}
+    for index in range(N_EC_CLASSES):
+        holds = support[:, index] > 0
+        if not holds.any():
+            continue
+        probability = Fraction(1)
+        for indices in members.values():
+            k, m = int(indices.size), int(holds[indices].sum())
+            if k == 1:
+                factor = Fraction(0) if m else Fraction(1)
+            else:
+                factor = Fraction(k - m, k) ** (k - 1 if resampling == RESAMPLING_RAO_WU else k)
+            probability *= factor
+        result[index] = probability
+    return result
+
+
+def class_absence_probability(support_by_cluster: np.ndarray, strata: Sequence[str],
+                              resampling: str = RESAMPLING_K_OF_K) -> dict[int, float]:
+    """Exact probability that a draw holds no cluster with a class, per class present in the support.
+
+    ``support_by_cluster`` holds the class weights per cluster (for a subset: that subset's rows)
+    and ``strata`` the stratum of each cluster. The value is the product over strata of
+    ((k - m) / k) ** d, with d = k - 1 for Rao-Wu and d = k for k of k; a one-cluster stratum gives
+    1 without the class and 0 with it. Computed in exact fractions, then converted.
+    """
+    return {index: float(value) for index, value in _absence_fractions(support_by_cluster, strata, resampling).items()}
+
+
 def single_cluster_primary_strata(class_support: np.ndarray) -> tuple[str, ...]:
     """Strata of EC classes 1-6 holding exactly one cluster (the class-7-only stratum is exempt)."""
     return tuple(name for name, size in stratum_sizes(class_support).items()
@@ -259,8 +398,8 @@ def single_cluster_strata(table: ClusterCountTable, metric: str) -> tuple[str, .
     EC classes 1-6 when an arm predicts one of its proteins as an averaged class (an EC class
     1-6 present in a subset), which is a false positive of that class.
     """
-    if metric not in BOOTSTRAP_METRICS:
-        raise ValueError(f"Unknown bootstrap metric {metric!r}; expected one of {BOOTSTRAP_METRICS}.")
+    if metric not in BOOTSTRAP_METRICS_V2:
+        raise ValueError(f"Unknown bootstrap metric {metric!r}; expected one of {BOOTSTRAP_METRICS_V2}.")
     strata = assign_cluster_strata(table.class_support)
     class_7_counts = False
     if metric == METRIC_ACCURACY:
@@ -274,21 +413,87 @@ def single_cluster_strata(table: ClusterCountTable, metric: str) -> tuple[str, .
                  if indices.size == 1 and (name != CLASS_7_ONLY_STRATUM or class_7_counts))
 
 
+def _subset_supports(table: ClusterCountTable) -> dict[str, np.ndarray]:
+    """Per subset, the class weights per cluster of that subset's rows."""
+    return {subset: table.counts[:, s, 0].sum(axis=-1) for s, subset in enumerate(table.subset_names)}
+
+
+def table_absence_probabilities(table: ClusterCountTable, metric: str, engine: str = ENGINE_FREEZE1
+                                ) -> dict[str, dict[int, float]]:
+    """Per subset and present EC class 1-6, the exact probability that a draw of ``engine`` lacks it."""
+    strata, _ = bootstrap_strata(table.class_support, metric, engine)
+    resampling = ENGINE_RESAMPLING[engine]
+    return {subset: {index: value for index, value in class_absence_probability(support, strata, resampling).items()
+                     if index in PRIMARY_CLASS_INDICES}
+            for subset, support in _subset_supports(table).items()}
+
+
+def inference_gate(table: ClusterCountTable, metric: str, engine: str = ENGINE_FREEZE1) -> tuple[str, ...]:
+    """Reasons that superiority inference on ``metric`` is unavailable for ``table`` (empty: available).
+
+    ``table`` holds the counts a bootstrap of ``metric`` would use, with the arms being compared.
+    Engine v1: the names of ``single_cluster_strata`` (unchanged). Engine v2 with a presence-free
+    metric: ``GATE_TOO_FEW_CLUSTERS`` when fewer than two clusters hold a protein of EC classes 1-6.
+    Engine v2 for balanced accuracy and macro-F1: the single-cluster names (SA1, and SA1-c for
+    macro-F1), then ``ec_class_<k>_not_guaranteed`` (`` in <subset>`` for a named subset) for each
+    EC class 1-6 present in a subset whose exact Rao-Wu absence probability is above zero.
+    """
+    _check_engine(engine, metric)
+    if engine == ENGINE_FREEZE1:
+        return single_cluster_strata(table, metric)
+    if metric in PRESENCE_FREE_METRICS:
+        n_clusters = int(np.count_nonzero(table.class_support[:, list(PRIMARY_CLASS_INDICES)].sum(axis=1) > 0))
+        return (GATE_TOO_FEW_CLUSTERS,) if n_clusters < 2 else ()
+    reasons = list(single_cluster_strata(table, metric))
+    strata = assign_cluster_strata(table.class_support)
+    for subset, support in _subset_supports(table).items():
+        exact = _absence_fractions(support, strata, RESAMPLING_RAO_WU)
+        for index in PRIMARY_CLASS_INDICES:
+            if exact.get(index, Fraction(0)) > 0:
+                reason = f"ec_class_{index + 1}_not_guaranteed" + ("" if subset == DEFAULT_SUBSET else f" in {subset}")
+                if reason not in reasons:
+                    reasons.append(reason)
+    return tuple(reasons)
+
+
 def stratified_multiplicities(
     rng: np.random.Generator,
     members: Sequence[np.ndarray],
     n_clusters: int,
     n_draws: int,
+    resampling: str = RESAMPLING_K_OF_K,
 ) -> np.ndarray:
-    """Cluster multiplicities ``[n_draws, n_clusters]``; each stratum keeps its cluster count."""
+    """Cluster multiplicities ``[n_draws, n_clusters]``; each stratum keeps its cluster count.
+
+    ``RESAMPLING_K_OF_K`` (engine v1, historical) draws k of k clusters. ``RESAMPLING_RAO_WU``
+    (engine v2) draws k - 1 of k and scales each pick by k / (k - 1); a one-cluster stratum is
+    fixed at 1 and uses no random numbers.
+    """
+    if resampling not in (RESAMPLING_K_OF_K, RESAMPLING_RAO_WU):
+        raise ValueError(f"Unknown resampling {resampling!r}.")
     multiplicity = np.zeros((n_draws, n_clusters), dtype=np.float64)
     offsets = np.arange(n_draws, dtype=np.int64)[:, None]
     for indices in members:
         size = int(indices.size)
-        picks = rng.integers(0, size, size=(n_draws, size))
+        if resampling == RESAMPLING_K_OF_K:
+            picks = rng.integers(0, size, size=(n_draws, size))
+            counts = np.bincount((picks + offsets * size).ravel(), minlength=n_draws * size)
+            multiplicity[:, indices] = counts.reshape(n_draws, size)
+            continue
+        if size == 1:
+            multiplicity[:, indices] = 1.0
+            continue
+        picks = rng.integers(0, size, size=(n_draws, size - 1))
         counts = np.bincount((picks + offsets * size).ravel(), minlength=n_draws * size)
-        multiplicity[:, indices] = counts.reshape(n_draws, size)
+        multiplicity[:, indices] = counts.reshape(n_draws, size) * (size / (size - 1))
     return multiplicity
+
+
+def multiplicities_are_dyadic(members: Sequence[np.ndarray], resampling: str) -> bool:
+    """Always for k of k; for Rao-Wu when every k - 1 (k >= 2) is a power of two, so k / (k - 1) is dyadic."""
+    if resampling == RESAMPLING_K_OF_K:
+        return True
+    return all(((size - 1) & (size - 2)) == 0 for size in (int(indices.size) for indices in members) if size >= 2)
 
 
 def confusion_metric(confusion: np.ndarray, metric: str, classes: Sequence[int]) -> np.ndarray:
@@ -303,6 +508,12 @@ def confusion_metric(confusion: np.ndarray, metric: str, classes: Sequence[int])
     diagonal = np.diagonal(matrix, axis1=-2, axis2=-1)
     if metric == METRIC_ACCURACY:
         return diagonal.sum(axis=-1) / matrix.sum(axis=(-2, -1))
+    if metric == METRIC_EC_CLASSES_1_6_ACCURACY:
+        # Rows of EC classes 1-6 only (a class-7 prediction there is wrong); ``classes`` is ignored.
+        rows = list(PRIMARY_CLASS_INDICES)
+        weight = np.asarray(matrix[..., rows, :].sum(axis=(-2, -1)), dtype=np.float64)
+        correct = np.asarray(diagonal[..., rows].sum(axis=-1), dtype=np.float64)
+        return np.divide(correct, weight, out=np.full_like(correct, np.nan), where=weight > 0)
     selected = np.asarray(classes, dtype=np.int64)
     if selected.size == 0:
         raise ValueError("At least one class must be averaged.")
@@ -317,7 +528,7 @@ def confusion_metric(confusion: np.ndarray, metric: str, classes: Sequence[int])
         denominator = precision + recall
         f1 = np.divide(2.0 * precision * recall, denominator, out=np.zeros_like(diagonal), where=denominator > 0)
         return f1[..., selected].mean(axis=-1)
-    raise ValueError(f"Unknown bootstrap metric {metric!r}; expected one of {BOOTSTRAP_METRICS}.")
+    raise ValueError(f"Unknown bootstrap metric {metric!r}; expected one of {BOOTSTRAP_METRICS_V2}.")
 
 
 @dataclass(frozen=True)
@@ -408,6 +619,11 @@ class BootstrapResult:
     dyadic_counts: bool
     numpy_version: str
     bit_generator: str
+    # Engine v2 fields (amendment 2); an engine v1 record does not emit them, so its format is unchanged.
+    engine: str = ENGINE_FREEZE1
+    strata_merges: tuple[dict[str, Any], ...] = ()
+    class_absence_probability: dict[str, dict[int, float]] = field(default_factory=dict)
+    multiplicities_dyadic: bool = True
 
     @property
     def n_valid(self) -> int:
@@ -457,12 +673,42 @@ class BootstrapResult:
             "dyadic_counts": self.dyadic_counts,
             "numpy_version": self.numpy_version,
             "bit_generator": self.bit_generator,
+            **({} if self.engine == ENGINE_FREEZE1 else {
+                "engine": self.engine,
+                "resampling": ENGINE_RESAMPLING[self.engine],
+                "strata_merges": [dict(item) for item in self.strata_merges],
+                "class_absence_probability": {
+                    subset: {str(index + 1): value for index, value in sorted(values.items())}
+                    for subset, values in self.class_absence_probability.items()},
+                "multiplicities_dyadic": self.multiplicities_dyadic,
+            }),
         }
 
 
 def _finite_or_none(value: float) -> Optional[float]:
     value = float(value)
     return value if math.isfinite(value) else None
+
+
+# A seed-mean system averages its arms in floating point, so identical predictions can differ from a single arm by a
+# few units in the last place. Contrast values this close to zero are set to exactly zero, which keeps identical
+# systems at p = 1 and a lower bound of 0 (conservative: a genuine difference of a metric fraction is many orders of
+# magnitude larger). The scoring pass (``scoring.CONTRAST_ZERO_TOLERANCE``, ``scoring.snap_contrasts``) and the
+# fold-0 futility projection share this one scientific definition, so the futility rule loads no post-fit analysis
+# file (rule A2-GOV-2).
+CONTRAST_ZERO_TOLERANCE = 1e-12
+
+
+def snap_to_zero(values: Sequence[float] | np.ndarray) -> np.ndarray:
+    """``values`` as float64 with entries within ``CONTRAST_ZERO_TOLERANCE`` of zero set to exactly zero."""
+    values = np.asarray(values, dtype=np.float64)
+    return np.where(np.abs(values) < CONTRAST_ZERO_TOLERANCE, 0.0, values)
+
+
+def snap_contrasts(result: "BootstrapResult") -> "BootstrapResult":
+    """The result with contrast points and draws within ``CONTRAST_ZERO_TOLERANCE`` of zero set to zero."""
+    return replace(result, contrast_point=snap_to_zero(result.contrast_point),
+                   contrast_draws=snap_to_zero(result.contrast_draws))
 
 
 def _resolve_systems(table: ClusterCountTable, systems: Optional[Mapping[str, Sequence[str]]]) -> dict[str, np.ndarray]:
@@ -527,8 +773,8 @@ def point_contrasts(
     metric: str = METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY,
 ) -> dict[str, float]:
     """Contrast point estimates on the full table, with no draws (descriptive use)."""
-    if metric not in BOOTSTRAP_METRICS:
-        raise ValueError(f"Unknown bootstrap metric {metric!r}; expected one of {BOOTSTRAP_METRICS}.")
+    if metric not in BOOTSTRAP_METRICS_V2:
+        raise ValueError(f"Unknown bootstrap metric {metric!r}; expected one of {BOOTSTRAP_METRICS_V2}.")
     resolved = _resolve_systems(table, systems)
     weights = _contrast_matrix(contrasts, table.subset_names, tuple(resolved))
     system_point = _system_values(table.counts.sum(axis=0), metric, _averaged_classes(table), resolved)
@@ -546,14 +792,17 @@ def paired_cluster_bootstrap(
     seed: int = DEFAULT_BOOTSTRAP_SEED,
     stratified: bool = True,
     max_skip_fraction: float = DEFAULT_MAX_SKIP_FRACTION,
+    engine: str = ENGINE_FREEZE1,
 ) -> BootstrapResult:
     """Paired (stratified) cluster bootstrap of system metrics and their contrasts.
 
     A system's value is the mean of its arms' metrics (a seed mean); an ensemble is its own arm.
-    All systems and contrasts share the same draws and the same skipped draws.
+    All systems and contrasts share the same draws and the same skipped draws. ``engine`` sets the
+    resampling and validity rules (module conventions); engine v1 is the historical default.
     """
-    if metric not in BOOTSTRAP_METRICS:
-        raise ValueError(f"Unknown bootstrap metric {metric!r}; expected one of {BOOTSTRAP_METRICS}.")
+    if metric not in BOOTSTRAP_METRICS_V2:
+        raise ValueError(f"Unknown bootstrap metric {metric!r}; expected one of {BOOTSTRAP_METRICS_V2}.")
+    _check_engine(engine, metric)
     if int(n_draws) < 1:
         raise ValueError("n_draws must be positive.")
     if not 0.0 <= float(max_skip_fraction) <= 1.0:
@@ -564,8 +813,13 @@ def paired_cluster_bootstrap(
     weights = _contrast_matrix(contrasts, table.subset_names, system_names)
     averaged = _averaged_classes(table)
 
-    strata = assign_cluster_strata(table.class_support) if stratified else (UNSTRATIFIED_STRATUM,) * len(table.cluster_ids)
+    if stratified:
+        strata, merges = bootstrap_strata(table.class_support, metric, engine)
+    else:
+        strata, merges = (UNSTRATIFIED_STRATUM,) * len(table.cluster_ids), ()
     members = stratum_members(strata)
+    resampling = ENGINE_RESAMPLING[engine]
+    presence_free = metric in PRESENCE_FREE_METRICS
     n_clusters = len(table.cluster_ids)
     flat_counts = table.counts.reshape(n_clusters, -1)
     tail_shape = table.counts.shape[1:]
@@ -577,19 +831,29 @@ def paired_cluster_bootstrap(
     system_chunks, skipped = [], 0
     for start in range(0, n_draws, DRAW_BATCH_SIZE):
         batch = min(DRAW_BATCH_SIZE, n_draws - start)
-        multiplicity = stratified_multiplicities(rng, list(members.values()), n_clusters, batch)
+        if engine == ENGINE_FREEZE1:
+            multiplicity = stratified_multiplicities(rng, list(members.values()), n_clusters, batch)
+        else:
+            multiplicity = stratified_multiplicities(rng, list(members.values()), n_clusters, batch, resampling)
         confusion = (multiplicity @ flat_counts).reshape((batch, *tail_shape))
         support = confusion[:, :, 0].sum(axis=-1)
         valid = np.ones(batch, dtype=bool)
-        for s, classes in enumerate(averaged):
-            valid &= (support[:, s, list(classes)] > 0).all(axis=1)
+        if presence_free:
+            # Presence-free validity: every subset keeps positive weight on EC classes 1-6.
+            valid &= (support[:, :, list(PRIMARY_CLASS_INDICES)].sum(axis=-1) > 0).all(axis=1)
+        else:
+            for s, classes in enumerate(averaged):
+                valid &= (support[:, s, list(classes)] > 0).all(axis=1)
         skipped += int(batch - valid.sum())
         if valid.any():
             system_chunks.append(_system_values(confusion[valid], metric, averaged, resolved))
 
     if skipped > max_skip_fraction * n_draws + _ORDER_TOLERANCE or not system_chunks:
+        # Defensive for a presence-free metric: only a subset can lose all its EC class 1-6 weight.
+        lacked = ("left a subset without EC class 1-6 weight" if presence_free
+                  else "lacked an EC class 1-6 present in the population")
         raise BootstrapAbort(
-            f"{skipped} of {n_draws} bootstrap draws lacked an EC class 1-6 present in the population "
+            f"{skipped} of {n_draws} bootstrap draws {lacked} "
             f"(limit {max_skip_fraction:.2%}); strata {({name: len(v) for name, v in members.items()})}."
         )
     system_draws = np.concatenate(system_chunks, axis=0)
@@ -615,6 +879,13 @@ def paired_cluster_bootstrap(
         dyadic_counts=table.dyadic_counts,
         numpy_version=np.__version__,
         bit_generator=type(rng.bit_generator).__name__,
+        engine=engine,
+        strata_merges=tuple(merges),
+        class_absence_probability=({} if engine == ENGINE_FREEZE1 else {
+            subset: {index: value for index, value in class_absence_probability(support, strata, resampling).items()
+                     if index in PRIMARY_CLASS_INDICES}
+            for subset, support in _subset_supports(table).items()}),
+        multiplicities_dyadic=multiplicities_are_dyadic(list(members.values()), resampling),
     )
 
 
@@ -792,3 +1063,63 @@ def co_primary_holm(
         family_alpha=CO_PRIMARY_FAMILY_ALPHA,
     )
     return CoPrimaryResult((steps[0], steps[1]))
+
+
+def co_primary_population_test(
+    table: ClusterCountTable,
+    contrasts: Sequence[Contrast],
+    *,
+    systems: Optional[Mapping[str, Sequence[str]]] = None,
+    metric: str = METRIC_EC_CLASSES_1_6_ACCURACY,
+    engine: str = ENGINE_AMENDMENT2,
+    n_draws: int = DEFAULT_N_DRAWS,
+    seed: int = DEFAULT_BOOTSTRAP_SEED,
+    max_skip_fraction: float = DEFAULT_MAX_SKIP_FRACTION,
+) -> tuple[Optional[BootstrapResult], Optional[str]]:
+    """One co-primary population under engine v2 (rules A2-STAT-5 and A2-STAT-6): the support gate, then the
+    stratified paired cluster bootstrap. A gated or aborted population is unavailable: ``(None, reason)``; the
+    caller keeps its Holm slot (``co_primary_holm`` with ``None``). Metric-generic, without wording."""
+    reasons = list(inference_gate(table, metric, engine) or [])
+    if reasons:
+        return None, "stratum gate: " + "; ".join(reasons)
+    try:
+        result = paired_cluster_bootstrap(table, list(contrasts), systems=systems, metric=metric, n_draws=int(n_draws),
+                                          seed=int(seed), stratified=True, max_skip_fraction=float(max_skip_fraction),
+                                          engine=engine)
+    except BootstrapAbort as exc:
+        return None, f"bootstrap aborted: {exc}"
+    return result, None
+
+
+def engine_policy_record_v2() -> dict[str, Any]:
+    """Engine ``stratified_rao_wu_v2`` as data (rules A2-STAT-1 to A2-STAT-6)."""
+    return {
+        "rule_id": ENGINE_AMENDMENT2,
+        "historical_engine": ENGINE_FREEZE1,
+        "metrics": list(BOOTSTRAP_METRICS_V2),
+        "historical_metrics": list(BOOTSTRAP_METRICS),
+        "presence_free_metrics": list(PRESENCE_FREE_METRICS),
+        "resampling": RESAMPLING_RAO_WU,
+        "clusters": "cohort components restricted to the population",
+        "strata": ("each cluster joins the stratum of the rarest EC class 1-6 it contains (rarity is the total "
+                   "protein weight in the population, ties to the lower class number); class-7-only clusters form "
+                   "their own stratum"),
+        "small_strata": ("a stratum of k >= 2 clusters draws k - 1 clusters uniformly with replacement, each pick "
+                         "weighted k/(k - 1); a one-cluster stratum keeps multiplicity 1 and uses no random numbers"),
+        "single_cluster_merge": ("primary metric only: strata of EC classes 1-6 from rarest to most common; a "
+                                 "one-cluster stratum gives its cluster to the next more common non-empty stratum "
+                                 "(the most common gives it to the next rarer); never for balanced accuracy or "
+                                 "macro-F1"),
+        "valid_draws": ("every draw for the primary metric; for balanced accuracy and macro-F1 only draws holding "
+                        "every EC class 1-6 present in the population"),
+        "support_gate": ("primary metric: fewer than two clusters with a protein of EC classes 1-6; balanced "
+                         "accuracy and macro-F1: a single-cluster EC class 1-6 stratum, (macro-F1) a single-cluster "
+                         "class-7-only stratum predicted as a present EC class 1-6, or a present EC class 1-6 not "
+                         "guaranteed in every draw"),
+        "absence_probability": "product over strata of ((k - m)/k)^(k - 1), m of the k clusters containing the class",
+        "unavailable": "a gated or aborted hypothesis keeps its point estimates, takes p = 1 and keeps its Holm slot",
+        "n_draws": DEFAULT_N_DRAWS,
+        "seed": DEFAULT_BOOTSTRAP_SEED,
+        "max_skip_fraction": DEFAULT_MAX_SKIP_FRACTION,
+        "draw_batch_size": DRAW_BATCH_SIZE,
+    }

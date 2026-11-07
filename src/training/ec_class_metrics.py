@@ -1,11 +1,16 @@
 """Fixed-denominator EC-class metrics (numpy only).
 
 One implementation serves the trainer, the campaign selection and the scorer.
-Classes are the seven EC classes in index order 0..6 (EC classes 1..7). The
-primary metric is the balanced accuracy over EC classes 1-6 computed from
-seven-way predictions: a wrong class-7 prediction still counts as an error, but
-class 7 is not averaged. Classes absent from the true labels are left out of an
-average and reported through the ``*_n_present`` counts.
+Classes are the seven EC classes in index order 0..6 (EC classes 1..7). Two
+summaries are computed over EC classes 1-6 from seven-way predictions: the
+accuracy over the proteins of those classes (``ec_classes_1_6_accuracy``: the
+correctly predicted weight of the rows whose true class is one of EC classes 1-6,
+over the weight of those rows) and the balanced accuracy over the EC classes 1-6
+present. A prediction of class 7 for such a protein counts as an error; class-7
+rows never enter the accuracy over EC classes 1-6, and class 7 is not averaged in
+the balanced accuracy. The campaign decides which summary is primary. Classes
+absent from the true labels are left out of an average and reported through the
+``*_n_present`` counts.
 """
 from __future__ import annotations
 
@@ -76,10 +81,15 @@ def ec_class_metrics(
     seven_ba, seven_present = _class_average(recall, support, ALL_CLASS_INDICES)
     primary_f1, _ = _class_average(f1, support, PRIMARY_CLASS_INDICES)
     seven_f1, _ = _class_average(f1, support, ALL_CLASS_INDICES)
+    primary_rows = list(PRIMARY_CLASS_INDICES)
+    primary_weight = float(support[primary_rows].sum())
+    primary_accuracy = float(correct[primary_rows].sum() / primary_weight) if primary_weight > 0 else float("nan")
     return {
         "n_examples": int(true.shape[0]),
         "total_weight": float(sample_weight.sum()),
         "accuracy": float(correct.sum() / sample_weight.sum()),
+        "ec_classes_1_6_accuracy": primary_accuracy,
+        "ec_classes_1_6_total_weight": primary_weight,
         "ec_classes_1_6_balanced_accuracy": primary_ba,
         "ec_classes_1_6_n_present": primary_present,
         "ec_classes_1_6_label": f"{primary_present}-class BA",

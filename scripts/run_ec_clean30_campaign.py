@@ -50,7 +50,28 @@ Actions
                 Authenticate the amendment; --draft permits review before publication, never real execution.
   select        Inner-fold selection step S1, S2 or S3 of one outer fold from verified fits (L5 certified
                 on the plan's eight inner fits), appended to the hash-chained step records.
-  gap-gate      Fold-0 development gap gate after S1 or S3 against the CLEAN inner arms.
+  gap-gate      Fold-0 development gap gate after S1 or S3 against the CLEAN inner arms (refused under
+                amendment 2, where its computation is a descriptive block of the futility record).
+  plan-v2       Amendment-2 per-fold unit matrix (fold 0: S1 112, S4 5; folds 1-4: S1 96, S4 5) as
+                deterministic JSON, written once to <campaign root>/plans_v2/fold<K>.json.
+  futility      Amendment-2 fold-0 futility rule: projected probability that the final claim succeeds;
+                continue to folds 1-4 only at >= 0.20; a binding run writes the record, its pointer file and the
+                FUT step record once (a run that cannot bind is refused; --smoke writes the record only);
+                prints totals only.
+  futility-oc   Synthetic operating characteristics of the futility rule (futility_oc.json, written once).
+  amend-2       Build the canonical amendment-2 record once from the reviewed draft, the rule text and the
+                maintainer's decisions file (C1-C8, C6b); --render writes its rendering.
+  verify-amendment-chain
+                Authenticate the amendment chain with the general chain verifier; write its receipt (the
+                scoring pass binds it).
+  dry-run-v2    Plan-v2 dry run of one view against the declared pretraining-input stub (write=False); the
+                receipt is written once outside the view.
+  refit-recipe  The verified refit recipe of one fold (fold 0: with the binding futility continue), for the
+                scoring pass (rule A2-SEL-9).
+  pretrain-corpus
+                Amendment-2 F6 inputs: holdout-lists (R1-inner lists in a scratch identity copy), build (the
+                cache-free corpus table bound before publication), fasta (the training-side union FASTA), attach
+                (the corpus and its sequence means in the view's attached folder) and verify.
   refit, execute
                 Not implemented yet (Phase 3 and 4 execution code); each prints its planned interface and
                 exits 3.
@@ -431,9 +452,34 @@ def action_verify_s1_amendment(args: argparse.Namespace) -> int:
     return 0
 
 
+def action_plan_v2(args: argparse.Namespace) -> int:
+    """Amendment 2: the fold's v2 plan (``campaign.build_fold_plan_v2``), written once with its receipt to
+    ``<campaign root>/plans_v2/fold<K>.json``, or its counts printed."""
+    from ec_clean30.campaign import build_fold_plan_v2
+    from ec_clean30.provenance import provenance_record, write_new_json
+
+    plan = build_fold_plan_v2(args.fold)
+    if args.out is None:
+        _print(plan if args.full else {"fold": plan["fold"], "counts": plan["counts"], "plan_sha256": plan["plan_sha256"],
+                                       "families": plan["families"]})
+        return 0
+    _refuse_paths(args, ["out"])
+    out = Path(args.out)
+    if out.parent.name != "plans_v2" or out.name != f"fold{args.fold}.json":
+        print(f"error: --out must be <campaign root>/plans_v2/fold{args.fold}.json", file=sys.stderr)
+        return 2
+    git = _git_for(args.smoke)
+    digest = write_new_json(out, plan)
+    receipt = {"plan": out.name, "plan_file_sha256": digest, "plan_sha256": plan["plan_sha256"],
+               "counts": plan["counts"], "provenance": provenance_record(smoke=args.smoke, git=git)}
+    write_new_json(out.with_name(out.name + ".receipt.json"), receipt)
+    _print({"plan": str(out), "plan_sha256": plan["plan_sha256"], "counts": plan["counts"]})
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     # Torch-free at import; each module defines its own action's arguments and handler.
-    from ec_clean30 import cohort, freeze, overlay, r2_lists, selector, transfers
+    from ec_clean30 import cohort, freeze, futility, overlay, pretrain_corpus, r2_lists, selector, transfers
 
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="action", required=True)
@@ -581,6 +627,25 @@ def build_parser() -> argparse.ArgumentParser:
         .set_defaults(handler=selector.action_select)
     selector.add_gap_gate_arguments(sub.add_parser("gap-gate", help=selector.GAP_GATE_HELP)) \
         .set_defaults(handler=selector.action_gap_gate)
+
+    # Amendment 2 (new actions only; the pinned runner functions are unchanged).
+    plan_v2 = sub.add_parser("plan-v2", help="Amendment-2 per-fold unit matrix (plan format v2).")
+    plan_v2.add_argument("--fold", type=int, required=True)
+    plan_v2.add_argument("--out", default=None, help="<campaign root>/plans_v2/fold<K>.json (written once).")
+    plan_v2.add_argument("--full", action="store_true", help="Print the whole plan instead of its counts.")
+    plan_v2.add_argument("--smoke", action="store_true", help="Engineering use: allow a dirty tree.")
+    plan_v2.set_defaults(handler=action_plan_v2)
+    futility.add_futility_arguments(sub.add_parser("futility", help=futility.FUTILITY_HELP)) \
+        .set_defaults(handler=futility.action_futility)
+    futility_oc = sub.add_parser("futility-oc", help="Synthetic operating characteristics of the futility rule.")
+    futility_oc.add_argument("--out", required=True, help="futility_oc.json (written once).")
+    futility_oc.set_defaults(handler=futility.action_futility_oc)
+    from ec_clean30 import amendment2
+
+    amendment2.add_amendment2_arguments(sub)
+    pretrain_corpus.add_pretrain_corpus_arguments(
+        sub.add_parser("pretrain-corpus", help=pretrain_corpus.PRETRAIN_CORPUS_HELP)) \
+        .set_defaults(handler=pretrain_corpus.action_pretrain_corpus)
 
     s1_simulation = sub.add_parser("simulate-s1", help="Bounded fixed-rule S1 characterization.")
     for flag in ("spec", "freeze1", "campaign-root", "out"):

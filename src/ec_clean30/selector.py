@@ -67,6 +67,37 @@ CLEAN-R1 (after S3, minus the 1.0-point optimism discount first); at or above -3
 outcomes are reported; seven-class and R2-inner gaps are undiscounted and never gated on. CLEAN query IDs
 must exactly equal the certified validation membership of each inner fold before closure filtering. No output names a protein; printed summaries
 hold totals only (per-class counts of the fold stay in the written records).
+
+Amendment 2 (pipeline ``amendment2_selection_v1``). A ``--freeze1-amendment`` of format
+``deepmzyme_ec_clean30_amendment_v2`` is authenticated by the general amendment-chain verifier of the science
+side (``_verify_amendment_chain``: ``amendment_chain.verify_chain`` on the full clone, verified once per process
+and re-checked cheaply after that, or ``amendment_chain.check_chain_receipt`` on a ``--amendment-chain-receipt``
+written by ``verify-amendment-chain``); the policy follows the verifier's **fit chain** (the chain up to its last
+link that changed a scientific file): only the fit chain [amendment 1, amendment 2] whose links carry
+``selection.selection_policy_record_v2`` and a scientific identity yields this pipeline (an unpublished chain
+only with ``--smoke``). A tip with later class-(a2) links is accepted only after a verified fold-0 ``continue``.
+Every later check in one call expects the chain the first one authenticated. Fits and step records are compared
+with the fit chain. Then:
+
+- The plan is ``<campaign root>/plans_v2/fold<K>.json`` and must equal ``campaign.build_fold_plan_v2(K)``; a v1
+  plan is refused, as is a v2 plan under a historical policy. Step records have format
+  ``deepmzyme_ec_clean30_step_record_v2`` and carry the pipeline and its policy SHA-256; mixed formats are refused.
+- S1 (best inner): every family's learning rate by the primary score, F1 (fold 0 only) and C-G pooled as
+  controls, C-GF pooled from the pretraining control files (``wp_pretrain_val_protein_predictions.csv``) of the
+  first F6 learning-rate setting of every inner fold and seed (the second setting's control content is compared
+  and the result recorded), and ``selection.s1_best_inner`` over F2, F3, F4, F5 and F6 (the training counts of the
+  recall-guard rows come from F2's pooled proteins). The fold-0 S1 record needs the passed (or disposed) CLEAN
+  held-out sanity record (rule A2-CLN-2); a fold-k S1 record (k >= 1) needs the fold-0 step chain with a verified
+  futility ``continue``.
+- S2 (L9 only): any S2 or S3 fit refuses the step; ``screen_logit_adjustment_primary`` runs on the re-pooled S1
+  winner and the record holds ``screen_scope: L9_only``, the dropped levers and the adopted tau.
+- FUT (fold 0 only, written by ``ec_clean30.futility``): the step chain is S1, S2, FUT, S4 in fold 0 and S1, S2,
+  S4 in folds 1-4; an S1 or S2 record after FUT and a second FUT are refused.
+- S4: ``selection.s4_refit_specification_v2`` from the S1 and S2 records (and, in fold 0, the verified FUT
+  ``continue``), bound to their record hashes; no fit is read. S3 and the L3 cost inputs are refused.
+  ``verified_refit_recipe`` turns a verified S4 record into the refit recipe (contract X15).
+- ``gap-gate`` is refused: its computation is a descriptive block of the fold-0 futility record
+  (``ec_clean30.futility``), which reuses ``inner_closure_rows``.
 """
 from __future__ import annotations
 
@@ -84,22 +115,27 @@ from typing import Any, Callable, Mapping, Optional, Sequence
 import numpy as np
 
 from ec_clean30.campaign import (
-    CAMPAIGN_ID, KIND_INNER, LEVER_CONFIGS, STEP_S1, STEP_S2, STEP_S3, UNIT_PREFIX, CampaignPlanError, PlannedUnit,
-    Recipe, build_fold_plan, plan_units, recipe_with_lever, unit_id as planned_unit_id,
+    CAMPAIGN_ID, KIND_INNER, LEVER_CONFIGS, PLAN_FORMAT, PLAN_FORMAT_V2, RECIPE_FIXED, STEP_S1, STEP_S2, STEP_S3,
+    STEP_S4, UNIT_PREFIX, CampaignPlanError, PlannedUnit, Recipe, build_fold_plan, build_fold_plan_v2, plan_units,
+    recipe_for_unit, recipe_with_lever, unit_id as planned_unit_id,
 )
 from ec_clean30.commands import VERIFY_UNIT_RECEIPT_NAME
 from ec_clean30.provenance import (
     provenance_record, real_action_git_state, refuse_test_paths, sha256_file, write_new_json,
 )
 from ec_clean30.selection import (
-    AMENDED_S1_RULE, HISTORICAL_S1_RULE, EPOCH_LEVER, EPOCH_LOOKS, FLOAT_TOLERANCE, LEVER_PASSED, LEVERS, LOGIT_ADJUSTMENT_LEVER,
-    N_INNER_FOLDS, POINTS, SCREENING_SEEDS, SUPCON_LEVER, SUPCON_MIN_POSITIVE_STEP_FRACTION, InnerFoldPredictions,
-    LeverOutcome, LeverScreen, PooledOof, PromotionConfig, apply_tau, append_step_record, learning_rate_label,
-    lever_applies, lever_not_applicable, lever_not_tested, pool_inner_oof, predictions_sha256, promotion_config_for,
-    read_step_chain, record_sha256, s1_choose_learning_rate, s1_family_escalation, s1_family_screen,
-    s2_lever_screen, s3_combination,
-    screen_epoch_lever, screen_lever, screen_logit_adjustment, supcon_lever_testable,
-    supcon_positive_step_fraction, verify_step_chain,
+    AMENDED_S1_RULE, BEST_INNER_S1_RULE, DROPPED_LEVERS_V2, F6_FAMILY, FUTILITY_CONTINUE, FUTILITY_FOLD,
+    FUTILITY_STOP, HISTORICAL_S1_RULE, EPOCH_LEVER, EPOCH_LOOKS,
+    FLOAT_TOLERANCE, L9_RULE_V2, LEVER_PASSED, LEVERS, LOGIT_ADJUSTMENT_LEVER, N_INNER_FOLDS, POINTS,
+    PRIMARY_METRIC_V2, S1_V2_CANDIDATES, S4_RULE_V2, SCREENING_SEEDS, SELECTION_PIPELINE_V2, SUPCON_LEVER,
+    SUPCON_MIN_POSITIVE_STEP_FRACTION, WHOLE_PROTEIN_CONTROL, InnerFoldPredictions, LeverOutcome, LeverScreen,
+    PooledOof, PromotionConfig, apply_tau, append_step_record, learning_rate_label, lever_applies,
+    lever_not_applicable, lever_not_tested, pool_inner_oof, predictions_sha256, promotion_config_for,
+    read_step_chain, record_sha256, s1_best_inner, s1_choose_learning_rate, s1_choose_learning_rate_primary,
+    s1_family_escalation, s1_family_screen, s2_lever_screen, s3_combination, s4_refit_specification_v2,
+    screen_epoch_lever, screen_lever, screen_logit_adjustment, screen_logit_adjustment_primary,
+    selection_policy_sha256_v2, sha256_canonical, supcon_lever_testable, supcon_positive_step_fraction,
+    verify_step_chain,
 )
 from training.ec_class_metrics import N_EC_CLASSES, PRIMARY_CLASS_INDICES
 from training.ec_classes import (
@@ -140,13 +176,28 @@ SUPCON_BATCHES_KEY = "ec_supcon_train_batches"
 SUPCON_BATCHES_WITH_POSITIVE_KEY = "ec_supcon_batches_with_positive"
 PRIOR_SMOOTHING = 1.0  # logit_adjustment.PRIOR_SMOOTHING: (n_c + 1) / (N + 7)
 
+# Amendment 2 (pipeline ``amendment2_selection_v1``): steps S1, S2 (L9 only) and S4 (specification record).
+STEP_RECORD_FORMAT_V2 = "deepmzyme_ec_clean30_step_record_v2"
+SCHEMA_VERSION_V2 = 2
+STEP_FUT = "FUT"
+SELECT_STEPS_V2: tuple[str, ...] = (STEP_S1, STEP_S2, STEP_S4)
+# Fold 0 adds the futility record between S2 and S4 (written by ``ec_clean30.futility``, never by ``select``).
+CHAIN_STEPS_V2_FOLD0: tuple[str, ...] = (STEP_S1, STEP_S2, STEP_FUT, STEP_S4)
+WP_PRETRAIN_RECEIPT_NAME = "global_esm_pretrain_receipt.json"  # training.global_esm_pretraining.RECEIPT_NAME
+WP_CONTROL_PREDICTIONS_NAME = "wp_pretrain_val_protein_predictions.csv"  # .CONTROL_PREDICTIONS_NAME
+SELECT_STEP_CHOICES: tuple[str, ...] = (STEP_S1, STEP_S2, STEP_S3, STEP_S4)
+S2_SCOPE_V2 = "L9_only"
+AMENDMENT_V2_FORMAT = "deepmzyme_ec_clean30_amendment_v2"
+AMENDMENT2_CHAIN_LENGTH = 2
+PLANS_V2_FOLDER = "plans_v2"
+
 PLANS_FOLDER = "plans"
 PLAN_FILE_NAME = "fold{fold}.json"
 COMPONENTS_FILE_NAME = "components_inner.tsv"
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
-SELECT_HELP = ("Inner-fold selection step S1, S2 or S3 of one outer fold from verified fits; appends a hash-chained "
-               "step record (L5 certified from hash-bound per-epoch counters).")
+SELECT_HELP = ("Inner-fold selection step S1, S2 or S3 (amendment 2: S1, S2 or S4) of one outer fold from verified "
+               "fits; appends a hash-chained step record (L5 certified from hash-bound per-epoch counters).")
 GAP_GATE_HELP = ("Fold-0 development gap gate after S1 or S3: DeepMzyme's selected inner OOF against the CLEAN inner "
                  "arms on the R1-inner EC closure; continue at a gap of -3.0 points or more.")
 
@@ -178,13 +229,155 @@ def _check_sha256(value: Any, what: str) -> str:
     return value
 
 
-def _selection_policy(amendment_path: Optional[Path], freeze1_sha256: str, *, smoke: bool) -> dict[str, Any]:
-    """Authenticate the policy before reading fits; historical replay has an empty amendment chain."""
+def _amendment_format(path: Path) -> Optional[str]:
+    """The ``format`` field of an amendment document, read only to choose its verifier (which authenticates it)."""
+    try:
+        document = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return document.get("format") if isinstance(document, dict) else None
+
+
+# Chains authenticated in this process: (tip, Freeze-1 SHA-256) -> receipt held in memory (a later call's
+# expected chain is enforced by the re-check).
+_VERIFIED_CHAINS: dict[tuple[str, str], Mapping[str, Any]] = {}
+
+
+def _verify_amendment_chain(path: Path, freeze1_sha256: str, *, smoke: bool, chain_receipt: Optional[Path] = None,
+                            expected_chain: Optional[Sequence[str]] = None) -> Mapping[str, Any]:
+    """The general sequence-n amendment-chain verifier of the science side (contract X2,
+    ``ec_clean30.amendment_chain``). It authenticates every link in a checkout of that link's published commit and
+    compares only the tip with the live tree. Its result must hold ``chain`` (the link SHA-256 values in order),
+    ``fit_chain`` (the chain up to its last link that changed a scientific file), ``tip_sequence``, ``policies``
+    (rule ID to policy), ``scientific_identity_sha256`` and ``published``. Without that verifier amendment-2
+    selection is refused.
+
+    - ``chain_receipt``: ``amendment_chain.check_chain_receipt`` on the receipt of ``verify-amendment-chain``
+      (written on the workstation's full clone; the pod and per-unit path); it must authenticate this tip.
+    - Otherwise a real call runs ``verify_chain`` once per process and keeps its receipt in memory; a later call
+      re-checks it with ``check_chain_receipt_record`` and verifies again when the re-check fails.
+    - ``--smoke``: ``verify_chain`` without ``require_published`` (never a receipt)."""
+    try:
+        from ec_clean30 import amendment_chain  # science-side module (scientific file, contract X2)
+    except ImportError as exc:
+        raise SelectionInputError("Amendment 2 needs the general amendment-chain verifier (ec_clean30.amendment_chain), "
+                                  "which is not available; amendment-2 selection is refused.") from exc
+    from ec_clean30.amendment_rules import FREEZE1B_SHA256
+    from ec_clean30.provenance import REPO_ROOT
+
+    expected = None if expected_chain is None else list(expected_chain)
+    options = {} if expected is None else {"expected_chain": expected}
+    if smoke:
+        _require(chain_receipt is None, "A chain receipt serves real use only; --smoke verifies the chain itself.")
+        return amendment_chain.verify_chain(Path(path), expected_freeze1_sha256=freeze1_sha256,
+                                            expected_freeze1b_sha256=FREEZE1B_SHA256, repo=REPO_ROOT,
+                                            require_published=False, **options)
+    if chain_receipt is not None:
+        refuse_test_paths([chain_receipt], what="--amendment-chain-receipt")
+        result = amendment_chain.check_chain_receipt(Path(chain_receipt), repo=REPO_ROOT, **options)
+        tip = (result.get("links") or [{}])[-1].get("path")
+        _require(isinstance(tip, str) and (Path(REPO_ROOT) / tip).resolve() == Path(path).resolve(),
+                 "The chain receipt authenticates another tip than --freeze1-amendment.")
+        _require(freeze1_sha256 == amendment_chain.rules.FREEZE1_SHA256,
+                 "The chain receipt belongs to another Freeze 1 than --freeze1-sha256.")
+        return result
+    key = (str(Path(path).resolve()), freeze1_sha256)
+    cached = _VERIFIED_CHAINS.get(key)
+    if cached is not None:
+        try:
+            return amendment_chain.check_chain_receipt_record(cached, repo=REPO_ROOT, **options)
+        except amendment_chain.AmendmentChainError:
+            _VERIFIED_CHAINS.pop(key, None)
+    receipt = amendment_chain.chain_receipt_record(Path(path), expected_freeze1_sha256=freeze1_sha256,
+                                                   expected_freeze1b_sha256=FREEZE1B_SHA256, repo=REPO_ROOT,
+                                                   require_published=True, **options)
+    _VERIFIED_CHAINS[key] = receipt
+    return dict(receipt["result"])
+
+
+def _carries_selection_policy_v2(policies: Any) -> bool:
+    if not isinstance(policies, Mapping):
+        return False
+    expected = selection_policy_sha256_v2()
+    for item in policies.values():
+        value = item.get("policy", item) if isinstance(item, Mapping) else None
+        try:
+            if value is not None and sha256_canonical(value) == expected:
+                return True
+        except (TypeError, ValueError):
+            continue
+    return False
+
+
+def _sha256_list(value: Any) -> bool:
+    return (isinstance(value, list) and len(set(value)) == len(value)
+            and all(isinstance(item, str) and _SHA256_RE.fullmatch(item) for item in value))
+
+
+def _chain_options(chain_receipt: Optional[Path], expected_chain: Optional[Sequence[str]]) -> dict[str, Any]:
+    """Keyword arguments of ``_verify_amendment_chain`` beyond the contract three (only those that are set)."""
+    options: dict[str, Any] = {}
+    if chain_receipt is not None:
+        options["chain_receipt"] = Path(chain_receipt)
+    if expected_chain is not None:
+        options["expected_chain"] = list(expected_chain)
+    return options
+
+
+def _amendment2_policy(path: Path, freeze1_sha256: str, *, smoke: bool, chain_receipt: Optional[Path] = None,
+                       expected_chain: Optional[Sequence[str]] = None) -> dict[str, Any]:
+    """The policy of an authenticated chain whose **fit chain** is [amendment 1, amendment 2] and carries the
+    amendment-2 selection policy record and a scientific identity (contract X13). The full chain may extend the fit
+    chain only by links that changed no scientific file (class a2); such a tip is accepted only after a verified
+    fold-0 ``continue`` (``requires_futility_continue``). An unpublished chain only serves ``--smoke``."""
+    try:
+        verified = _verify_amendment_chain(path, freeze1_sha256, smoke=smoke,
+                                           **_chain_options(chain_receipt, expected_chain))
+    except SelectionInputError:
+        raise
+    except (OSError, ValueError, RuntimeError) as exc:
+        raise SelectionInputError(f"--freeze1-amendment does not verify ({exc}).") from exc
+    _require(isinstance(verified, Mapping), "The amendment-chain verifier returned no result.")
+    chain, fit_chain = verified.get("chain"), verified.get("fit_chain")
+    _require(_sha256_list(chain) and _sha256_list(fit_chain), "The verifier returned a malformed chain or fit chain.")
+    _require(len(fit_chain) == AMENDMENT2_CHAIN_LENGTH and chain[:AMENDMENT2_CHAIN_LENGTH] == fit_chain
+             and verified.get("tip_sequence") == len(chain),
+             "Amendment-2 selection needs the authenticated fit chain [amendment 1, amendment 2].")
+    _require(_carries_selection_policy_v2(verified.get("policies")),
+             "The authenticated amendment chain does not carry the implemented amendment-2 selection policy.")
+    _require(smoke or verified.get("published") is True, "A real selection needs a published amendment.")
+    identity = verified.get("scientific_identity_sha256")
+    _require(isinstance(identity, str) and bool(_SHA256_RE.fullmatch(identity)),
+             "The verifier returned a missing or malformed scientific identity.")
+    return {"freeze1_amendment_chain": list(fit_chain), "s1_rule": BEST_INNER_S1_RULE,
+            "selection_pipeline": SELECTION_PIPELINE_V2, "selection_policy_sha256": selection_policy_sha256_v2(),
+            "amendment_tip_chain": list(chain), "scientific_identity_sha256": identity,
+            "requires_futility_continue": len(chain) > len(fit_chain)}
+
+
+def is_pipeline_v2(policy: Mapping[str, Any]) -> bool:
+    return policy.get("selection_pipeline") == SELECTION_PIPELINE_V2
+
+
+def _selection_policy(amendment_path: Optional[Path], freeze1_sha256: str, *, smoke: bool,
+                      chain_receipt: Optional[Path] = None,
+                      expected_chain: Optional[Sequence[str]] = None) -> dict[str, Any]:
+    """Authenticate the policy before reading fits; historical replay has an empty amendment chain.
+
+    An amendment document of format ``deepmzyme_ec_clean30_amendment_v2`` goes to the general chain verifier (or
+    the check of its ``chain_receipt``) and yields the amendment-2 policy; any other document goes to the unchanged
+    amendment-1 verifier. ``expected_chain`` is the chain an earlier check of the same call authenticated.
+    """
     if amendment_path is None:
+        _require(chain_receipt is None, "--amendment-chain-receipt belongs to an amendment-2 chain.")
         return {"freeze1_amendment_chain": [], "s1_rule": HISTORICAL_S1_RULE}
     from ec_clean30.freeze import Freeze1Error, verify_s1_amendment
 
     refuse_test_paths([amendment_path], what="--freeze1-amendment")
+    if _amendment_format(Path(amendment_path)) == AMENDMENT_V2_FORMAT:
+        return _amendment2_policy(Path(amendment_path), freeze1_sha256, smoke=smoke, chain_receipt=chain_receipt,
+                                  expected_chain=expected_chain)
+    _require(chain_receipt is None, "--amendment-chain-receipt belongs to an amendment-2 chain.")
     try:
         verified = verify_s1_amendment(Path(amendment_path), expected_freeze1_sha256=freeze1_sha256,
                                        require_published=not smoke)
@@ -209,12 +402,62 @@ def _check_policy_record(record: Mapping[str, Any], policy: Mapping[str, Any], w
     # Historical records predate these fields; authenticated fit chains identify the rule without a new trainer flag.
     rule = record.get("s1_rule", policy["s1_rule"] if fit else HISTORICAL_S1_RULE)
     _require(rule == policy["s1_rule"], f"{what}: the S1 rule differs from the authenticated selection policy.")
+    # Amendment 2: step records name the pipeline and its policy hash; a fit identity may carry them too.
+    for key in ("selection_pipeline", "selection_policy_sha256"):
+        value = record.get(key, policy.get(key) if fit else None)
+        _require(value == policy.get(key), f"{what}: the {key} differs from the authenticated selection policy.")
+
+
+def _check_policy_chain_v2(records: Sequence[Mapping[str, Any]]) -> None:
+    seen_fut: dict[Any, int] = {}
+    for record in records:
+        payload = record.get("payload") or {}
+        step = record.get("step")
+        _require(payload.get("format") == STEP_RECORD_FORMAT_V2,
+                 f"The {step} step record is not an amendment-2 step record; mixed formats are refused.")
+        _require(step in CHAIN_STEPS_V2_FOLD0, f"A {step} step record is not part of {SELECTION_PIPELINE_V2}.")
+        fold = payload.get("fold")
+        if step == STEP_FUT:
+            _require(fold == FUTILITY_FOLD, f"A futility record belongs to fold {FUTILITY_FOLD} only.")
+            _require(fold not in seen_fut, "The step chain holds a second futility record; a futility decision is "
+                                           "never rerun inside the chain (rule A2-GOV-7(d)).")
+            _require(payload.get("decision") in (FUTILITY_CONTINUE, FUTILITY_STOP)
+                     and isinstance(payload.get("futility_record_sha256"), str)
+                     and bool(_SHA256_RE.fullmatch(payload["futility_record_sha256"])),
+                     "The futility step record names no decision or record SHA-256.")
+            seen_fut[fold] = int(record.get("index", -1))
+            continue
+        _require(not (step in (STEP_S1, STEP_S2) and fold in seen_fut),
+                 f"An {step} record after the fold-{fold} futility record is refused (rule A2-GOV-7(d)).")
+        if step == STEP_S1:
+            screen = payload.get("best_inner_screen")
+            _require(isinstance(screen, dict) and screen.get("rule_id") == BEST_INNER_S1_RULE
+                     and "family_screen" not in payload and "family_escalation" not in payload,
+                     "The amendment-2 S1 record does not contain the authenticated best-inner rule.")
+            _require(screen.get("policy_sha256") == selection_policy_sha256_v2(),
+                     "The amendment-2 S1 record carries another selection policy.")
+            _require(screen.get("winner_family") == (payload.get("s1_winner") or {}).get("family")
+                     == ((payload.get("selected") or {}).get("recipe") or {}).get("family"),
+                     "The amendment-2 S1 winner differs from its best-inner result.")
+        elif step == STEP_S2:
+            _require(payload.get("screen_scope") == S2_SCOPE_V2 and (payload.get("l9") or {}).get("details", {})
+                     .get("rule_id") == L9_RULE_V2, "The amendment-2 S2 record is not the L9-only screen.")
+        elif step == STEP_S4:
+            _require((payload.get("refit_specification") or {}).get("rule_id") == S4_RULE_V2,
+                     "The amendment-2 S4 record is not a refit_spec_v2 record.")
 
 
 def _check_policy_chain(records: Sequence[Mapping[str, Any]], policy: Mapping[str, Any]) -> None:
     for record in records:
         payload = record.get("payload") or {}
         _check_policy_record(payload, policy, f"{record.get('step')} step record")
+    if is_pipeline_v2(policy):
+        _check_policy_chain_v2(records)
+        return
+    for record in records:
+        payload = record.get("payload") or {}
+        _require(payload.get("format") != STEP_RECORD_FORMAT_V2,
+                 "An amendment-2 step record is refused under a historical selection policy.")
         if record.get("step") == STEP_S1 and policy["s1_rule"] == AMENDED_S1_RULE:
             screen = payload.get("family_screen")
             _require(isinstance(screen, dict) and screen.get("rule_id") == AMENDED_S1_RULE
@@ -234,17 +477,25 @@ def _recipe_key(recipe: Mapping[str, Any] | Recipe) -> dict[str, Any]:
     """A recipe as a comparable record (learning-rate items and lever configurations in sorted order)."""
     record = recipe.to_dict() if isinstance(recipe, Recipe) else dict(recipe or {})
     learning_rate = record.get("learning_rate") or {}
-    return {"family": record.get("family"),
-            "learning_rate": sorted([str(key), value] for key, value in dict(learning_rate).items()),
-            "epochs": record.get("epochs"),
-            "lever_configs": sorted(str(item) for item in record.get("lever_configs") or [])}
+    key = {"family": record.get("family"),
+           "learning_rate": sorted([str(key), value] for key, value in dict(learning_rate).items()),
+           "epochs": record.get("epochs"),
+           "lever_configs": sorted(str(item) for item in record.get("lever_configs") or [])}
+    # Amendment-2 recipe fields (``rbf_distances`` and any other added field) take part when present, so a recipe
+    # difference outside the four historical fields is never ignored; historical keys are unchanged. The historical
+    # encoding ``rbf_distances: normalized`` equals its absence (``Recipe.to_dict`` emits only ``raw``).
+    extra = {str(name): value for name, value in record.items()
+             if name not in ("family", "learning_rate", "epochs", "lever_configs")
+             and not (name == "rbf_distances" and value == "normalized")}
+    if extra:
+        key["extra"] = json.loads(json.dumps(extra, sort_keys=True, default=str))
+    return key
 
 
 def recipe_from_record(record: Mapping[str, Any]) -> Recipe:
     """The ``Recipe`` of a ``Recipe.to_dict()`` record (a step record or a runner identity)."""
     try:
-        return Recipe(record["family"], tuple(dict(record["learning_rate"]).items()), int(record["epochs"]),
-                      tuple(record.get("lever_configs") or ()))
+        return Recipe.from_dict(record)
     except (KeyError, TypeError, ValueError) as exc:
         raise SelectionInputError(f"Recipe record is not a campaign recipe ({exc.__class__.__name__}).") from exc
 
@@ -253,17 +504,30 @@ def recipe_from_record(record: Mapping[str, Any]) -> Recipe:
 # Frozen plan
 
 
-def load_frozen_plan(path: Path, fold: int) -> dict[str, Any]:
-    """``<campaign root>/plans/fold<K>.json``: its own hash rechecked and equal to the live plan of fold K."""
+_PLAN_FOLDERS = {PLANS_FOLDER: PLAN_FORMAT, PLANS_V2_FOLDER: PLAN_FORMAT_V2}
+_PLAN_BUILDERS = {PLAN_FORMAT: build_fold_plan, PLAN_FORMAT_V2: build_fold_plan_v2}
+
+
+def load_frozen_plan(path: Path, fold: int, *, plan_format: Optional[str] = None) -> dict[str, Any]:
+    """``<campaign root>/plans/fold<K>.json`` (format v1) or ``<campaign root>/plans_v2/fold<K>.json`` (format v2):
+    its own hash rechecked and equal to the live plan of fold K of its format. ``plan_format`` (the active
+    policy's) refuses a plan of the other version."""
     path = Path(path)
-    _require(path.name == PLAN_FILE_NAME.format(fold=fold) and path.parent.name == PLANS_FOLDER,
-             f"--plan must be <campaign root>/{PLANS_FOLDER}/{PLAN_FILE_NAME.format(fold=fold)}, got {path.name}.")
+    _require(path.name == PLAN_FILE_NAME.format(fold=fold) and path.parent.name in _PLAN_FOLDERS,
+             f"--plan must be <campaign root>/{PLANS_FOLDER}/{PLAN_FILE_NAME.format(fold=fold)} or "
+             f"<campaign root>/{PLANS_V2_FOLDER}/{PLAN_FILE_NAME.format(fold=fold)}, got {path.name}.")
+    expected_format = _PLAN_FOLDERS[path.parent.name]
+    _require(plan_format is None or plan_format == expected_format,
+             f"The active selection policy needs a {plan_format} plan; {path.parent.name}/{path.name} holds "
+             f"{expected_format} plans.")
     plan = _read_json(path, "--plan")
     _require(isinstance(plan, dict) and plan.get("fold") == fold,
              f"--plan holds fold {plan.get('fold') if isinstance(plan, dict) else None!r}, not {fold}.")
+    _require(plan.get("format") == expected_format,
+             f"--plan in {path.parent.name}/ must have format {expected_format}, got {plan.get('format')!r}.")
     try:
         plan_units(plan)
-        live = build_fold_plan(fold)["plan_sha256"]
+        live = _PLAN_BUILDERS[expected_format](fold)["plan_sha256"]
     except (CampaignPlanError, KeyError, TypeError) as exc:
         raise SelectionInputError(f"--plan does not verify: {exc}") from exc
     _require(plan["plan_sha256"] == live, f"--plan's plan_sha256 differs from the live plan of fold {fold}.")
@@ -790,14 +1054,18 @@ def split_structure_ids(value: str) -> tuple[str, ...]:
 
 def read_inner_fold_predictions(evidence: FitEvidence, run_dir: Path) -> FitPredictions:
     """The fit's ``ec_val_protein_predictions.csv`` (already matched to its receipt) as inner-fold predictions."""
-    unit_id = evidence.unit_id
-    with (Path(run_dir) / PROTEIN_PREDICTIONS_NAME).open("r", encoding="utf-8", newline="") as handle:
+    return _read_protein_rows(evidence, Path(run_dir) / PROTEIN_PREDICTIONS_NAME,
+                              (evidence.receipt.get("protein_predictions") or {}).get("n_rows"))
+
+
+def _read_protein_rows(evidence: FitEvidence, path: Path, n_rows: Any) -> FitPredictions:
+    unit_id, name = evidence.unit_id, Path(path).name
+    with Path(path).open("r", encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
         _require(tuple(reader.fieldnames or ()) == PROTEIN_PREDICTION_COLUMNS,
-                 f"{unit_id}: {PROTEIN_PREDICTIONS_NAME} has unexpected columns.")
+                 f"{unit_id}: {name} has unexpected columns.")
         rows = list(reader)
-    _require(rows and len(rows) == (evidence.receipt.get("protein_predictions") or {}).get("n_rows"),
-             f"{unit_id}: {PROTEIN_PREDICTIONS_NAME} row count differs from its receipt.")
+    _require(rows and len(rows) == n_rows, f"{unit_id}: {name} row count differs from its receipt.")
     expected = {"run_id": unit_id, "mode": "validation", "fold_index": str(evidence.inner_fold),
                 "n_folds": str(N_INNER_FOLDS), "seed": str(evidence.seed)}
     ids, logits, true_class, ec_numbers = [], [], {}, {}
@@ -825,6 +1093,84 @@ def read_inner_fold_predictions(evidence: FitEvidence, run_dir: Path) -> FitPred
     part = InnerFoldPredictions(evidence.seed, evidence.inner_fold, tuple(ids), np.array(logits, dtype=np.float64),
                                 priors)
     return FitPredictions(part, true_class, ec_numbers)
+
+
+@dataclass(frozen=True)
+class ControlEvidence:
+    """The C-GF control file of one verified F6 inner fit, bound by its pretraining receipt."""
+
+    unit_id: str
+    receipt_sha256: str
+    control_sha256: str
+    content_sha256: str
+    branch_digest: str
+    # The pretraining host: the receipt's CPU identity and pretraining thread count (None when not recorded).
+    host: Optional[Mapping[str, Any]] = None
+
+    def record(self) -> dict[str, Any]:
+        return {"unit_id": self.unit_id, "pretrain_receipt_sha256": self.receipt_sha256,
+                "control_sha256": self.control_sha256, "content_sha256": self.content_sha256,
+                "branch_digest": self.branch_digest, "host": None if self.host is None else dict(self.host)}
+
+
+def _pretraining_host(receipt: Mapping[str, Any]) -> Optional[dict[str, Any]]:
+    """The CPU identity and pretraining thread count a pretraining receipt records (A2-F6-5), or None."""
+    runtime = receipt.get("runtime") if isinstance(receipt.get("runtime"), Mapping) else {}
+    identity = runtime.get("cpu_identity")
+    threads = (receipt.get("hyperparameters") or {}).get("num_threads", runtime.get("pretrain_num_threads"))
+    if not isinstance(identity, Mapping) or not isinstance(threads, int) or isinstance(threads, bool):
+        return None
+    return {"cpu_identity": {str(key): identity[key] for key in sorted(identity)}, "num_threads": threads,
+            "torch_version": runtime.get("torch_version")}
+
+
+def read_control_predictions(evidence: FitEvidence, run_dir: Path) -> tuple[FitPredictions, ControlEvidence]:
+    """The C-GF rows of a verified F6 inner fit: ``wp_pretrain_val_protein_predictions.csv`` as bound by
+    ``global_esm_pretrain_receipt.json`` (path, SHA-256, rows, content hash), read like the fit's own predictions."""
+    unit_id, run_dir = evidence.unit_id, Path(run_dir)
+    receipt_path = run_dir / WP_PRETRAIN_RECEIPT_NAME
+    receipt = _read_json(receipt_path, unit_id)
+    _require(isinstance(receipt, dict), f"{unit_id}: {WP_PRETRAIN_RECEIPT_NAME} must be a JSON object.")
+    control = receipt.get("control_predictions") or {}
+    path = run_dir / WP_CONTROL_PREDICTIONS_NAME
+    _require(control.get("path") == WP_CONTROL_PREDICTIONS_NAME and path.is_file() and not path.is_symlink(),
+             f"{unit_id}: the C-GF control file {WP_CONTROL_PREDICTIONS_NAME} is missing.")
+    digest = sha256_file(path)
+    _require(control.get("sha256") == digest, f"{unit_id}: {WP_CONTROL_PREDICTIONS_NAME} differs from its receipt.")
+    _require(receipt.get("split") == f"inner{evidence.inner_fold}",
+             f"{unit_id}: the pretraining receipt names split {receipt.get('split')!r}, not inner{evidence.inner_fold}.")
+    branch, content = receipt.get("branch_digest"), control.get("content_sha256")
+    _require(isinstance(branch, str) and bool(_SHA256_RE.fullmatch(branch))
+             and isinstance(content, str) and bool(_SHA256_RE.fullmatch(content)),
+             f"{unit_id}: the pretraining receipt carries no branch digest or control content hash.")
+    predictions = _read_protein_rows(evidence, path, control.get("n_rows"))
+    return predictions, ControlEvidence(unit_id, sha256_file(receipt_path), digest, content, branch,
+                                        _pretraining_host(receipt))
+
+
+def pool_control(name: str, fits: Mapping[str, FitRecord], *, tables: Optional[InnerTables] = None,
+                 verifier: Optional[FitVerifier] = None) -> tuple[PooledConfiguration, tuple[ControlEvidence, ...]]:
+    """C-GF (rule A2-F6-7): the control rows of the given verified F6 inner fits, pooled like ``pool_fits``."""
+    verifier = verifier or FitVerifier()
+    evidence, parts, true_class, ec_numbers, controls = [], [], {}, {}, []
+    for record in fits.values():
+        item = verify_fit_evidence(record, verifier=verifier)
+        predictions, control = read_control_predictions(item, record.run_dir)
+        evidence.append(item)
+        controls.append(control)
+        parts.append(predictions.part)
+        for accession, label in predictions.true_class.items():
+            _require(true_class.setdefault(accession, label) == label,
+                     f"{name}: true classes of the same protein disagree between control files.")
+            ec_numbers.setdefault(accession, predictions.ec_numbers[accession])
+    if tables is not None and tables.inner_fold_of is not None:
+        _require(set(true_class) == set(tables.inner_fold_of),
+                 f"{name}: the control files do not cover exactly the certified inner-validation proteins.")
+    try:
+        pooled = pool_inner_oof(name, parts, true_class)
+    except ValueError as exc:
+        raise SelectionInputError(f"{name}: the control predictions do not pool (protein details withheld).") from exc
+    return PooledConfiguration(pooled, tuple(evidence), ec_numbers), tuple(controls)
 
 
 @dataclass(frozen=True)
@@ -948,12 +1294,16 @@ def load_inner_tables(fold: int, path: Path, *, smoke: bool = False) -> InnerTab
 # Step chain helpers
 
 
-def _fold_records(records: Sequence[Mapping[str, Any]], fold: int) -> dict[str, tuple[Mapping[str, Any], str]]:
-    """This fold's step records by step, each with its record SHA-256 (one record per fold and step)."""
+def _fold_records(records: Sequence[Mapping[str, Any]], fold: int,
+                  record_format: str = STEP_RECORD_FORMAT) -> dict[str, tuple[Mapping[str, Any], str]]:
+    """This fold's step records by step, each with its record SHA-256 (one record per fold and step).
+
+    ``record_format`` is the step-record format of the active pipeline; ``_check_policy_chain`` has already
+    refused records of the other pipeline."""
     found: dict[str, tuple[Mapping[str, Any], str]] = {}
     for record in records:
         payload = record.get("payload") or {}
-        if payload.get("format") != STEP_RECORD_FORMAT or payload.get("fold") != fold:
+        if payload.get("format") != record_format or payload.get("fold") != fold:
             continue
         _require(record["step"] not in found, f"The step chain holds two {record['step']} records of fold {fold}.")
         found[record["step"]] = (payload, record_sha256(record))
@@ -1389,6 +1739,286 @@ def _s3(plan, records, tables, chain, *, freeze1_sha256, smoke, base_config, ver
             "promotion_config": config.to_record(), "selected": selected}
 
 
+# ---------------------------------------------------------------------------
+# Amendment 2: S1 (best inner), S2 (L9 only) and S4 (refit specification)
+
+
+def unit_recipe_record_v2(unit: PlannedUnit) -> dict[str, Any]:
+    """The recipe record that the identity of a fixed plan-v2 unit must carry: ``Recipe.to_dict`` of the unit's
+    recipe (``rbf_distances: raw`` appears only for the GVP families)."""
+    _require(unit.recipe_source == RECIPE_FIXED, f"{unit.unit_id} is a template unit and has no fixed recipe.")
+    return recipe_for_unit(unit).to_dict()
+
+
+def _selected_v2(step: str, config: str, recipe: Mapping[str, Any], units: Sequence[str], tau: float,
+                 pooled: PooledOof) -> dict[str, Any]:
+    return {"step": step, "config": config, "recipe": dict(recipe), "unit_ids": list(units), "tau": float(tau),
+            "predictions_sha256": predictions_sha256(pooled)}
+
+
+def pool_selected_v2(descriptor: Mapping[str, Any], plan: Mapping[str, Any], records: Mapping[str, FitRecord], *,
+                     tables: Optional[InnerTables] = None, freeze1_sha256: Optional[str] = None, smoke: bool = False,
+                     verifier: Optional[FitVerifier] = None) -> PooledConfiguration:
+    """Re-pool the selected S1 configuration named by an amendment-2 step record (with its tau) and require the
+    recorded predictions hash; the recipe must equal its plan units'."""
+    units = _plan_unit_map(plan)
+    unit_ids = list(descriptor.get("unit_ids") or [])
+    _require(len(unit_ids) == N_INNER_FOLDS * len(SCREENING_SEEDS)
+             and all(uid in units and units[uid].step == STEP_S1 for uid in unit_ids),
+             f"The selected configuration {descriptor.get('config')!r} does not name a grid of S1 plan units.")
+    required = [(units[uid], unit_recipe_record_v2(units[uid])) for uid in unit_ids]
+    _require(all(_recipe_key(recipe) == _recipe_key(descriptor.get("recipe") or {}) for _, recipe in required),
+             f"The selected configuration {descriptor.get('config')!r} names another recipe than its plan units.")
+    fits = collect_fits(records, required, owns=lambda record: False, what=f"selected {descriptor.get('config')}",
+                        freeze1_sha256=freeze1_sha256, smoke=smoke)
+    configuration = pool_fits(str(descriptor.get("config")), fits, tables=tables, verifier=verifier)
+    tau = float(descriptor.get("tau") or 0.0)
+    if tau != 0.0:
+        configuration = replace(configuration, pooled=apply_tau(configuration.pooled, tau))
+    _require(predictions_sha256(configuration.pooled) == descriptor.get("predictions_sha256"),
+             f"The re-pooled {descriptor.get('config')} predictions differ from the step record's hash.")
+    return configuration
+
+
+def _s1_v2(plan, records, tables, *, freeze1_sha256, smoke, base_config, verifier,
+           clean_sanity: Optional[Mapping[str, Any]] = None) -> dict[str, Any]:
+    """Rules A2-SEL-2 to A2-SEL-7: learning rate per family and the best-inner family choice; no bootstrap. C-GF
+    comes from the first F6 learning-rate setting's control files (rule A2-F6-7)."""
+    del base_config  # S1 runs no promotion test under amendment 2
+    s1_units = [unit for unit in plan_units(plan) if unit.step == STEP_S1]
+    fits = collect_fits(records, [(unit, unit_recipe_record_v2(unit)) for unit in s1_units],
+                        owns=lambda record: record.step == STEP_S1, what="S1 fits",
+                        freeze1_sha256=freeze1_sha256, smoke=smoke)
+    families = list(dict.fromkeys(unit.family for unit in s1_units))
+    planned = list(plan.get("families") or [])
+    _require(families == [family for family in planned if family != WHOLE_PROTEIN_CONTROL]
+             and WHOLE_PROTEIN_CONTROL in planned and F6_FAMILY in families,
+             "The plan's S1 units do not cover its families (F6 and its control C-GF are required).")
+    choices, best, configurations, recipes = {}, {}, {}, {}
+    f6_settings: list[list[str]] = []
+    for family in families:
+        settings: dict[str, tuple[str, PlannedUnit, list[str]]] = {}
+        for unit in s1_units:
+            if unit.family == family:
+                name = unit.unit_id.split("__")[3]
+                settings.setdefault(learning_rate_label(unit.learning_rate), (name, unit, []))[2].append(unit.unit_id)
+        pooled = {}
+        for label, (name, first, unit_ids) in settings.items():
+            configurations[name] = pool_fits(name, {uid: fits[uid] for uid in unit_ids}, tables=tables,
+                                             verifier=verifier)
+            _component_check(tables, configurations[name].pooled)
+            pooled[label] = configurations[name].pooled
+            recipes[(family, label)] = (name, unit_recipe_record_v2(first), unit_ids)
+            if family == F6_FAMILY:
+                f6_settings.append(unit_ids)
+        try:
+            choices[family] = s1_choose_learning_rate_primary(family, pooled)
+        except ValueError as exc:
+            raise SelectionInputError(f"S1 {family}: {exc}") from exc
+        best[family] = choices[family].winner
+    # C-GF: pooled from the first F6 setting; the second setting's controls are compared (same host: equal).
+    _require(len(f6_settings) == 2, "F6 needs its two learning-rate settings in S1.")
+    control_name = WHOLE_PROTEIN_CONTROL
+    control_conf, first_controls = pool_control(control_name, {uid: fits[uid] for uid in f6_settings[0]},
+                                                tables=tables, verifier=verifier)
+    _component_check(tables, control_conf.pooled)
+    configurations[control_name] = control_conf
+    second = {}
+    for uid in f6_settings[1]:
+        evidence = verify_fit_evidence(fits[uid], verifier=verifier)
+        second[(evidence.inner_fold, evidence.seed)] = read_control_predictions(evidence, fits[uid].run_dir)[1]
+    by_position = {}
+    for control, uid in zip(first_controls, f6_settings[0]):
+        position = (fits[uid].identity.get("inner_fold"), fits[uid].identity.get("seed"))
+        other = second.get(position)
+        same_host = other is not None and control.host is not None and other.host == control.host
+        digest_equal = other is not None and other.branch_digest == control.branch_digest
+        # Rule A2-F6-5: equal recorded CPU identity and thread count make equal branch digests a requirement.
+        _require(not same_host or digest_equal,
+                 f"F6 inner{position[0]} seed {position[1]}: the two learning-rate settings pretrained on the same "
+                 "recorded CPU identity and thread count give different branch digests (refused, rule A2-F6-5).")
+        by_position[f"inner{position[0]}_seed{position[1]}"] = {
+            "content_equal": other is not None and other.content_sha256 == control.content_sha256,
+            "branch_digest_equal": digest_equal, "same_recorded_host": same_host}
+    determinism = {"rule": "the two F6 learning-rate settings of one (inner fold, seed) must give equal branch "
+                           "digests when the recorded CPU identity and thread count are equal (refused otherwise); "
+                           "with a different or unrecorded host a difference is recorded",
+                   "n_positions": len(by_position),
+                   "n_content_equal": sum(1 for item in by_position.values() if item["content_equal"]),
+                   "n_branch_digest_equal": sum(1 for item in by_position.values() if item["branch_digest_equal"]),
+                   "n_same_recorded_host": sum(1 for item in by_position.values() if item["same_recorded_host"]),
+                   "positions": by_position}
+    winners = {family: pooled for family, pooled in best.items() if family in S1_V2_CANDIDATES}
+    controls = {family: pooled for family, pooled in best.items() if family not in S1_V2_CANDIDATES}
+    controls[WHOLE_PROTEIN_CONTROL] = control_conf.pooled
+    _require("F2" in winners, "S1 needs the anchor F2.")
+    try:
+        screen = s1_best_inner(winners, controls=controls, training_class_counts=_training_counts(winners["F2"]),
+                               clean_sanity_record_sha256=(clean_sanity or {}).get("sha256"))
+    except ValueError as exc:
+        raise SelectionInputError(f"S1 best-inner screen: {exc}") from exc
+    name, recipe, unit_ids = recipes[(screen.winner_family, choices[screen.winner_family].chosen)]
+    return {
+        "metric": PRIMARY_METRIC_V2,
+        "learning_rate_choices": {family: choice.to_record() for family, choice in choices.items()},
+        "best_inner_screen": screen.to_record(),
+        "configurations": {key: value.record() for key, value in configurations.items()},
+        "whole_protein_control": {"family": WHOLE_PROTEIN_CONTROL, "source_family": F6_FAMILY,
+                                  "prediction_file": WP_CONTROL_PREDICTIONS_NAME,
+                                  "unit_ids": list(f6_settings[0]),
+                                  "controls": [item.record() for item in first_controls],
+                                  "second_setting_determinism": determinism},
+        "clean_sanity": None if clean_sanity is None else dict(clean_sanity),
+        "s1_winner": recipe,
+        "selected": _selected_v2(STEP_S1, name, recipe, unit_ids, 0.0, screen.winner),
+    }
+
+
+def _s2_l9_only(plan, records, tables, chain, *, freeze1_sha256, smoke, base_config, verifier) -> dict[str, Any]:
+    """Rule A2-S8: L9 on the re-pooled S1 winner, scored by the primary metric; no fit is read or allowed."""
+    s1_payload, s1_sha256 = chain[STEP_S1]
+    _check_chain_inputs(s1_payload, plan_sha256=plan["plan_sha256"], freeze1_sha256=freeze1_sha256)
+    stray = sorted(uid for uid, record in records.items() if record.step in (STEP_S2, STEP_S3))
+    _require(not stray, f"S2 is the L9-only screen under {SELECTION_PIPELINE_V2}; S2 or S3 fits are refused: "
+                        f"{stray[:8]}.")
+    family = (s1_payload.get("s1_winner") or {}).get("family")
+    s1 = pool_selected_v2(s1_payload["selected"], plan, records, tables=tables, freeze1_sha256=freeze1_sha256,
+                          smoke=smoke, verifier=verifier)
+    _component_check(tables, s1.pooled)
+    config = promotion_config_for(LOGIT_ADJUSTMENT_LEVER, base_config)
+    try:
+        outcome = screen_logit_adjustment_primary(family, s1.pooled, component_of=tables.component_of,
+                                                  training_class_counts=_training_counts(s1.pooled), config=config)
+    except ValueError as exc:
+        raise SelectionInputError(f"S2 L9: {exc}") from exc
+    tau = float(outcome.details["adopted_tau"])
+    selected_pooled = s1.pooled if tau == 0.0 else apply_tau(s1.pooled, tau)
+    return {
+        "s1_record_sha256": s1_sha256,
+        "s1_winner": dict(s1_payload["s1_winner"]),
+        "s1_winner_predictions_sha256": predictions_sha256(s1.pooled),
+        "screen_scope": S2_SCOPE_V2,
+        "rule_id": L9_RULE_V2,
+        "metric": PRIMARY_METRIC_V2,
+        "screened_levers": [LOGIT_ADJUSTMENT_LEVER],
+        "dropped_levers": list(DROPPED_LEVERS_V2),
+        "l9": outcome.to_record(),
+        "adopted_tau": tau,
+        "promotion_config": config.to_record(),
+        "selected": {**dict(s1_payload["selected"]), "step": STEP_S2, "tau": tau,
+                     "predictions_sha256": predictions_sha256(selected_pooled)},
+    }
+
+
+def _s4_v2(plan, chain, *, freeze1_sha256, futility: Optional[Mapping[str, Any]] = None) -> dict[str, Any]:
+    """Rule A2-SEL-9: the S4 refit specification from the S1 and S2 records and, in fold 0, the verified FUT
+    ``continue`` (no fit is read)."""
+    s1_payload, s1_sha256 = chain[STEP_S1]
+    s2_payload, s2_sha256 = chain[STEP_S2]
+    for payload in (s1_payload, s2_payload):
+        _check_chain_inputs(payload, plan_sha256=plan["plan_sha256"], freeze1_sha256=freeze1_sha256)
+    _require(s2_payload.get("s1_record_sha256") == s1_sha256, "The S2 record was built on another S1 record.")
+    fold = plan["fold"]
+    fut_sha256 = None
+    if fold == FUTILITY_FOLD:
+        _require(STEP_FUT in chain and futility is not None, "The fold-0 S4 record needs the verified FUT record.")
+        fut_payload, fut_sha256 = chain[STEP_FUT]
+        _require(fut_payload.get("s2_record_sha256") == s2_sha256 and fut_payload.get("s1_record_sha256") == s1_sha256,
+                 "The FUT record was built on other S1 or S2 records.")
+        _require(futility.get("decision") == FUTILITY_CONTINUE
+                 and futility.get("record_sha256") == fut_payload.get("futility_record_sha256"),
+                 "The fold-0 S4 record needs a verified futility continue (a stop is binding).")
+    winner = dict(s1_payload.get("s1_winner") or {})
+    _require(_recipe_key(s2_payload.get("s1_winner") or {}) == _recipe_key(winner),
+             "The S2 record names another S1 winner.")
+    family = winner.get("family")
+    choice = (s1_payload.get("learning_rate_choices") or {}).get(family) or {}
+    setting = dict(choice.get("chosen_setting") or {})
+    _require(setting == dict(winner.get("learning_rate") or {}),
+             "The S1 winner's learning rate differs from its learning-rate choice.")
+    tau = float(s2_payload.get("adopted_tau", 0.0))
+    try:
+        specification = s4_refit_specification_v2(
+            family=family, learning_rate_setting=setting, adopted_levers=[LOGIT_ADJUSTMENT_LEVER] if tau else [],
+            tau=tau, s1_record_sha256=s1_sha256, s2_record_sha256=s2_sha256, fold=fold,
+            futility_decision=None if fold != FUTILITY_FOLD else futility["decision"],
+            futility_record_sha256=None if fold != FUTILITY_FOLD else futility["record_sha256"])
+    except ValueError as exc:
+        raise SelectionInputError(f"S4: {exc}") from exc
+    _require(specification["rbf_distances"] == winner.get("rbf_distances", "normalized"),
+             "The S1 winner's RBF encoding differs from the amendment-2 encoding of its family.")
+    units = plan_units(plan)
+    return {
+        "s1_record_sha256": s1_sha256,
+        "s2_record_sha256": s2_sha256,
+        "fut_step_record_sha256": fut_sha256,
+        "refit_specification": specification,
+        "refit_units": [unit.unit_id for unit in units if unit.step == STEP_S4],
+    }
+
+
+@dataclass(frozen=True)
+class RefitSpec:
+    """The refit recipe of one outer fold from its verified S4 v2 record (contract X15)."""
+
+    fold: int
+    recipe: Recipe
+    tau: float
+    seeds: tuple[int, ...]
+    f6_pretraining: Optional[Mapping[str, Any]]
+    s4_record_sha256: str
+    refit_unit_ids: tuple[str, ...]
+
+    def record(self) -> dict[str, Any]:
+        return {"fold": self.fold, "recipe": self.recipe.to_dict(), "tau": self.tau, "seeds": list(self.seeds),
+                "f6_pretraining": None if self.f6_pretraining is None else dict(self.f6_pretraining),
+                "s4_record_sha256": self.s4_record_sha256, "refit_unit_ids": list(self.refit_unit_ids)}
+
+
+def verified_refit_recipe(step_chain_path: Path, fold: int, *, freeze1_sha256: str, amendment_tip: Path,
+                          campaign_root: Path, plan_path: Path, smoke: bool = False,
+                          chain_receipt: Optional[Path] = None,
+                          expected_chain: Optional[Sequence[str]] = None) -> RefitSpec:
+    """The refit recipe of ``fold`` from its verified amendment-2 S4 record: the chain is authenticated under the
+    fit chain (or its ``chain_receipt`` checked), the S4 record must equal a fresh ``s4_refit_specification_v2`` of
+    its S1 and S2 records, and fold 0 needs a verified futility ``continue`` (a stop is binding) under the same
+    chain. Raises ``SelectionInputError`` otherwise."""
+    freeze1_sha256 = _check_sha256(freeze1_sha256, "--freeze1-sha256")
+    policy = _selection_policy(Path(amendment_tip), freeze1_sha256, smoke=smoke, chain_receipt=chain_receipt,
+                               expected_chain=expected_chain)
+    _require(is_pipeline_v2(policy), "A refit recipe is defined only under the amendment-2 pipeline.")
+    plan = load_frozen_plan(Path(plan_path), fold, plan_format=PLAN_FORMAT_V2)
+    records = _read_chain(Path(step_chain_path), freeze1_sha256, "--step-chain")
+    _check_policy_chain(records, policy)
+    chain = _fold_records(records, fold, STEP_RECORD_FORMAT_V2)
+    _require(STEP_S4 in chain, f"The step chain holds no S4 record of fold {fold}.")
+    futility = None
+    if fold == FUTILITY_FOLD:
+        from ec_clean30 import futility as futility_module
+
+        try:
+            futility = futility_module.verify_futility_decision(
+                Path(step_chain_path), freeze1_sha256=freeze1_sha256, amendment_tip=Path(amendment_tip),
+                campaign_root=Path(campaign_root), smoke=smoke,
+                **_chain_options(chain_receipt, policy.get("amendment_tip_chain")))
+        except futility_module.FutilityInputError as exc:
+            raise SelectionInputError(str(exc)) from exc
+        _require(futility["decision"] == FUTILITY_CONTINUE, "The fold-0 futility decision is stop_futility.")
+    s4_payload, s4_sha256 = chain[STEP_S4]
+    expected = _s4_v2(plan, chain, freeze1_sha256=freeze1_sha256, futility=futility)
+    _require(s4_payload.get("refit_specification") == json.loads(json.dumps(expected["refit_specification"]))
+             and s4_payload.get("refit_units") == expected["refit_units"],
+             "The S4 record differs from the refit specification of its S1 and S2 records.")
+    spec = expected["refit_specification"]
+    try:
+        recipe = Recipe(spec["family"], tuple(dict(spec["learning_rate_setting"]).items()), int(spec["epochs"]), (),
+                        spec["rbf_distances"])
+    except (CampaignPlanError, KeyError, TypeError, ValueError) as exc:
+        raise SelectionInputError(f"The S4 record names no campaign recipe ({exc}).") from exc
+    return RefitSpec(fold, recipe, float(spec["logit_adjustment_tau"]), tuple(int(seed) for seed in spec["seeds"]),
+                     spec.get("whole_protein_pretraining"), s4_sha256, tuple(expected["refit_units"]))
+
+
 def run_select(
     *,
     fold: int,
@@ -1404,58 +2034,127 @@ def run_select(
     freeze1c_path: Optional[Path] = None,
     l3_cost_disposition_path: Optional[Path] = None,
     freeze1_amendment_path: Optional[Path] = None,
+    clean_sanity_record_path: Optional[Path] = None,
+    clean_sanity_disposition_paths: Sequence[Path] = (),
+    campaign_root: Optional[Path] = None,
+    fold0_step_chain_path: Optional[Path] = None,
+    amendment_chain_receipt_path: Optional[Path] = None,
 ) -> dict[str, Any]:
     """One selection step of one outer fold; appends its record to ``out`` and returns it.
 
     ``base_config`` replaces the frozen promotion settings except alpha, which ``promotion_config_for`` always
     sets (engineering tests only; the runner never passes it).
+
+    Under the amendment-2 policy the steps are S1, S2 (L9 only) and S4 (the refit specification, which reads no
+    fit); in fold 0 the futility record (FUT, written by ``ec_clean30.futility``) sits between S2 and S4. S3, the L3
+    cost inputs and a v1 plan are refused. The fold-0 S1 step needs ``clean_sanity_record_path`` (the passed or
+    disposed CLEAN held-out record, rule A2-CLN-2); the fold-0 S4 step needs ``campaign_root`` (futility pointer
+    files); every step of folds 1-4 needs ``fold0_step_chain_path`` and ``campaign_root`` with a verified fold-0
+    ``continue``. Under a historical policy the steps are S1, S2 and S3 and a v2 plan is refused.
     """
-    _require(step in SELECT_STEPS, f"--step must be one of {SELECT_STEPS}, got {step!r}.")
+    _require(step in SELECT_STEP_CHOICES, f"--step must be one of {SELECT_STEP_CHOICES}, got {step!r}.")
     freeze1_sha256 = _check_sha256(freeze1_sha256, "--freeze1-sha256")
-    policy = _selection_policy(freeze1_amendment_path, freeze1_sha256, smoke=smoke)
+    policy = _selection_policy(freeze1_amendment_path, freeze1_sha256, smoke=smoke,
+                               chain_receipt=amendment_chain_receipt_path)
+    v2 = is_pipeline_v2(policy)
+    steps = SELECT_STEPS_V2 if v2 else SELECT_STEPS
+    pipeline = SELECTION_PIPELINE_V2 if v2 else policy["s1_rule"]
+    _require(step in steps, f"--step {step} is not a step of the {pipeline} selection pipeline (steps {steps}).")
+    if v2 and fold == FUTILITY_FOLD:
+        steps = CHAIN_STEPS_V2_FOLD0
+    _require(v2 or (clean_sanity_record_path is None and not clean_sanity_disposition_paths
+                    and fold0_step_chain_path is None),
+             "The CLEAN sanity and fold-0 chain inputs belong to the amendment-2 pipeline.")
     _require((freeze1c_path is None) == (l3_cost_disposition_path is None),
              "--freeze1c and --l3-cost-disposition must be supplied together.")
+    _require(not v2 or freeze1c_path is None, f"L3 cost inputs are refused under {SELECTION_PIPELINE_V2} (no L3).")
     _require(freeze1c_path is None or step == STEP_S2, "L3 cost inputs are accepted only for S2.")
     out = Path(out)
     folder = tables.record.get("folder")
     _refuse_record_output(out, {fold: Path(folder)} if folder else {})
-    plan = load_frozen_plan(plan_path, fold)
+    plan = load_frozen_plan(plan_path, fold, plan_format=PLAN_FORMAT_V2 if v2 else PLAN_FORMAT)
     chain_records = _read_chain(out, freeze1_sha256, "--out") if out.exists() else []
     _check_policy_chain(chain_records, policy)
-    chain = _fold_records(chain_records, fold)
+    chain = _fold_records(chain_records, fold, STEP_RECORD_FORMAT_V2 if v2 else STEP_RECORD_FORMAT)
     _require(step not in chain, f"The step chain already holds the {step} record of fold {fold}.")
-    previous = {STEP_S1: None, STEP_S2: STEP_S1, STEP_S3: STEP_S2}[step]
+    previous = steps[steps.index(step) - 1] if steps.index(step) else None
     _require(previous is None or previous in chain, f"{step} needs the {previous} record of fold {fold} in --out.")
-    _require(not any(later in chain for later in SELECT_STEPS[SELECT_STEPS.index(step) + 1:]),
+    _require(not any(later in chain for later in steps[steps.index(step) + 1:]),
              f"The step chain already holds a later step of fold {fold}.")
-    for earlier in SELECT_STEPS[:SELECT_STEPS.index(step)]:
+    for earlier in steps[:steps.index(step)]:
+        if earlier == STEP_FUT:
+            continue
         _require(_components_binding(chain[earlier][0].get("components")) == _components_binding(tables.record),
                  f"--components differs from the inner tables the {earlier} record of fold {fold} used "
                  "(component, membership or certificate SHA-256, or their counts).")
-    records = read_runner_records(runs_dirs, fold=fold)
-    _check_fit_policies(records, policy)
-    verifier = FitVerifier()
-    options = {"freeze1_sha256": None if smoke else freeze1_sha256, "smoke": smoke, "base_config": base_config,
-               "verifier": verifier}
-    if step == STEP_S1:
-        result = _s1(plan, records, tables, s1_rule=policy["s1_rule"], **options)
-    elif step == STEP_S2:
-        cost = None if freeze1c_path is None else verify_l3_cost_disposition(
-            plan, records, recipe_from_record(chain[STEP_S1][0]["s1_winner"]),
-            freeze1c_path=freeze1c_path, disposition_path=l3_cost_disposition_path,
-            freeze1_sha256=freeze1_sha256, smoke=smoke, verifier=verifier)
-        result = _s2(plan, records, tables, chain, cost_disposition=cost, **options)
+    futility = None
+    clean_sanity = None
+    if v2:
+        needs_continue = fold != FUTILITY_FOLD or step == STEP_S4 or policy.get("requires_futility_continue")
+        if needs_continue:
+            from ec_clean30 import futility as futility_module
+
+            fold0_chain = Path(out) if fold == FUTILITY_FOLD else fold0_step_chain_path
+            _require(fold0_chain is not None and campaign_root is not None,
+                     f"Fold {fold} {step} needs the fold-0 step chain and --campaign-root with a verified futility "
+                     "continue (rule A2-FUT-1).")
+            try:
+                futility = futility_module.verify_futility_decision(
+                    Path(fold0_chain), freeze1_sha256=freeze1_sha256, amendment_tip=Path(freeze1_amendment_path),
+                    campaign_root=Path(campaign_root), smoke=smoke,
+                    **_chain_options(amendment_chain_receipt_path, policy.get("amendment_tip_chain")))
+            except futility_module.FutilityInputError as exc:
+                raise SelectionInputError(str(exc)) from exc
+            _require(futility["decision"] == FUTILITY_CONTINUE,
+                     "The fold-0 futility decision is stop_futility: no further campaign step is run (A2-FUT-7).")
+        if fold == FUTILITY_FOLD and step == STEP_S1:
+            _require(clean_sanity_record_path is not None,
+                     "The fold-0 S1 record needs --clean-sanity-record (the CLEAN held-out sanity record, A2-CLN-2).")
+            from ec_clean30 import clean_sanity as sanity_module
+
+            refuse_test_paths([clean_sanity_record_path, *clean_sanity_disposition_paths],
+                              what="--clean-sanity-record/--clean-sanity-disposition")
+            try:
+                clean_sanity = sanity_module.held_out_binding(Path(clean_sanity_record_path),
+                                                              [Path(path) for path in clean_sanity_disposition_paths])
+            except sanity_module.SanityError as exc:
+                raise SelectionInputError(f"--clean-sanity-record: {exc}") from exc
+        else:
+            _require(clean_sanity_record_path is None and not clean_sanity_disposition_paths,
+                     "The CLEAN held-out sanity record is bound by the fold-0 S1 record only.")
+    if v2 and step == STEP_S4:
+        records: dict[str, FitRecord] = {}
+        result = _s4_v2(plan, chain, freeze1_sha256=freeze1_sha256, futility=futility)
     else:
-        result = _s3(plan, records, tables, chain, **options)
+        records = read_runner_records(runs_dirs, fold=fold)
+        _check_fit_policies(records, policy)
+        verifier = FitVerifier()
+        options = {"freeze1_sha256": None if smoke else freeze1_sha256, "smoke": smoke, "base_config": base_config,
+                   "verifier": verifier}
+        if v2 and step == STEP_S1:
+            result = _s1_v2(plan, records, tables, clean_sanity=clean_sanity, **options)
+        elif v2:
+            result = _s2_l9_only(plan, records, tables, chain, **options)
+        elif step == STEP_S1:
+            result = _s1(plan, records, tables, s1_rule=policy["s1_rule"], **options)
+        elif step == STEP_S2:
+            cost = None if freeze1c_path is None else verify_l3_cost_disposition(
+                plan, records, recipe_from_record(chain[STEP_S1][0]["s1_winner"]),
+                freeze1c_path=freeze1c_path, disposition_path=l3_cost_disposition_path,
+                freeze1_sha256=freeze1_sha256, smoke=smoke, verifier=verifier)
+            result = _s2(plan, records, tables, chain, cost_disposition=cost, **options)
+        else:
+            result = _s3(plan, records, tables, chain, **options)
     payload = {
-        "format": STEP_RECORD_FORMAT,
-        "schema_version": SCHEMA_VERSION,
+        "format": STEP_RECORD_FORMAT_V2 if v2 else STEP_RECORD_FORMAT,
+        "schema_version": SCHEMA_VERSION_V2 if v2 else SCHEMA_VERSION,
         "campaign_id": CAMPAIGN_ID,
         "fold": fold,
         "step": step,
         "plan_sha256": plan["plan_sha256"],
         "freeze1_sha256": freeze1_sha256,
-        **policy,
+        **{key: value for key, value in policy.items() if key != "requires_futility_continue"},
+        **({"futility": dict(futility)} if futility is not None else {}),
         "smoke": bool(smoke),
         "components": dict(tables.record),
         "n_runner_records": len(records),
@@ -1528,9 +2227,9 @@ def gap_gate_decision(deepmzyme_points: float, clean_r1_points: float, *, after:
 
 
 def _read_clean_arm(paths: Sequence[Path], arm: str) -> dict[int, Any]:
-    from ec_clean30 import scoring
+    from ec_clean30.clean_sanity import load_comparator  # scientific loader; no post-fit analysis file is loaded
 
-    comparator = scoring.comparator
+    comparator = load_comparator()
     exports: dict[int, Any] = {}
     for path in paths:
         path = Path(path)
@@ -1554,15 +2253,11 @@ def _read_clean_arm(paths: Sequence[Path], arm: str) -> dict[int, Any]:
     return exports
 
 
-def score_gap_gate(configuration: PooledConfiguration, r1_exports: Mapping[int, Any], r2_exports: Mapping[int, Any],
-                   *, after: str) -> dict[str, Any]:
-    """Scores on the R1-inner EC closure (see the module docstring); returns counts and points only."""
-    from ec_clean30 import scoring
-
-    comparator = scoring.comparator
-    pooled = configuration.pooled
+def check_clean_queries(pooled: PooledOof, exports_by_arm: Mapping[str, Mapping[int, Any]]) -> None:
+    """Each CLEAN inner export's query IDs must exactly equal the certified validation membership of its inner
+    fold before closure filtering (no extra, missing or duplicate queries)."""
     _require(pooled.inner_fold is not None, "The pooled predictions carry no inner folds.")
-    for arm, exports in (("r1_inner", r1_exports), ("r2_inner", r2_exports)):
+    for arm, exports in exports_by_arm.items():
         _require(set(exports) == set(range(N_INNER_FOLDS)), f"CLEAN {arm} needs exactly four inner folds.")
         for inner, export in exports.items():
             expected = {pid for pid, fold in zip(pooled.protein_ids, pooled.inner_fold) if int(fold) == inner}
@@ -1570,13 +2265,70 @@ def score_gap_gate(configuration: PooledConfiguration, r1_exports: Mapping[int, 
             _require(len(queries) == len(set(queries)) and set(queries) == expected,
                      f"CLEAN {arm} inner fold {inner}: query IDs must exactly equal the certified validation "
                      "membership before closure filtering (no extra, missing or duplicate queries).")
+
+
+def inner_closure_mask(configuration: PooledConfiguration, r1_exports: Mapping[int, Any]) -> np.ndarray:
+    """Pooled proteins whose full EC numbers all occur among the R1-inner training centres of their inner fold."""
+    pooled = configuration.pooled
     closure = {inner: set(export.ec_labels) for inner, export in r1_exports.items()}
     keep = np.array([all(number in closure[int(fold)] for number in configuration.ec_numbers[pid])
                      for pid, fold in zip(pooled.protein_ids, pooled.inner_fold)], dtype=bool)
     _require(keep.any(), "No inner-validation protein has all its EC numbers among the R1-inner training centres.")
+    return keep
+
+
+def clean_inner_outcomes(ids: Sequence[str], true: np.ndarray, folds: np.ndarray, exports: Mapping[int, Any],
+                         arm: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Per scored protein: CLEAN's correctness, its predicted EC class index (class 7, index 6, for a tie, which
+    counts as wrong) and whether it was a tie, from the arm's inner exports (nearest-centre EC class)."""
+    from ec_clean30.clean_sanity import load_comparator  # scientific loader; no post-fit analysis file is loaded
+
+    comparator = load_comparator()
+    correct = np.zeros(len(ids), dtype=bool)
+    predicted = np.full(len(ids), N_EC_CLASSES - 1, dtype=np.int64)
+    tie = np.zeros(len(ids), dtype=bool)
+    for inner, export in exports.items():
+        projection = comparator.project_ec_classes(export.distances, export.query_ids, export.ec_labels)
+        row_of = {query: position for position, query in enumerate(projection.query_ids)}
+        members = [position for position, fold in enumerate(folds) if int(fold) == inner]
+        missing = sum(1 for position in members if ids[position] not in row_of)
+        _require(missing == 0, f"CLEAN {arm} inner fold {inner} lacks predictions for {missing} scored proteins.")
+        for position in members:
+            row = row_of[ids[position]]
+            tied = bool(projection.tie[row])
+            tie[position] = tied
+            correct[position] = (not tied) and projection.predicted_class[row] == EC_CLASS_TOKENS[true[position]]
+            if not tied:
+                predicted[position] = EC_CLASS_TOKENS.index(projection.predicted_class[row])
+    return correct, predicted, tie
+
+
+def inner_closure_rows(configuration: PooledConfiguration, r1_exports: Mapping[int, Any],
+                       r2_exports: Optional[Mapping[int, Any]] = None) -> dict[str, Any]:
+    """The R1-inner EC closure of the pooled inner-validation proteins and CLEAN's outcomes on it (shared by the
+    gap gate and the futility projection): ``keep`` (mask over the pooled proteins), ``ids``, ``true``,
+    ``folds`` and, per CLEAN arm, ``correct``, ``predicted``, ``tie`` (a mask) and ``ties`` (their number)."""
+    exports_by_arm = {"r1_inner": r1_exports, **({} if r2_exports is None else {"r2_inner": r2_exports})}
+    check_clean_queries(configuration.pooled, exports_by_arm)
+    pooled = configuration.pooled
+    keep = inner_closure_mask(configuration, r1_exports)
     ids = [pid for pid, kept in zip(pooled.protein_ids, keep) if kept]
     true = pooled.true_idx[keep]
     folds = pooled.inner_fold[keep]
+    arms = {}
+    for arm, exports in (("clean_r1_inner", r1_exports), ("clean_r2_inner", r2_exports)):
+        if exports is not None:
+            correct, predicted, tie = clean_inner_outcomes(ids, true, folds, exports, arm)
+            arms[arm] = {"correct": correct, "predicted": predicted, "tie": tie, "ties": int(tie.sum())}
+    return {"keep": keep, "ids": ids, "true": true, "folds": folds, "arms": arms}
+
+
+def score_gap_gate(configuration: PooledConfiguration, r1_exports: Mapping[int, Any], r2_exports: Mapping[int, Any],
+                   *, after: str) -> dict[str, Any]:
+    """Scores on the R1-inner EC closure (see the module docstring); returns counts and points only."""
+    pooled = configuration.pooled
+    rows = inner_closure_rows(configuration, r1_exports, r2_exports)
+    keep, ids, true, folds = rows["keep"], rows["ids"], rows["true"], rows["folds"]
     systems: dict[str, dict[str, Any]] = {}
     dm_correct = pooled.predictions[:, keep] == true[None, :]
     by_seed = [correctness_balanced_accuracy(true, row)[0] for row in dm_correct]
@@ -1584,20 +2336,8 @@ def score_gap_gate(configuration: PooledConfiguration, r1_exports: Mapping[int, 
     systems["deepmzyme"] = {"ec_classes_1_6_ba_points": float(np.mean(by_seed)), "ba_points_by_seed": by_seed,
                             "seven_class_ba_points": float(np.mean(seven_by_seed)),
                             "ec7_correct_by_seed": [int(row[true == 6].sum()) for row in dm_correct]}
-    for arm, exports in (("clean_r1_inner", r1_exports), ("clean_r2_inner", r2_exports)):
-        correct = np.zeros(len(ids), dtype=bool)
-        ties = 0
-        for inner, export in exports.items():
-            projection = comparator.project_ec_classes(export.distances, export.query_ids, export.ec_labels)
-            row_of = {query: position for position, query in enumerate(projection.query_ids)}
-            members = [position for position, fold in enumerate(folds) if int(fold) == inner]
-            missing = sum(1 for position in members if ids[position] not in row_of)
-            _require(missing == 0, f"CLEAN {arm} inner fold {inner} lacks predictions for {missing} scored proteins.")
-            for position in members:
-                row = row_of[ids[position]]
-                tied = bool(projection.tie[row])
-                ties += int(tied)
-                correct[position] = (not tied) and projection.predicted_class[row] == EC_CLASS_TOKENS[true[position]]
+    for arm in ("clean_r1_inner", "clean_r2_inner"):
+        correct, ties = rows["arms"][arm]["correct"], rows["arms"][arm]["ties"]
         systems[arm] = {"ec_classes_1_6_ba_points": correctness_balanced_accuracy(true, correct)[0],
                         "seven_class_ba_points": correctness_balanced_accuracy(true, correct, range(N_EC_CLASSES))[0],
                         "n_ties_counted_wrong": ties, "ec7_correct": int(correct[true == 6].sum())}
@@ -1646,11 +2386,14 @@ def run_gap_gate(
     _require(after in GAP_GATE_AFTER, f"--after must be one of {GAP_GATE_AFTER}, got {after!r}.")
     freeze1_sha256 = _check_sha256(freeze1_sha256, "--freeze1-sha256")
     policy = _selection_policy(freeze1_amendment_path, freeze1_sha256, smoke=smoke)
+    _require(not is_pipeline_v2(policy),
+             f"The gap gate is superseded under {SELECTION_PIPELINE_V2}: its computation is a descriptive part of the "
+             "fold-0 futility record (action futility).")
     out = Path(out)
     folder = tables.record.get("folder")
     _refuse_record_output(out, {fold: Path(folder)} if folder else {})
     _require(not out.exists(), f"--out {out.name} already exists (written once).")
-    plan = load_frozen_plan(plan_path, fold)
+    plan = load_frozen_plan(plan_path, fold, plan_format=PLAN_FORMAT)
     records_chain = _read_chain(Path(step_chain), freeze1_sha256, "--step-chain")
     _check_policy_chain(records_chain, policy)
     chain = _fold_records(records_chain, fold)
@@ -1704,8 +2447,10 @@ def run_gap_gate(
 def add_select_arguments(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     """The ``select`` action's arguments (see the module docstring); the handler is ``action_select``."""
     parser.add_argument("--fold", type=int, required=True)
-    parser.add_argument("--step", choices=SELECT_STEPS, required=True)
-    parser.add_argument("--plan", required=True, help="The frozen plan <campaign root>/plans/fold<K>.json.")
+    parser.add_argument("--step", choices=SELECT_STEP_CHOICES, required=True,
+                        help="S1, S2, S3 (historical pipelines) or S1, S2, S4 (amendment 2).")
+    parser.add_argument("--plan", required=True, help="The frozen plan <campaign root>/plans/fold<K>.json "
+                                                      "(amendment 2: <campaign root>/plans_v2/fold<K>.json).")
     parser.add_argument("--runs", action="append", required=True, help="Runs folder of the fold's fits (repeatable).")
     parser.add_argument("--components", required=True,
                         help="The data overlay's identity copy <overlay>/identity/fold<K> "
@@ -1715,6 +2460,15 @@ def add_select_arguments(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     parser.add_argument("--freeze1c", help="Freeze-1c JSON with the approved L3 ceiling (S2 cost skip only).")
     parser.add_argument("--l3-cost-disposition", help="Hash-bound L3 accounting and close-out decision (S2 only).")
     parser.add_argument("--out", required=True, help="Step-record chain (JSON lines; appended).")
+    parser.add_argument("--clean-sanity-record",
+                        help="Amendment 2, fold-0 S1: the CLEAN held-out sanity record (passed, or with a disposition).")
+    parser.add_argument("--clean-sanity-disposition", action="append", default=[],
+                        help="Amendment 2: the maintainer's disposition of a failed held-out sanity record.")
+    parser.add_argument("--campaign-root", help="Amendment 2: the campaign root (futility pointer files).")
+    parser.add_argument("--fold0-step-chain",
+                        help="Amendment 2, folds 1-4: the fold-0 step chain with its verified futility continue.")
+    parser.add_argument("--amendment-chain-receipt",
+                        help="Amendment 2: the verify-amendment-chain receipt, checked instead of verifying again.")
     parser.add_argument("--smoke", action="store_true", help="Engineering use: allow a dirty tree and smoke fits.")
     return parser
 
@@ -1748,10 +2502,12 @@ def action_select(args: argparse.Namespace) -> int:
     Returns 0 after appending a record and 2 when the inputs are refused (``SelectionInputError``, printed as
     ``error: ...``); ``HeldOutInputError`` and ``DirtyTreeError`` propagate to the runner.
     """
-    for name in ("plan", "components", "out", "freeze1c", "l3_cost_disposition", "freeze1_amendment"):
+    for name in ("plan", "components", "out", "freeze1c", "l3_cost_disposition", "freeze1_amendment",
+                 "clean_sanity_record", "campaign_root", "fold0_step_chain"):
         if getattr(args, name, None) is not None:
             refuse_test_paths([getattr(args, name)], what=f"--{name.replace('_', '-')}")
     refuse_test_paths(args.runs, what="--runs")
+    refuse_test_paths(list(getattr(args, "clean_sanity_disposition", None) or []), what="--clean-sanity-disposition")
     try:
         git = real_action_git_state(smoke=args.smoke)
         tables = load_inner_tables(args.fold, Path(args.components), smoke=args.smoke)
@@ -1761,15 +2517,29 @@ def action_select(args: argparse.Namespace) -> int:
                             provenance=provenance_record(smoke=args.smoke, git=git),
                             freeze1c_path=Path(args.freeze1c) if args.freeze1c else None,
                             l3_cost_disposition_path=Path(args.l3_cost_disposition) if args.l3_cost_disposition else None,
-                            freeze1_amendment_path=Path(args.freeze1_amendment) if args.freeze1_amendment else None)
+                            freeze1_amendment_path=Path(args.freeze1_amendment) if args.freeze1_amendment else None,
+                            clean_sanity_record_path=(Path(args.clean_sanity_record)
+                                                      if getattr(args, "clean_sanity_record", None) else None),
+                            clean_sanity_disposition_paths=[Path(path) for path in
+                                                            getattr(args, "clean_sanity_disposition", None) or []],
+                            campaign_root=Path(args.campaign_root) if getattr(args, "campaign_root", None) else None,
+                            fold0_step_chain_path=(Path(args.fold0_step_chain)
+                                                   if getattr(args, "fold0_step_chain", None) else None),
+                            amendment_chain_receipt_path=(Path(args.amendment_chain_receipt)
+                                                          if getattr(args, "amendment_chain_receipt", None) else None))
     except SelectionInputError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     payload = record["payload"]
     summary = {"step": record["step"], "index": record["index"], "fold": payload["fold"],
                "record_sha256": record_sha256(record), "n_runner_records": payload["n_runner_records"]}
-    if record["step"] == STEP_S2:
+    if record["step"] == STEP_S2 and "screen" in payload:
         summary["levers"] = {item["lever"]: item["status"] for item in payload["screen"]["outcomes"]}
+    elif record["step"] == STEP_S2:
+        summary["levers"] = {payload["l9"]["lever"]: payload["l9"]["status"]}
+        summary["adopted_tau"] = payload["adopted_tau"]
+    if record["step"] == STEP_S4 and "refit_specification" in payload:
+        summary["refit_family"] = payload["refit_specification"]["family"]
     if "selected" in payload:
         summary["selected"] = payload["selected"]["config"]
     _print_summary(summary)

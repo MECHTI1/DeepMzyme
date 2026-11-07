@@ -73,6 +73,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 import csv
+import importlib
 from dataclasses import dataclass
 import io
 import json
@@ -154,6 +155,12 @@ FORWARD_CONFIG = {
     "ith_hidden_layer": -1,
 }
 TOKEN_TRIM = "drop_bos_and_eos"
+# Forward precision (amendment 2, rule A2-F6-4). "sdk" is the historical path (``ESMC.logits``: bfloat16 parameters
+# and bfloat16 autocast on CUDA); "fp32" casts the parameters to float32 after loading, calls ``ESMC.forward``
+# directly with autocast disabled, refuses flash attention, sets TF32 off and requires float32 outputs.
+FORWARD_PRECISION_SDK = "sdk"
+FORWARD_PRECISION_FP32 = "fp32"
+FORWARD_PRECISIONS = (FORWARD_PRECISION_SDK, FORWARD_PRECISION_FP32)
 MASK_TOKEN = "<mask>"
 MASK_POLICY = "'<mask>' is one residue token; masked positions are included in the mean"
 # Pre-declared tolerance for chain means of one protein computed by two routes.
@@ -513,6 +520,51 @@ def build_from_residue_cache(
 # Model forward (from-model and sequences)
 # ---------------------------------------------------------------------------
 
+def _flash_attention_flags(model: Any) -> list[str]:
+    """Module paths whose flash-attention flag is set (the SDK picks flash attention at construction)."""
+    flagged = []
+    modules = model.named_modules() if hasattr(model, "named_modules") else [("", model)]
+    for name, module in modules:
+        for attribute in ("_use_flash_attn", "use_flash_attn"):
+            if getattr(module, attribute, False) is True:
+                flagged.append(f"{name or '<model>'}.{attribute}")
+    return flagged
+
+
+def configure_fp32_precision(model: Any, device: str) -> dict[str, Any]:
+    """The fp32 path: float32 parameters (the SDK casts to bfloat16 off CPU), no flash attention, TF32 off.
+
+    TF32 is set off and recorded by ``ec_clean30.runtime_precision.configure_and_record``. On CUDA the module is
+    required (rule A2-GOV-3): without it the build refuses, because no other record proves the TF32-off state that
+    ``pretrain-corpus attach`` checks. On CPU without the module the two backend flags are set off here and the
+    record says so; such a record does not pass ``runtime_precision.validate_policy``, so attach refuses that cache.
+    """
+    flagged = _flash_attention_flags(model)
+    if flagged:
+        raise GlobalEsmCacheError(f"The fp32 forward refuses flash attention (set at construction): {flagged[:4]}.")
+    kind = torch.device(device).type
+    try:
+        # Scientific file of the execution lane (contract X10); import_module honours a sys.modules entry.
+        runtime_precision = importlib.import_module("ec_clean30.runtime_precision")
+    except ImportError:
+        if kind == "cuda":
+            raise GlobalEsmCacheError("The fp32 forward on CUDA needs ec_clean30.runtime_precision to set and record "
+                                      "TF32 off (rule A2-GOV-3); refused instead of a local fallback.") from None
+        runtime_precision = None
+    model.to(torch.float32)
+    dtypes = sorted({str(parameter.dtype).removeprefix("torch.") for parameter in model.parameters()})
+    if dtypes != ["float32"]:
+        raise GlobalEsmCacheError(f"The fp32 forward needs float32 parameters, found {dtypes}.")
+    if runtime_precision is None:
+        torch.backends.cuda.matmul.allow_tf32 = False
+        torch.backends.cudnn.allow_tf32 = False
+        policy = {"device": kind, "cuda_matmul_allow_tf32": False, "cudnn_allow_tf32": False,
+                  "recorded_by": "esmc_chain_means (ec_clean30.runtime_precision not available)"}
+    else:
+        policy = dict(runtime_precision.configure_and_record(kind))
+    return {"parameter_dtypes": dtypes, "precision_policy": policy}
+
+
 def load_esmc_for_layers(model_name: str, device: str) -> tuple[Any, tuple[Any, Any, Any]]:
     sdk = _esmc_sdk()
     model = sdk[0].from_pretrained(model_name, device=torch.device(device))
@@ -520,7 +572,9 @@ def load_esmc_for_layers(model_name: str, device: str) -> tuple[Any, tuple[Any, 
     return model, sdk
 
 
-def describe_runtime(model: Any, *, model_name: str, requested_device: str) -> dict[str, Any]:
+def describe_runtime(model: Any, *, model_name: str, requested_device: str,
+                     forward_precision: str = FORWARD_PRECISION_SDK,
+                     precision: Mapping[str, Any] | None = None) -> dict[str, Any]:
     parameter = next(iter(model.parameters()), None)
     device = parameter.device if parameter is not None else torch.device(requested_device)
     versions = installed_package_versions()
@@ -536,6 +590,10 @@ def describe_runtime(model: Any, *, model_name: str, requested_device: str) -> d
         "forward_config": dict(FORWARD_CONFIG),
         "python": platform.python_version(),
         "versions": {name: versions.get(name) for name in RECORDED_PACKAGES},
+        # Only the fp32 path adds these keys, so every historical runtime record (and resume check) is unchanged.
+        **({"forward_precision": FORWARD_PRECISION_FP32, "autocast_dtype": None, "forward_call": "ESMC.forward",
+            "precision": dict(precision or {})}
+           if forward_precision == FORWARD_PRECISION_FP32 else {}),
     }
 
 
@@ -555,12 +613,57 @@ def forward_layer_means(
     n_tokens: int,
     layer_index: int,
     embedding_dim: int,
+    forward_precision: str = FORWARD_PRECISION_SDK,
 ) -> LayerMeans:
     """One ESMC forward; means of the final layer and of block ``layer_index`` without BOS/EOS."""
     _model_cls, protein_cls, config_cls = sdk
-    with torch.no_grad():
-        output = model.logits(model.encode(protein_cls(sequence=sequence)), config_cls(**FORWARD_CONFIG))
-    embeddings, hidden = output.embeddings, output.hidden_states
+    if forward_precision == FORWARD_PRECISION_FP32:
+        embeddings, hidden = _fp32_forward(model, protein_cls, sequence)
+    else:
+        with torch.no_grad():
+            output = model.logits(model.encode(protein_cls(sequence=sequence)), config_cls(**FORWARD_CONFIG))
+        embeddings, hidden = output.embeddings, output.hidden_states
+    means = _layer_means(embeddings, hidden, n_tokens=n_tokens, layer_index=layer_index, embedding_dim=embedding_dim)
+    if forward_precision == FORWARD_PRECISION_FP32 and set(means.emitted_dtypes.values()) != {"float32"}:
+        raise GlobalEsmCacheError(f"The fp32 forward emitted {means.emitted_dtypes}, not float32.")
+    return means
+
+
+def _autocast_active() -> bool:
+    return bool(torch.is_autocast_enabled())
+
+
+def _fp32_forward(model: Any, protein_cls: Any, sequence: str) -> tuple[Any, Any]:
+    """``ESMC.forward`` under ``no_grad`` with autocast disabled (bypassing ``ESMC.logits``, which opens its own
+    bfloat16 autocast on CUDA); a forward hook refuses any active autocast. ``FORWARD_CONFIG`` keeps every hidden
+    state and the final embeddings, as ``ESMC.logits`` would return them."""
+    encoded = model.encode(protein_cls(sequence=sequence))
+    tokens = encoded.sequence
+    if tokens.dim() == 1:
+        tokens = tokens.unsqueeze(0)
+    seen: list[bool] = []
+
+    def hook(_module: Any, _inputs: Any, _output: Any) -> None:
+        seen.append(_autocast_active())
+
+    target = getattr(model, "transformer", model)
+    handle = target.register_forward_hook(hook) if hasattr(target, "register_forward_hook") else None
+    try:
+        with torch.no_grad(), torch.autocast(device_type=tokens.device.type, enabled=False):
+            output = model.forward(sequence_tokens=tokens)
+    finally:
+        if handle is not None:
+            handle.remove()
+    if any(seen):
+        raise GlobalEsmCacheError("Autocast was active inside the fp32 forward.")
+    hidden = output.hidden_states
+    if FORWARD_CONFIG["ith_hidden_layer"] != -1 and hidden is not None:
+        index = FORWARD_CONFIG["ith_hidden_layer"]
+        hidden = hidden[index:index + 1]
+    return output.embeddings, hidden
+
+
+def _layer_means(embeddings: Any, hidden: Any, *, n_tokens: int, layer_index: int, embedding_dim: int) -> LayerMeans:
     if embeddings is None or hidden is None:
         raise GlobalEsmCacheError("The model returned no embeddings or hidden states.")
     if embeddings.dim() == 3 and embeddings.size(0) == 1:
@@ -569,8 +672,8 @@ def forward_layer_means(
         hidden = hidden[:, 0]
     if embeddings.dim() != 2 or hidden.dim() != 3:
         raise GlobalEsmCacheError(
-            f"Unexpected output shapes: embeddings {tuple(output.embeddings.shape)}, "
-            f"hidden states {tuple(output.hidden_states.shape)} (one sequence per forward is required)."
+            f"Unexpected output shapes: embeddings {tuple(embeddings.shape)}, "
+            f"hidden states {tuple(hidden.shape)} (one sequence per forward is required)."
         )
     expected_positions = n_tokens + 2
     if embeddings.size(0) != expected_positions or hidden.size(1) != expected_positions:
@@ -595,17 +698,24 @@ def forward_layer_means(
 
 
 def _model_and_runtime(
-    model: Any, sdk: Any, *, model_name: str, device: str, layer_index: int
+    model: Any, sdk: Any, *, model_name: str, device: str, layer_index: int,
+    forward_precision: str = FORWARD_PRECISION_SDK,
 ) -> tuple[Any, Any, dict[str, Any]]:
     _check_layer_index(layer_index)
+    if forward_precision not in FORWARD_PRECISIONS:
+        raise GlobalEsmCacheError(f"--forward-precision must be one of {FORWARD_PRECISIONS}.")
+    precision = None
     if model is None:
-        model, sdk = load_esmc_for_layers(model_name, device)
+        model, sdk = load_esmc_for_layers(model_name, device)  # the one loading hook; fp32 is applied below
     elif sdk is None:
         raise GlobalEsmCacheError("An injected model needs its SDK triple (model class, protein class, config class).")
+    if forward_precision == FORWARD_PRECISION_FP32:
+        precision = configure_fp32_precision(model, device)
     blocks = getattr(getattr(model, "transformer", None), "blocks", None)
     if blocks is not None and layer_index >= len(blocks):
         raise GlobalEsmCacheError(f"Layer index {layer_index} is out of range for a {len(blocks)}-block model.")
-    return model, sdk, describe_runtime(model, model_name=model_name, requested_device=device)
+    return model, sdk, describe_runtime(model, model_name=model_name, requested_device=device,
+                                        forward_precision=forward_precision, precision=precision)
 
 
 def _reuse_existing(
@@ -665,6 +775,7 @@ def build_from_model(
     resume: bool = False,
     model: Any = None,
     sdk: Any = None,
+    forward_precision: str = FORWARD_PRECISION_SDK,
 ) -> dict[str, Any]:
     _check_layer_index(layer_index)
     allowlist = read_id_allowlist(allowlist_path, expected_sha256=expected_allowlist_sha256)
@@ -677,10 +788,12 @@ def build_from_model(
         "requested_device": str(device),
         "allowlist_sha256": allowlist.file_sha256,
     }
+    if forward_precision != FORWARD_PRECISION_SDK:
+        settings["forward_precision"] = forward_precision
     out_dir = _prepare_output_dir(out_dir, resume=resume, settings=settings)
     chains = _load_chain_inputs(structure_dir, allowlist.ids, roots, structure_manifest=structure_manifest)
     model, sdk, runtime = _model_and_runtime(
-        model, sdk, model_name=model_name, device=device, layer_index=layer_index
+        model, sdk, model_name=model_name, device=device, layer_index=layer_index, forward_precision=forward_precision
     )
     block_layer = layer_name(layer_index)
 
@@ -709,7 +822,7 @@ def build_from_model(
             continue
         means = forward_layer_means(
             model, sdk, chain.sequence, n_tokens=len(chain.sequence), layer_index=layer_index,
-            embedding_dim=embedding_dim,
+            embedding_dim=embedding_dim, forward_precision=forward_precision,
         )
         for layer, mean in ((FINAL_LAYER, means.final), (block_layer, means.block)):
             payload = chain_mean_payload(
@@ -954,6 +1067,7 @@ def build_sequence_means(
     resume: bool = False,
     model: Any = None,
     sdk: Any = None,
+    forward_precision: str = FORWARD_PRECISION_SDK,
 ) -> dict[str, Any]:
     _check_layer_index(layer_index)
     if max_residue_tokens is not None and (isinstance(max_residue_tokens, bool) or max_residue_tokens <= 0):
@@ -972,10 +1086,12 @@ def build_sequence_means(
         "mask_policy": MASK_POLICY,
         "truncation": truncation,
     }
+    if forward_precision != FORWARD_PRECISION_SDK:
+        settings["forward_precision"] = forward_precision  # absent for the historical path (resume unchanged)
 
     out_dir = _prepare_output_dir(out_dir, resume=resume, settings=settings)
     model, sdk, runtime = _model_and_runtime(
-        model, sdk, model_name=model_name, device=device, layer_index=layer_index
+        model, sdk, model_name=model_name, device=device, layer_index=layer_index, forward_precision=forward_precision
     )
     block_layer = layer_name(layer_index)
 
@@ -1005,7 +1121,8 @@ def build_sequence_means(
             n_reused += 1
             continue
         means = forward_layer_means(
-            model, sdk, "".join(used), n_tokens=len(used), layer_index=layer_index, embedding_dim=embedding_dim
+            model, sdk, "".join(used), n_tokens=len(used), layer_index=layer_index, embedding_dim=embedding_dim,
+            forward_precision=forward_precision,
         )
         for layer, mean in ((FINAL_LAYER, means.final), (block_layer, means.block)):
             payload = sequence_mean_payload(
@@ -1123,6 +1240,9 @@ def _add_model_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--layer-index", type=int, required=True,
                         help="Zero-based ESMC block whose output (before the final norm) is averaged.")
     parser.add_argument("--device", required=True, help="Torch device for the forward pass, e.g. cpu or cuda.")
+    parser.add_argument("--forward-precision", choices=FORWARD_PRECISIONS, default=FORWARD_PRECISION_SDK,
+                        help="'fp32': float32 parameters, ESMC.forward without autocast or flash attention, TF32 "
+                             "off (amendment 2); 'sdk' keeps the historical ESMC.logits path.")
     parser.add_argument("--resume", action="store_true",
                         help="Continue an interrupted run in --out that was started with the same settings.")
 
@@ -1180,6 +1300,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
     compare.add_argument("--max-abs-diff", type=float, default=PARITY_MAX_ABS_DIFF,
                          help=f"Fail when any difference is larger (default {PARITY_MAX_ABS_DIFF}).")
     compare.add_argument("--out", type=Path, default=None, help="Optional JSON report path.")
+    compare.add_argument("--kind", choices=("chain_mean", "sequence_mean"), default="chain_mean",
+                         help="'sequence_mean' compares two sequence-mean caches on sequence SHA-256 keys (final "
+                              "layer, the amendment-2 GPU-versus-CPU sample check).")
     return parser
 
 
@@ -1197,13 +1320,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = build_from_model(
                 args.allowlist, args.structure_dir, args.out, layer_index=args.layer_index, device=args.device,
                 permitted_roots=args.permitted_root, structure_manifest=args.structure_manifest,
-                expected_allowlist_sha256=args.allowlist_sha256, resume=args.resume, **common,
+                expected_allowlist_sha256=args.allowlist_sha256, resume=args.resume,
+                forward_precision=args.forward_precision, **common,
             )
         elif args.action == "sequences":
             result = build_sequence_means(
                 args.fasta, args.sequence_map, args.out, layer_index=args.layer_index, device=args.device,
                 max_residue_tokens=args.max_residue_tokens, expected_sequence_map_sha256=args.sequence_map_sha256,
-                resume=args.resume, **common,
+                resume=args.resume, forward_precision=args.forward_precision, **common,
             )
         elif args.action == "subset":
             keys = read_id_allowlist(args.ids).ids
@@ -1218,6 +1342,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                     subset_name=args.name, manifest_name=args.manifest_name,
                 )
             result = {"action": "subset", "manifest": str(path), "manifest_sha256": digest, "n_ids": len(keys)}
+        elif getattr(args, "kind", "chain_mean") == "sequence_mean":
+            from ec_clean30.pretrain_corpus import compare_sequence_mean_samples
+
+            result = compare_sequence_mean_samples(args.cache_a, args.manifest_a_sha256, args.cache_b,
+                                                   args.manifest_b_sha256, read_id_allowlist(args.ids).ids)
+            result["passed"] = bool(result.get("passed", result.get("status") == "passed"))
+            if args.out is not None:
+                args.out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         else:
             result = compare_chain_mean_caches(
                 args.cache_a, args.manifest_a_sha256, args.cache_b, args.manifest_b_sha256,

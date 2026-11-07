@@ -31,6 +31,14 @@ followed by the runner's own additions (``--ring-features-dir``, ``--runs-dir``,
     --external-features-root-dir V/external --dataset-bundle-id g1-smoke-view --dataset-bundle-sha256 <view sha>
     --device cpu --load-workers 1 --num-workers 0 --seed 42
 
+Amendment 2 adds two recipe renderings and nothing else changes for the Freeze-1 families:
+an F6 unit adds ``--global-esm-branch-init pretrained_frozen``, the view's pretraining corpus
+and sequence-mean subset (``whole_protein_pretrain/``, both with their SHA-256), the
+pretraining split (``inner<j>`` or ``refit``) and the three fixed pretraining
+hyperparameters right after the whole-protein branch flags, and its identity adds
+``wp_pretrain_corpus_sha256`` and ``wp_pretrain_manifest_sha256``; a GVP recipe with
+``rbf_distances="raw"`` adds ``--rbf-use-raw-distances`` after ``--ec-contrastive-weight``.
+
 ``check_command`` refuses abbreviated or unknown flags and checks the configuration the
 trainer resolves, not only the tokens: every input path inside the view, the runs folder
 outside it, no other path, and the same configuration as the recipe's own command.
@@ -58,8 +66,10 @@ import time
 from typing import Any, Mapping, Optional, Sequence
 
 from ec_clean30.campaign import (
-    CAMPAIGN_ID, FAMILY_SPECS, KIND_INNER, KIND_REFIT, LEVER_CONFIGS, N_OUTER_FOLDS, STEP_S4, Recipe, canonical_json,
-    canonical_sha256, format_learning_rate,
+    CAMPAIGN_ID, F6_PRETRAINING, FAMILY_SPECS, FAMILY_SPECS_V2, KIND_INNER, KIND_REFIT, LEVER_CONFIGS, N_OUTER_FOLDS,
+    RBF_DISTANCES_RAW,
+    STEP_S4, WHOLE_PROTEIN_PRETRAIN_FAMILIES, Recipe, canonical_json, canonical_sha256, format_learning_rate,
+    wp_pretrain_split,
 )
 from ec_clean30.provenance import (
     SRC_ROOT, HeldOutInputError, is_test_named_path, provenance_record, refuse_test_arguments, sha256_bytes,
@@ -81,11 +91,14 @@ PREDICTION_FILE_NAMES: Mapping[str, tuple[str, str]] = {
     "validation": ("ec_val_pocket_predictions.csv", "ec_val_protein_predictions.csv"),
     "probe": ("ec_probe_pocket_predictions.csv", "ec_probe_protein_predictions.csv"),
 }
-GLOBAL_FAMILIES = frozenset(family for family, spec in FAMILY_SPECS.items() if spec.global_branch)
+# The families with a whole-protein branch, F6 included (amendment 2); F6 units also pass the pretraining checks.
+GLOBAL_FAMILIES = frozenset(family for family, spec in FAMILY_SPECS_V2.items() if spec.global_branch)
 
 DATA_PATH_FLAGS: tuple[str, ...] = (
     "--structure-dir", "--summary-csv", "--esm-embeddings-dir", "--external-features-root-dir",
     "--ring-features-dir", "--global-esm-cache-dir", "--fold-membership-csv", "--ec-probe-structure-ids",
+    # Amendment 2 (F6): the view's whole-protein pretraining corpus and its sequence-mean subset.
+    "--global-esm-pretrain-cache-dir", "--global-esm-pretrain-corpus",
 )
 OUTPUT_PATH_FLAGS: tuple[str, ...] = ("--runs-dir",)
 CACHE_ENVIRONMENT: Mapping[str, str] = {
@@ -188,6 +201,25 @@ def _global_cache(view: View, recipe: Recipe) -> tuple[Path, str]:
     return directory, digest
 
 
+def _wp_pretrain_inputs(view: View, recipe: Recipe, *, stub: bool = False):
+    """The view's whole-protein pretraining corpus and sequence-mean subset (F6 only; ``None`` otherwise).
+
+    ``stub=True`` (amendment-2 dry runs only) gives the declared pretraining-input stub instead
+    (``pretrain_corpus.stub_pretrain_inputs``, rule A2-GOV-4)."""
+    if not recipe.pretrains_global_branch:
+        return None
+    from ec_clean30.pretrain_corpus import PretrainCorpusError, stub_pretrain_inputs, view_pretrain_inputs
+
+    if stub:
+        return stub_pretrain_inputs(view)
+
+    try:
+        return view_pretrain_inputs(view)
+    except PretrainCorpusError as exc:
+        raise CommandError(f"{recipe.family} needs the view's whole-protein pretraining corpus (build it with the "
+                           f"pretrain-corpus action first): {exc}") from exc
+
+
 def _payload_sha256(payload: Mapping[str, Any]) -> str:
     return sha256_bytes(json.dumps(payload, sort_keys=True, default=str).encode("utf-8"))
 
@@ -227,6 +259,7 @@ def _base_argv(
     runs_dir: str | os.PathLike,
     inner_fold: Optional[int],
     device: str,
+    pretrain_stub: bool = False,
 ) -> tuple[list[str], Optional[str]]:
     """The trainer arguments a recipe gives on ``view`` (without the run identity) and the chain-mean SHA-256."""
     if kind not in (KIND_INNER, KIND_REFIT):
@@ -254,9 +287,25 @@ def _base_argv(
         cache_dir, cache_digest = _global_cache(view, recipe)
         head.update({"--use-global-esm-branch": True, "--global-esm-cache-dir": str(cache_dir),
                      "--global-esm-manifest-sha256": cache_digest})
+    pretrain = _wp_pretrain_inputs(view, recipe, stub=pretrain_stub)
+    if pretrain is not None:
+        # Amendment 2 (F6): pretrain the whole-protein branch on the fold's full training file, then freeze it.
+        head.update({"--global-esm-branch-init": "pretrained_frozen",
+                     "--global-esm-pretrain-cache-dir": str(pretrain.cache_dir),
+                     "--global-esm-pretrain-manifest-sha256": pretrain.manifest_sha256,
+                     "--global-esm-pretrain-corpus": str(pretrain.corpus),
+                     "--global-esm-pretrain-corpus-sha256": pretrain.corpus_sha256,
+                     "--global-esm-pretrain-split": wp_pretrain_split(
+                         kind, None if inner_fold is None else int(inner_fold)),
+                     "--global-esm-pretrain-epochs": int(F6_PRETRAINING["epochs"]),
+                     "--global-esm-pretrain-learning-rate": float(F6_PRETRAINING["learning_rate"]),
+                     "--global-esm-pretrain-batch-size": int(F6_PRETRAINING["batch_size"])})
     model = {"--ec-group-weighting": "structure_id", "--ec-class-weight-unit": "group", "--batch-size": 4,
              "--epochs": int(recipe.epochs), "--lr-schedule": "cosine", "--checkpoint-rule": "terminal",
              "--edge-radius": 6.0, "--ec-contrastive-weight": 0}
+    if recipe.rbf_distances == RBF_DISTANCES_RAW:
+        # Amendment 2 (P14): node and edge RBFs read distances in angstrom (the 999 A sentinel gives a zero row).
+        model["--rbf-use-raw-distances"] = True
     for config_id in recipe.lever_configs:
         for flag, value in LEVER_CONFIGS[config_id].options_for(recipe.family):
             (head if flag in head else model)[flag] = value
@@ -299,8 +348,12 @@ def build_unit_command(
     git_head: Optional[str] = None,
     tree_sha256: Optional[str] = None,
     freeze1b_sha256: Optional[str] = None,
+    pretrain_stub: bool = False,
 ) -> UnitCommand:
     """Exact trainer arguments of one unit on ``view`` (see the module docstring for the order).
+
+    ``pretrain_stub=True`` builds an F6 command against the declared pretraining-input stub (amendment-2 dry runs
+    only); its identity carries ``wp_pretrain_input_stub_sha256`` and ``run_unit`` and ``verify_unit`` refuse it.
 
     The run identity follows map I-10: campaign, Freeze-1 SHA-256 and its amendment chain,
     the Freeze-1b SHA-256 (identity audit; ``None`` before it exists), code tree, overlay ID
@@ -318,7 +371,7 @@ def build_unit_command(
     if freeze1b_sha256 is not None and not _is_sha256(freeze1b_sha256):
         raise CommandError(f"freeze1b_sha256 must be a 64-character lowercase hex SHA-256, got {freeze1b_sha256!r}.")
     base_argv, cache_digest = _base_argv(view, recipe, unit_id=unit_id, kind=kind, seed=seed, runs_dir=runs_dir,
-                                         inner_fold=inner_fold, device=device)
+                                         inner_fold=inner_fold, device=device, pretrain_stub=pretrain_stub)
     membership = view.membership
     identity = {
         "campaign_id": CAMPAIGN_ID,
@@ -344,6 +397,13 @@ def build_unit_command(
         "source_tree_sha256": tree_sha256,
         "resolved_config_sha256": resolved_config_sha256(base_argv),
     }
+    pretrain = _wp_pretrain_inputs(view, recipe, stub=pretrain_stub)
+    if pretrain is not None:
+        # F6 units only, so every other family's identity keeps its keys.
+        identity["wp_pretrain_corpus_sha256"] = pretrain.corpus_sha256
+        identity["wp_pretrain_manifest_sha256"] = pretrain.manifest_sha256
+        if pretrain_stub:
+            identity["wp_pretrain_input_stub_sha256"] = pretrain.receipt_sha256
     argv = [*base_argv, "--campaign-run-identity", canonical_json(identity)]
     command = UnitCommand(unit_id=unit_id, kind=kind, step=step, seed=int(seed), recipe=recipe, argv=tuple(argv),
                           env=cache_environment(view), identity=identity,
@@ -390,6 +450,7 @@ def _is_number(token: str) -> bool:
 RESOLVED_DATA_FIELDS: tuple[str, ...] = (
     "structure_dir", "summary_csv", "esm_embeddings_dir", "external_features_root_dir", "ring_features_dir",
     "global_esm_cache_dir", "fold_membership_csv", "ec_probe_structure_ids",
+    "global_esm_pretrain_cache_dir", "global_esm_pretrain_corpus",
 )
 ALWAYS_SET_DATA_FIELDS = frozenset({"structure_dir", "summary_csv", "esm_embeddings_dir",
                                     "external_features_root_dir", "ring_features_dir"})
@@ -406,7 +467,18 @@ def _expected_settings(command: UnitCommand) -> dict[str, Any]:
         "test_summary_csv": None, "export_ec_predictions": True, "use_ring_edges": False,
         "epochs": command.recipe.epochs, "seed": command.seed, "load_workers": 1, "num_workers": 0,
         "run_name": command.unit_id,
+        "global_esm_branch_init": "pretrained_frozen" if command.recipe.pretrains_global_branch else "random",
     }
+
+
+def _is_pretrain_stub(command: UnitCommand) -> bool:
+    """Whether ``command`` was built against the declared pretraining-input stub (dry runs only)."""
+    from ec_clean30.pretrain_corpus import PRETRAIN_STUB_SHA256
+
+    marker = (command.identity or {}).get("wp_pretrain_input_stub_sha256")
+    if marker is not None and marker != PRETRAIN_STUB_SHA256:
+        raise CommandError("The command names an unknown pretraining-input stub.")
+    return marker == PRETRAIN_STUB_SHA256
 
 
 def check_command(command: UnitCommand, view: View) -> list[str]:
@@ -477,7 +549,9 @@ def check_command(command: UnitCommand, view: View) -> list[str]:
         if actual != value:
             problems.append(f"resolved {name} is {actual!r}, expected {value!r}")
     uses = {"global_esm_cache_dir": command.recipe.spec.global_branch,
-            "fold_membership_csv": command.kind == KIND_INNER, "ec_probe_structure_ids": command.kind == KIND_REFIT}
+            "fold_membership_csv": command.kind == KIND_INNER, "ec_probe_structure_ids": command.kind == KIND_REFIT,
+            "global_esm_pretrain_cache_dir": command.recipe.pretrains_global_branch,
+            "global_esm_pretrain_corpus": command.recipe.pretrains_global_branch}
     for name in RESOLVED_DATA_FIELDS:
         value = payload.get(name)
         needed = name in ALWAYS_SET_DATA_FIELDS or uses.get(name, False)
@@ -511,11 +585,12 @@ def check_command(command: UnitCommand, view: View) -> list[str]:
     # The resolved configuration must be the one the recipe gives on this view.
     actual = dict(payload)
     actual["campaign_run_identity"] = None
+    stubbed = _is_pretrain_stub(command)
     try:
         expected_argv, _digest = _base_argv(
             view, command.recipe, unit_id=command.unit_id, kind=command.kind, seed=command.seed,
             runs_dir=command.runs_dir or payload.get("runs_dir") or "", inner_fold=command.inner_fold,
-            device=command.device)
+            device=command.device, pretrain_stub=stubbed)
         expected = config_to_payload(parse_args(expected_argv))
     except (CommandError, SystemExit, ValueError) as exc:
         problems.append(f"the recipe's own command cannot be rebuilt on this view: {exc}")
@@ -535,6 +610,14 @@ def check_command(command: UnitCommand, view: View) -> list[str]:
              "recipe": command.recipe.to_dict(), "view_manifest_sha256": view.manifest_sha256,
              "allowlist_sha256": view.allowlist_sha256, "overlay_id": overlay_id, "overlay_sha256": overlay_sha256,
              "resolved_config_sha256": _payload_sha256(actual)}
+    if command.recipe.pretrains_global_branch:
+        try:
+            pretrain = _wp_pretrain_inputs(view, command.recipe, stub=stubbed)
+        except CommandError as exc:
+            problems.append(str(exc))
+        else:
+            bound["wp_pretrain_corpus_sha256"] = pretrain.corpus_sha256
+            bound["wp_pretrain_manifest_sha256"] = pretrain.manifest_sha256
     for name, value in bound.items():
         if identity.get(name) != value:
             problems.append(f"the campaign run identity's {name} does not match this unit and view")
@@ -595,6 +678,8 @@ def run_unit(
     from ec_clean30.views import runs_dir_problem
 
     problems = check_command(command, view)
+    if _is_pretrain_stub(command):
+        problems.append("the command was built against the dry-run pretraining-input stub and never runs")
     runs_problem = runs_dir_problem(view, command.runs_dir) if command.runs_dir else "the unit names no runs folder"
     if runs_problem:
         problems.append(runs_problem)
@@ -710,14 +795,16 @@ def verify_unit(runs_dir: Path, unit_id: str, *, view: Optional[View] = None,
     runner = _load_json(receipt_path)
     unit = runner["unit"]
     identity = unit["identity"]
-    kind, recipe = unit["kind"], Recipe(unit["recipe"]["family"], tuple(unit["recipe"]["learning_rate"].items()),
-                                        int(unit["recipe"]["epochs"]), tuple(unit["recipe"]["lever_configs"]))
+    kind, recipe = unit["kind"], Recipe.from_dict(unit["recipe"])
     view = view if view is not None else View.load(runner["view"])
     head = {"unit_id": unit_id, "kind": kind, "family": recipe.family, "smoke": identity.get("smoke"),
             "fold": identity.get("fold"), "inner_fold": identity.get("inner_fold"), "seed": identity.get("seed"),
             "step": identity.get("step"), "recipe": recipe.to_dict()}
     checks.add("view_matches", runner["view_manifest_sha256"] == view.manifest_sha256 ==
                identity["view_manifest_sha256"], runner["view_manifest_sha256"])
+    if "wp_pretrain_input_stub_sha256" in identity:
+        # A command built against the dry-run pretraining-input stub never yields a valid unit (rule A2-GOV-4).
+        checks.add("no_pretrain_input_stub", False, identity["wp_pretrain_input_stub_sha256"])
     checks.add("exit_code", runner.get("returncode") == 0, runner.get("returncode"))
     run_dir = runs_dir / unit_id
     if not run_dir.is_dir():
@@ -808,6 +895,29 @@ def verify_unit(runs_dir: Path, unit_id: str, *, view: Optional[View] = None,
     checks.add("prediction_structures", expected_ids is not None
                and prediction.get("structure_ids_sha256") == canonical_sha256(expected_ids),
                None if expected_ids is None else len(expected_ids))
+    if recipe.pretrains_global_branch:
+        # Family F6 (amendment 2): receipt, frozen branch bit for bit, and the C-GF control file of an inner fit.
+        from training.global_esm_pretraining import verify_wp_pretrain_unit
+
+        for name, item in verify_wp_pretrain_unit(run_dir, identity=identity, kind=kind,
+                                                  validation_structure_ids=expected_ids if kind == KIND_INNER
+                                                  else None).items():
+            checks.add(name, item["ok"], item["detail"])
+    if recipe.rbf_distances == RBF_DISTANCES_RAW:
+        inputs = summary.get("rbf_distance_inputs") or {}
+        checks.add("rbf_distance_inputs", inputs.get("node") == "x_dist_raw_raw"
+                   and inputs.get("edge") == "edge_dist_raw_raw" and not inputs.get("missing"), inputs)
+    device = str((run_config.get("config") or {}).get("device") or "cpu")
+    if device.startswith("cuda"):
+        policy = (run_config.get("runtime_environment") or {}).get("precision_policy")
+        try:
+            from ec_clean30 import runtime_precision
+
+            runtime_precision.validate_policy(policy, device="cuda")
+            policy_ok = True
+        except (ImportError, RuntimeError):
+            policy_ok = False
+        checks.add("precision_policy", policy_ok, policy)
     files: dict[str, Any] = {}
     files_ok = True
     for key, expected_name in zip(("pocket_predictions", "protein_predictions"), PREDICTION_FILE_NAMES[mode]):
@@ -841,7 +951,7 @@ def verify_unit(runs_dir: Path, unit_id: str, *, view: Optional[View] = None,
     config = run_config.get("config") or {}
     outside = [key for key in ("structure_dir", "summary_csv", "esm_embeddings_dir", "external_features_root_dir",
                                "ring_features_dir", "global_esm_cache_dir", "fold_membership_csv",
-                               "ec_probe_structure_ids")
+                               "ec_probe_structure_ids", "global_esm_pretrain_cache_dir", "global_esm_pretrain_corpus")
                if config.get(key) is not None and not _inside(config[key], view.root)]
     checks.add("data_paths_in_view", not outside, outside)
     return {**head, "passed": checks.passed, "checks": checks.results,
@@ -1059,8 +1169,17 @@ def view_unit_commands(
     exclude_levers: Sequence[str] = (),
     git_head: Optional[str] = None,
     tree_sha256: Optional[str] = None,
+    plan_version: int = 1,
+    pretrain_stub: bool = False,
 ) -> list[PlannedCommand]:
     """Commands of every unit planned for ``view``.
+
+    ``pretrain_stub=True`` (plan version 2 only, for the amendment-2 dry runs) builds the F6 commands against the
+    declared pretraining-input stub instead of the view's attached corpus.
+
+    ``plan_version=2`` (amendment 2) plans the fold's v2 matrix instead: the S1 units as they are (raw-distance
+    RBFs for the GVP families, F6 against the view's attached pretraining corpus) and one S4 refit template per
+    v2 candidate family under the amendment-2 defaults. A smoke view always plans its smoke units.
 
     A smoke view plans one 1-epoch inner unit (smoke fold 0) and one refit per family. A
     fold view plans the fold's matrix: S1 units as they are, S2 lever templates for every
@@ -1069,8 +1188,9 @@ def view_unit_commands(
     is returned with its problem.
     """
     from ec_clean30.campaign import (
-        CANDIDATE_FAMILIES, RECIPE_FIXED, RECIPE_S1_WINNER, RECIPE_SELECTED, STEP_S2, STEP_S4, build_fold_plan,
-        default_smoke_recipe, plan_units, recipe_for_unit, recipe_with_lever, smoke_unit_id,
+        CANDIDATE_FAMILIES, CANDIDATE_FAMILIES_V2, RECIPE_FIXED, RECIPE_S1_WINNER, RECIPE_SELECTED, STEP_S2, STEP_S4,
+        amendment2_recipe, build_fold_plan, build_fold_plan_v2, default_smoke_recipe, plan_units, recipe_for_unit,
+        recipe_learning_rate_grid, recipe_with_lever, smoke_unit_id,
     )
     from ec_clean30.selection import FAMILIES, S1_LEARNING_RATE_GRID
 
@@ -1080,7 +1200,8 @@ def view_unit_commands(
             template_of: Optional[str] = None) -> None:
         try:
             command = build_unit_command(view, recipe, unit_id=unit_id, kind=kind, seed=seed, runs_dir=runs_dir,
-                                         step=step, inner_fold=inner_fold, git_head=git_head, tree_sha256=tree_sha256)
+                                         step=step, inner_fold=inner_fold, git_head=git_head, tree_sha256=tree_sha256,
+                                         pretrain_stub=pretrain_stub)
             planned.append(PlannedCommand(command, unit_id, kind, recipe.family, template_of))
         except (CommandError, ValueError) as exc:
             planned.append(PlannedCommand(None, unit_id, kind, recipe.family, template_of, str(exc)))
@@ -1092,6 +1213,21 @@ def view_unit_commands(
                 step="smoke", inner_fold=0)
             add(recipe, unit_id=smoke_unit_id(view.fold, recipe, refit=True, seed=42), kind=KIND_REFIT, seed=42,
                 step="smoke", inner_fold=None)
+        return planned
+    if plan_version not in (1, 2):
+        raise CommandError(f"plan_version must be 1 or 2, got {plan_version!r}.")
+    if pretrain_stub and plan_version != 2:
+        raise CommandError("The pretraining-input stub belongs to the plan-v2 dry runs only.")
+    if plan_version == 2:
+        for unit in plan_units(build_fold_plan_v2(view.fold)):
+            if unit.recipe_source == RECIPE_FIXED:
+                add(recipe_for_unit(unit), unit_id=unit.unit_id, kind=unit.kind, seed=unit.seed, step=unit.step,
+                    inner_fold=unit.inner_fold)
+            elif unit.recipe_source == RECIPE_SELECTED and unit.step == STEP_S4:
+                for family in CANDIDATE_FAMILIES_V2:
+                    add(amendment2_recipe(family, recipe_learning_rate_grid(family)[0], epochs=unit.epochs),
+                        unit_id=f"{unit.unit_id}__as_{family}", kind=KIND_REFIT, seed=unit.seed, step=unit.step,
+                        inner_fold=None, template_of=unit.unit_id)
         return planned
     excluded = set(exclude_levers)
     for unit in plan_units(build_fold_plan(view.fold)):
@@ -1111,6 +1247,12 @@ def view_unit_commands(
                 add(Recipe(family, tuple(S1_LEARNING_RATE_GRID[family][0])), unit_id=f"{unit.unit_id}__as_{family}",
                     kind=KIND_REFIT, seed=unit.seed, step=unit.step, inner_fold=None, template_of=unit.unit_id)
     return planned
+
+
+def _stub_sha256() -> str:
+    from ec_clean30.pretrain_corpus import PRETRAIN_STUB_SHA256
+
+    return PRETRAIN_STUB_SHA256
 
 
 def evaluate_probe(report: Mapping[str, Any], *, view: View, command: UnitCommand, probe_dir: Path) -> dict[str, Any]:
@@ -1181,8 +1323,15 @@ def dry_run(
     timeout: Optional[float] = None,
     provenance: Optional[Mapping[str, Any]] = None,
     write: bool = True,
+    plan_version: int = 1,
+    pretrain_stub: bool = False,
 ) -> dict[str, Any]:
     """Check every planned command of ``view`` statically, then probe one inner and one refit unit per family.
+
+    ``plan_version=2`` checks the amendment-2 matrix (``view_unit_commands``); the amendment-2 dry runs pass
+    ``write=False`` and save their receipt outside the view (rule A2-GOV-4). ``pretrain_stub=True`` (only with
+    ``write=False`` and ``plan_version=2``) builds the F6 commands against the declared pretraining-input stub and
+    records its specification SHA-256 in the receipt; F6 is then never probed.
 
     ``runs_dir`` defaults to ``view.default_runs_dir`` (``<campaign root>/runs/fold<k>`` or
     ``<campaign root>/smoke_runs/<name>``); a runs folder that fails ``runs_dir_problem``
@@ -1195,6 +1344,8 @@ def dry_run(
     """
     from ec_clean30.views import DRY_RUN_RECEIPT_NAME, run_probe, runs_dir_problem, verify_view
 
+    if pretrain_stub and (write or plan_version != 2):
+        raise CommandError("The pretraining-input stub is allowed only in a plan-v2 dry run with write=False.")
     runs_dir = Path(os.path.abspath(os.fspath(runs_dir))) if runs_dir is not None else view.default_runs_dir
     problem = runs_dir_problem(view, runs_dir)
     if problem:
@@ -1206,8 +1357,11 @@ def dry_run(
     if verify:
         verification = verify_view(view.root, require_chain_means=("final",), write_receipt=write,
                                    provenance=provenance)
-    planned = view_unit_commands(view, runs_dir=runs_dir, exclude_levers=exclude_levers)
+    planned = view_unit_commands(view, runs_dir=runs_dir, exclude_levers=exclude_levers, plan_version=plan_version,
+                                 pretrain_stub=pretrain_stub)
     static_failures = [{"unit_id": item.unit_id, "problem": item.problem} for item in planned if item.problem]
+    if pretrain_stub:
+        probe_families = tuple(family for family in probe_families if family != "F6")
     probes = []
     stamp = utc_now().replace(":", "").replace("-", "").replace("+0000", "Z")
     probe_root = view.caches / "dry_run" / f"run_{stamp}_{os.getpid()}"
@@ -1236,6 +1390,8 @@ def dry_run(
             key: verification.get(key) for key in ("view_manifest_sha256", "n_files", "n_structures", "n_eligible",
                                                    "membership", "chain_means", "file_modes_enforced", "overlay")},
         "read_guard": {"rules": dict(view.read_guard), "expanded_roots": view.forbidden_read_roots},
+        **({"plan_version": plan_version} if plan_version != 1 else {}),
+        **({"pretrain_input_stub_sha256": _stub_sha256()} if pretrain_stub else {}),
         "n_commands_checked": len(planned),
         "n_template_commands": sum(1 for item in planned if item.template_of),
         "static_failures": static_failures,

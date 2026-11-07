@@ -150,6 +150,12 @@ CACHE_DIR = "caches"
 CACHE_SUBDIRS: tuple[str, ...] = ("parse", "graph", "tmp", "dry_run")
 RECEIPTS_DIR = "receipts"
 WRITABLE_DIRS: tuple[str, ...] = (CACHE_DIR, RECEIPTS_DIR, *CHAIN_MEAN_DIRS.values())
+# Amendment 2 (rule A2-F6-4, contract X9): folders attached to a view after it is built. They are never created at
+# build, never packed into a view transfer, absent from the view manifest (``WRITABLE_DIRS`` and every new view
+# manifest stay unchanged) and skipped by the data walk; the execution lane creates them writable at unpack and
+# ``pretrain-corpus attach`` fills them on the target filesystem. ``verify_view`` checks them when present.
+WHOLE_PROTEIN_PRETRAIN_DIR = "whole_protein_pretrain"
+ATTACHED_DIRS: tuple[str, ...] = (WHOLE_PROTEIN_PRETRAIN_DIR,)
 VERIFY_RECEIPT_NAME = "verify_view_receipt.json"
 DRY_RUN_RECEIPT_NAME = "dry_run_receipt.json"
 FILE_MODES_RECEIPT_NAME = "file_modes.json"
@@ -771,16 +777,20 @@ def _set_permissions(root: Path) -> dict[str, Any]:
     ``refused`` (a chmod raised).
     """
     writable = {root / name for name in WRITABLE_DIRS}
+    attached = {root / name for name in ATTACHED_DIRS}
     targets: list[tuple[Path, int]] = []
     for current, dirs, files in os.walk(root, topdown=True):
         current_path = Path(current)
+        if any(current_path == path or path in current_path.parents for path in attached):
+            dirs[:] = []
+            continue
         if any(current_path == path or path in current_path.parents for path in writable):
             targets.append((current_path, WRITABLE_DIR_MODE))
             continue
         targets.extend((current_path / name, DATA_FILE_MODE) for name in files)
     for current, dirs, _files in os.walk(root, topdown=False):
         current_path = Path(current)
-        if any(current_path == path or path in current_path.parents for path in writable):
+        if any(current_path == path or path in current_path.parents for path in writable | attached):
             continue
         targets.append((current_path, DATA_DIR_MODE))
     refused: list[str] = []
@@ -1067,7 +1077,7 @@ def build_view(
         for current, dirs, names in os.walk(staging):
             dirs.sort()
             relative_dir = Path(current).relative_to(staging)
-            if relative_dir.parts and relative_dir.parts[0] in WRITABLE_DIRS:
+            if relative_dir.parts and relative_dir.parts[0] in (*WRITABLE_DIRS, *ATTACHED_DIRS):
                 continue
             for name in sorted(names):
                 path = Path(current) / name
@@ -1174,6 +1184,12 @@ def _remove_tree(path: Path) -> None:
     for current, dirs, _files in os.walk(path):
         os.chmod(current, 0o755)
     shutil.rmtree(path, ignore_errors=True)
+
+
+# Public names for execution code, which reads no private scientific name (amendment-2 rule A2-GOV-2); the same
+# function objects, so no pinned closure changes.
+set_permissions = _set_permissions
+remove_tree = _remove_tree
 
 
 # ---------------------------------------------------------------------------
@@ -1348,7 +1364,7 @@ def _walk_view(view: View, problems: list[str]) -> dict[str, Path]:
                 problems.append(f"symlink in view: {relative}")
             if names_test_split(name) and not scratch:
                 problems.append(f"test-named entry in view: {relative}")
-        if relative_dir.parts and relative_dir.parts[0] in WRITABLE_DIRS:
+        if relative_dir.parts and relative_dir.parts[0] in (*WRITABLE_DIRS, *ATTACHED_DIRS):
             continue
         for name in names:
             path = current_path / name
@@ -1366,8 +1382,12 @@ def verify_view(
     check_sources: bool = False,
     write_receipt: bool = True,
     provenance: Optional[Mapping[str, Any]] = None,
+    require_whole_protein_pretrain: bool = False,
 ) -> dict[str, Any]:
     """Rehash and cross-check a view; raise ``ViewVerificationError`` listing every failed check.
+
+    An attached ``whole_protein_pretrain/`` folder (amendment 2) is checked when present
+    (``pretrain_corpus.verify_whole_protein_pretrain``) and required with ``require_whole_protein_pretrain``.
 
     File modes are tested in ``receipts/`` first (``probe_file_modes``): only where chmod
     works are writable data files a problem; content hashes are always checked. The receipt
@@ -1539,6 +1559,15 @@ def verify_view(
         except (GlobalEsmCacheError, OSError, ValueError) as exc:
             problems.append(f"chain means of layer {layer} do not verify: {exc}")
 
+    whole_protein_pretrain = None
+    if require_whole_protein_pretrain or os.path.lexists(view.root / WHOLE_PROTEIN_PRETRAIN_DIR):
+        from ec_clean30.pretrain_corpus import PretrainCorpusError, verify_whole_protein_pretrain
+
+        try:
+            whole_protein_pretrain = verify_whole_protein_pretrain(view, required=require_whole_protein_pretrain)
+        except PretrainCorpusError as exc:
+            problems.append(f"{WHOLE_PROTEIN_PRETRAIN_DIR}/ does not verify: {exc}")
+
     if problems:
         raise ViewVerificationError(problems)
     receipt = {
@@ -1557,6 +1586,7 @@ def verify_view(
         "file_modes_enforced": bool(modes_enforced),
         "file_modes": {**file_modes, "recorded_outcome": recorded_modes},
         "overlay": None if view.overlay is None else dict(view.overlay),
+        **({"whole_protein_pretrain": whole_protein_pretrain} if whole_protein_pretrain is not None else {}),
         "provenance": dict(provenance) if provenance is not None else provenance_record(smoke=view.smoke),
     }
     if write_receipt:

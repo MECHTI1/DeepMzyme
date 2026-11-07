@@ -313,7 +313,7 @@ def _prediction_loader(pockets: list[PocketRecord], config: Mapping[str, Any], n
 
 
 def campaign_family(config: Mapping[str, Any]) -> str | None:
-    """The campaign family label (F1-F5, C-G) of a saved configuration, or None for other models."""
+    """The campaign family label (F1-F6, C-G) of a saved configuration, or None for other models."""
     architecture = MODEL_ARCHITECTURE_ALIASES.get(str(config.get("model_architecture")), config.get("model_architecture"))
     with_global = bool(config.get("use_global_esm_branch", False))
     if architecture == "only_global":
@@ -321,6 +321,8 @@ def campaign_family(config: Mapping[str, Any]) -> str | None:
     if architecture == "only_gvp":
         return None if with_global else "F1"
     if architecture == "only_esm":
+        if with_global and config.get("global_esm_branch_init", "random") == "pretrained_frozen":
+            return "F6"  # amendment 2: the branch pretrained on the full training file, then frozen
         return "F5" if with_global else "F2"
     if (architecture == "gvp" and config.get("fusion_mode") == "late_fusion" and config.get("use_esm_branch", True)
             and not config.get("use_early_esm", False)):
@@ -337,6 +339,10 @@ def _model_identity(config: Mapping[str, Any]) -> dict[str, Any]:
         "ec_aux_levels": config.get("ec_aux_levels", ""),
         "ec_supcon_weight": config.get("ec_supcon_weight", 0.0),
         "campaign_family": campaign_family(config),
+        # Only a pretrained branch adds these keys, so every historical identity dictionary is unchanged.
+        **({"global_esm_branch_init": config.get("global_esm_branch_init"),
+            "global_esm_pretrain_corpus_sha256": config.get("global_esm_pretrain_corpus_sha256")}
+           if config.get("global_esm_branch_init", "random") != "random" else {}),
     }
 
 
@@ -482,6 +488,12 @@ def _predict(model: torch.nn.Module, loader: DataLoader, pockets: Sequence[Pocke
     _require(bool(torch.isfinite(logits).all()), "Prediction produced non-finite EC logits")
     return {**predictions, "ec_logits": logits}
 
+
+# Public names for execution code, which reads no private scientific name (amendment-2 rule A2-GOV-2); the same
+# function objects, so no pinned closure changes.
+graph_options = _graph_options
+prediction_loader = _prediction_loader
+predict = _predict
 
 def build_prediction_rows(
     pockets: Sequence[PocketRecord],

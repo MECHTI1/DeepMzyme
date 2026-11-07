@@ -1,0 +1,64 @@
+{
+  "cases": {
+    "clear_gain": {
+      "co_primary_available": [
+        true,
+        true
+      ],
+      "decisions": {
+        "P1": "Outperforms retrained CLEAN in EC class prediction on a conservative metalloenzyme subset of the official CLEAN split30 benchmark (AlphaFold models with AlphaFill-transplanted, MAHOMES-catalytic metal sites; EC class = first EC digit; accuracy over the proteins of EC classes 1-6).",
+        "P2": "Outperforms retrained CLEAN in EC class prediction on the proteins of a conservative metalloenzyme subset of the official CLEAN split30 benchmark (AlphaFold models with AlphaFill-transplanted, MAHOMES-catalytic metal sites; EC class = first EC digit; accuracy over the proteins of EC classes 1-6) that have no ≥30% identity hit to their fold's training file and no shared selected AlphaFill donor."
+      },
+      "secondary_available": {
+        "P1 ec_classes_1_6_accuracy versus R2 (seed_mean)": true,
+        "P1 ec_classes_1_6_balanced_accuracy versus R1": true,
+        "P1 ec_classes_1_6_macro_f1 versus R1": true,
+        "P2 ec_classes_1_6_accuracy versus R2 (seed_mean)": true,
+        "P2 ec_classes_1_6_balanced_accuracy versus R1": true,
+        "P2 ec_classes_1_6_macro_f1 versus R1": true,
+        "similarity_difference_in_differences": true
+      }
+    },
+    "r1_disclosed": {
+      "co_primary_available": [
+        false,
+        false
+      ],
+      "decisions": {
+        "P1": "No superiority inference on a conservative metalloenzyme subset of the official CLEAN split30 benchmark (AlphaFold models with AlphaFill-transplanted, MAHOMES-catalytic metal sites; EC class = first EC digit; accuracy over the proteins of EC classes 1-6): a CLEAN sanity check failed without an identified defect; results are descriptive.",
+        "P2": "No superiority inference on the proteins of a conservative metalloenzyme subset of the official CLEAN split30 benchmark (AlphaFold models with AlphaFill-transplanted, MAHOMES-catalytic metal sites; EC class = first EC digit; accuracy over the proteins of EC classes 1-6) that have no ≥30% identity hit to their fold's training file and no shared selected AlphaFill donor: a CLEAN sanity check failed without an identified defect; results are descriptive."
+      },
+      "secondary_available": {
+        "P1 ec_classes_1_6_accuracy versus R2 (seed_mean)": true,
+        "P1 ec_classes_1_6_balanced_accuracy versus R1": false,
+        "P1 ec_classes_1_6_macro_f1 versus R1": false,
+        "P2 ec_classes_1_6_accuracy versus R2 (seed_mean)": true,
+        "P2 ec_classes_1_6_balanced_accuracy versus R1": false,
+        "P2 ec_classes_1_6_macro_f1 versus R1": false,
+        "similarity_difference_in_differences": false
+      }
+    },
+    "r2_disclosed": {
+      "co_primary_available": [
+        true,
+        true
+      ],
+      "decisions": {
+        "P1": "Outperforms retrained CLEAN in EC class prediction on a conservative metalloenzyme subset of the official CLEAN split30 benchmark (AlphaFold models with AlphaFill-transplanted, MAHOMES-catalytic metal sites; EC class = first EC digit; accuracy over the proteins of EC classes 1-6).",
+        "P2": "Outperforms retrained CLEAN in EC class prediction on the proteins of a conservative metalloenzyme subset of the official CLEAN split30 benchmark (AlphaFold models with AlphaFill-transplanted, MAHOMES-catalytic metal sites; EC class = first EC digit; accuracy over the proteins of EC classes 1-6) that have no ≥30% identity hit to their fold's training file and no shared selected AlphaFill donor."
+      },
+      "secondary_available": {
+        "P1 ec_classes_1_6_accuracy versus R2 (seed_mean)": false,
+        "P1 ec_classes_1_6_balanced_accuracy versus R1": true,
+        "P1 ec_classes_1_6_macro_f1 versus R1": true,
+        "P2 ec_classes_1_6_accuracy versus R2 (seed_mean)": false,
+        "P2 ec_classes_1_6_balanced_accuracy versus R1": true,
+        "P2 ec_classes_1_6_macro_f1 versus R1": true,
+        "similarity_difference_in_differences": true
+      }
+    }
+  },
+  "format": "deepmzyme_ec_clean30_amendment2_decision_fixtures_v1",
+  "rule_id": "amendment2_ec16_accuracy_v1",
+  "settings": "ANALYSIS_SETTINGS of tests/test_ec_clean30_scoring.py"
+}

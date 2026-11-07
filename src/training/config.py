@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import argparse
+import math
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from data_structures import (
     DEFAULT_EDGE_RADIUS,
@@ -47,6 +48,10 @@ VALID_METAL_EXAMPLE_UNITS = ("pocket", "ion")
 VALID_SELECTED_SITE_POCKET_GROUPING_CHOICES = ("cluster", "structure")
 DEFAULT_SELECTED_SITE_POCKET_GROUPING = "cluster"
 VALID_BINDING_RESIDUE_POOLING_CHOICES = ("none", "first_shell_bias")
+GLOBAL_ESM_BRANCH_INIT_CHOICES = ("random", "pretrained_frozen")
+GLOBAL_ESM_PRETRAIN_N_INNER_FOLDS = 4
+GLOBAL_ESM_PRETRAIN_SPLIT_CHOICES = (*(f"inner{index}" for index in range(GLOBAL_ESM_PRETRAIN_N_INNER_FOLDS)),
+                                     "refit")
 VALID_METAL_LABEL_SCHEME_CHOICES = tuple(METAL_LABEL_SCHEMES)
 VALID_NODE_FEATURE_SET_CHOICES = NODE_FEATURE_SET_CHOICES
 VALID_METAL_NODE_MODE_CHOICES = METAL_NODE_MODE_CHOICES
@@ -155,6 +160,17 @@ class TrainConfig:
     global_esm_dim: int = 960
     global_esm_dropout: float = 0.2
     global_esm_standardize: str = "none"
+    # Whole-protein branch initialisation (EC class campaign, amendment 2, family F6): "random" keeps the
+    # existing behaviour; "pretrained_frozen" pretrains the branch on a full-training-file corpus, then freezes it.
+    global_esm_branch_init: str = "random"
+    global_esm_pretrain_cache_dir: Path | None = None
+    global_esm_pretrain_manifest_sha256: str | None = None
+    global_esm_pretrain_corpus: Path | None = None
+    global_esm_pretrain_corpus_sha256: str | None = None
+    global_esm_pretrain_split: str | None = None
+    global_esm_pretrain_epochs: int = 30
+    global_esm_pretrain_learning_rate: float = 1e-3
+    global_esm_pretrain_batch_size: int = 64
     train_metrics_every_n_epochs: int = 1
     allow_train_loss_test_eval_debug: bool = False
     allow_final_refit_test_eval: bool = False
@@ -1165,6 +1181,26 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="'train_proteins' z-scores the vectors with means and SDs fitted on one vector per training protein.",
     )
     parser.add_argument(
+        "--global-esm-branch-init", choices=GLOBAL_ESM_BRANCH_INIT_CHOICES, default="random",
+        help=("'pretrained_frozen' first trains the whole-protein branch with its own two-layer head on the "
+              "sequence-mean vectors of a pretraining corpus (one row per accession; the split's flagged rows "
+              "removed), then loads the branch into the model and freezes it. 'random' keeps the default."),
+    )
+    parser.add_argument("--global-esm-pretrain-cache-dir", type=Path, default=None,
+                        help="Sequence-mean cache of the pretraining corpus (final layer).")
+    parser.add_argument("--global-esm-pretrain-manifest-sha256", type=str, default=None,
+                        help="SHA-256 of that cache's manifest; refused on mismatch.")
+    parser.add_argument("--global-esm-pretrain-corpus", type=Path, default=None,
+                        help="Pretraining corpus table (accession, sequence_sha256, ec_class, exclude_inner0..3).")
+    parser.add_argument("--global-esm-pretrain-corpus-sha256", type=str, default=None,
+                        help="SHA-256 of the corpus table; refused on mismatch.")
+    parser.add_argument("--global-esm-pretrain-split", choices=GLOBAL_ESM_PRETRAIN_SPLIT_CHOICES, default=None,
+                        help="'inner<j>' drops the rows flagged for inner fold j (it must equal --fold-index); "
+                             "'refit' uses every row (runs without validation).")
+    parser.add_argument("--global-esm-pretrain-epochs", type=int, default=30)
+    parser.add_argument("--global-esm-pretrain-learning-rate", type=float, default=1e-3)
+    parser.add_argument("--global-esm-pretrain-batch-size", type=int, default=64)
+    parser.add_argument(
         "--binding-residue-pooling", choices=VALID_BINDING_RESIDUE_POOLING_CHOICES, default="none",
         help=(
             "'first_shell_bias' adds one learned, zero-initialized logit bias per readout pooling "
@@ -1226,6 +1262,73 @@ def parse_ec_aux_levels(value: str) -> tuple[int, ...]:
             raise ValueError(f"--ec-aux-levels takes distinct values from 2 and 3, got {value!r}")
         levels.append(int(token))
     return tuple(sorted(levels))
+
+
+_SHA256_HEX_RE = re.compile(r"^[0-9a-f]{64}$")
+_GLOBAL_ESM_PRETRAIN_HYPERPARAMETER_DEFAULTS = (
+    ("--global-esm-pretrain-epochs", "global_esm_pretrain_epochs", 30),
+    ("--global-esm-pretrain-learning-rate", "global_esm_pretrain_learning_rate", 1e-3),
+    ("--global-esm-pretrain-batch-size", "global_esm_pretrain_batch_size", 64),
+)
+
+
+def validate_global_esm_pretraining_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    """Rules of ``--global-esm-branch-init`` and the ``--global-esm-pretrain-*`` options (amendment 2, F6).
+
+    Without ``pretrained_frozen`` no pretraining option may be set (defaults keep every existing
+    configuration). With it: the whole-protein branch on ``only_esm``, the fixed seven-class EC
+    task, all four corpus/cache paths and SHA-256 values, the final layer without standardisation,
+    no held-out test set, and a split that matches the run: ``inner<j>`` needs the membership split
+    with ``--fold-index j``; ``refit`` needs a run without validation.
+    """
+    paths = (
+        ("--global-esm-pretrain-cache-dir", args.global_esm_pretrain_cache_dir),
+        ("--global-esm-pretrain-manifest-sha256", args.global_esm_pretrain_manifest_sha256),
+        ("--global-esm-pretrain-corpus", args.global_esm_pretrain_corpus),
+        ("--global-esm-pretrain-corpus-sha256", args.global_esm_pretrain_corpus_sha256),
+        ("--global-esm-pretrain-split", args.global_esm_pretrain_split),
+    )
+    if args.global_esm_branch_init != "pretrained_frozen":
+        given = [flag for flag, value in paths if value is not None]
+        given += [flag for flag, name, default in _GLOBAL_ESM_PRETRAIN_HYPERPARAMETER_DEFAULTS
+                  if getattr(args, name) != default]
+        if given:
+            parser.error(f"{', '.join(given)} require --global-esm-branch-init pretrained_frozen")
+        return
+    if not args.use_global_esm_branch or args.model_architecture != "only_esm":
+        parser.error("--global-esm-branch-init pretrained_frozen requires --use-global-esm-branch and "
+                     "--model-architecture only_esm")
+    missing = [flag for flag, value in paths if value is None or str(value) == ""]
+    if missing:
+        parser.error(f"--global-esm-branch-init pretrained_frozen requires {', '.join(missing)}")
+    for flag, value in ((paths[1][0], args.global_esm_pretrain_manifest_sha256),
+                        (paths[3][0], args.global_esm_pretrain_corpus_sha256)):
+        if not _SHA256_HEX_RE.match(str(value)):
+            parser.error(f"{flag} must be a 64-character lowercase hex SHA-256")
+    if args.task != "ec" or args.ec_class_vocabulary != "fixed_seven":
+        parser.error("--global-esm-branch-init pretrained_frozen requires --task ec and "
+                     "--ec-class-vocabulary fixed_seven")
+    if args.run_test_eval or args.test_structure_dir is not None or args.test_summary_csv is not None:
+        parser.error("--global-esm-branch-init pretrained_frozen cannot be combined with a held-out test set")
+    if args.global_esm_layer != "final":
+        parser.error("--global-esm-branch-init pretrained_frozen requires --global-esm-layer final")
+    if args.global_esm_standardize != "none":
+        parser.error("--global-esm-branch-init pretrained_frozen requires --global-esm-standardize none")
+    if args.global_esm_pretrain_epochs < 1 or args.global_esm_pretrain_batch_size < 1 or \
+            not math.isfinite(args.global_esm_pretrain_learning_rate) or args.global_esm_pretrain_learning_rate <= 0:
+        parser.error("--global-esm-pretrain-epochs and --global-esm-pretrain-batch-size must be >= 1 and "
+                     "--global-esm-pretrain-learning-rate must be a positive number")
+    split = args.global_esm_pretrain_split
+    if split == "refit":
+        if args.val_fraction != 0.0 or args.n_folds is not None or args.fold_index is not None:
+            parser.error("--global-esm-pretrain-split refit is for runs without validation "
+                         "(--val-fraction 0, no folds)")
+        return
+    inner = int(split.removeprefix("inner"))
+    if args.fold_split_source != "membership" or args.fold_index is None or int(args.fold_index) != inner \
+            or args.n_folds is None or inner >= int(args.n_folds):
+        parser.error(f"--global-esm-pretrain-split {split} requires --fold-split-source membership and "
+                     f"--fold-index {inner} (inside --n-folds)")
 
 
 def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
@@ -1344,6 +1447,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
             parser.error("--use-global-esm-branch requires --global-esm-cache-dir and --global-esm-manifest-sha256")
         if args.metal_example_unit != "pocket":
             parser.error("--use-global-esm-branch requires --metal-example-unit pocket")
+    validate_global_esm_pretraining_args(args, parser)
     if args.augmentation_rng == "per_fit" and args.num_workers != 0:
         parser.error("--augmentation-rng per_fit requires --num-workers 0")
     if args.ec_conflicting_labels == "fail" and args.task == "metal":
@@ -1411,6 +1515,15 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         global_esm_dim=args.global_esm_dim,
         global_esm_dropout=args.global_esm_dropout,
         global_esm_standardize=args.global_esm_standardize,
+        global_esm_branch_init=args.global_esm_branch_init,
+        global_esm_pretrain_cache_dir=args.global_esm_pretrain_cache_dir,
+        global_esm_pretrain_manifest_sha256=args.global_esm_pretrain_manifest_sha256,
+        global_esm_pretrain_corpus=args.global_esm_pretrain_corpus,
+        global_esm_pretrain_corpus_sha256=args.global_esm_pretrain_corpus_sha256,
+        global_esm_pretrain_split=args.global_esm_pretrain_split,
+        global_esm_pretrain_epochs=args.global_esm_pretrain_epochs,
+        global_esm_pretrain_learning_rate=args.global_esm_pretrain_learning_rate,
+        global_esm_pretrain_batch_size=args.global_esm_pretrain_batch_size,
         train_metrics_every_n_epochs=args.train_metrics_every_n_epochs,
         allow_train_loss_test_eval_debug=args.allow_train_loss_test_eval_debug,
         allow_final_refit_test_eval=args.allow_final_refit_test_eval,
@@ -1587,8 +1700,34 @@ def default_selection_metric_for_task(task: str, *, has_validation: bool) -> str
     )
 
 
+# The F6 option group (amendment 2) at its defaults. ``config_to_payload`` drops the whole group while every
+# option in it is at its default, so every earlier configuration keeps its payload and resolved-config hash.
+F6_OPTION_DEFAULTS: dict[str, Any] = {
+    "global_esm_branch_init": "random",
+    "global_esm_pretrain_cache_dir": None,
+    "global_esm_pretrain_manifest_sha256": None,
+    "global_esm_pretrain_corpus": None,
+    "global_esm_pretrain_corpus_sha256": None,
+    "global_esm_pretrain_split": None,
+    "global_esm_pretrain_epochs": 30,
+    "global_esm_pretrain_learning_rate": 1e-3,
+    "global_esm_pretrain_batch_size": 64,
+}
+
+
+def f6_options_at_defaults(payload: Mapping[str, Any]) -> bool:
+    return all(payload.get(name, default) == default for name, default in F6_OPTION_DEFAULTS.items())
+
+
 def config_to_payload(config: TrainConfig) -> dict[str, Any]:
     payload = asdict(config)
+    if f6_options_at_defaults(payload):
+        for name in F6_OPTION_DEFAULTS:
+            payload.pop(name, None)
+    else:
+        for name in ("global_esm_pretrain_cache_dir", "global_esm_pretrain_corpus"):
+            if payload.get(name) is not None:
+                payload[name] = str(payload[name])
     payload["structure_dir"] = str(config.structure_dir)
     payload["summary_csv"] = str(config.summary_csv)
     payload["test_structure_dir"] = str(config.test_structure_dir) if config.test_structure_dir is not None else None

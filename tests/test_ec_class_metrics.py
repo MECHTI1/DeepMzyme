@@ -39,6 +39,27 @@ def test_wrong_class7_prediction_counts_as_error_but_class7_is_not_averaged():
     assert metrics["seven_class_n_present"] == 3 and not metrics["seven_class_full_support"]
 
 
+def test_ec_classes_1_6_accuracy_excludes_class_7_and_counts_class_7_predictions_wrong():
+    # True EC classes 1, 1, 2, 7 predicted as 1, 7, 2, 1: the class-7 row leaves the population and the
+    # class-7 prediction of an EC class 1 protein is wrong, so 2 of 3.
+    metrics = ec_class_metrics([0, 0, 1, 6], [0, 6, 1, 0])
+    assert metrics["ec_classes_1_6_accuracy"] == pytest.approx(2 / 3)
+    assert metrics["ec_classes_1_6_total_weight"] == pytest.approx(3.0)
+    assert metrics["accuracy"] == pytest.approx(2 / 4)
+    weighted = ec_class_metrics([0, 0, 1, 6], [0, 6, 1, 0], weights=[0.5, 1.5, 1.0, 2.0])
+    assert weighted["ec_classes_1_6_accuracy"] == pytest.approx(1.5 / 3.0)
+    only_class_7 = ec_class_metrics([6, 6], [6, 0])
+    assert np.isnan(only_class_7["ec_classes_1_6_accuracy"]) and only_class_7["ec_classes_1_6_total_weight"] == 0.0
+    keys = list(metrics)
+    assert keys.index("ec_classes_1_6_accuracy") == keys.index("accuracy") + 1
+    assert keys == ["n_examples", "total_weight", "accuracy", "ec_classes_1_6_accuracy",
+                    "ec_classes_1_6_total_weight", "ec_classes_1_6_balanced_accuracy", "ec_classes_1_6_n_present",
+                    "ec_classes_1_6_label", "ec_classes_1_6_macro_f1", "seven_class_balanced_accuracy",
+                    "seven_class_n_present", "seven_class_full_support", "seven_class_macro_f1", "per_class_support",
+                    "per_class_recall", "per_class_precision", "per_class_f1", "confusion_matrix"]
+    assert metrics["ec_classes_1_6_balanced_accuracy"] == pytest.approx((0.5 + 1.0) / 2)  # unchanged
+
+
 def test_absent_class_is_counted_not_averaged():
     true = np.array([0, 1, 2, 3, 5])
     pred = np.array([0, 1, 2, 4, 5])

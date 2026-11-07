@@ -829,6 +829,15 @@ SHA-256 `fc6f032805f084d7aef4f704a42149e92fb7894af3699b2ad5c12e86c87bcbdb`; it a
 and verified. No test score was produced or used. The approved CPU preparation endpoint is complete; later
 training and scoring retain their separate gates.
 
+**2026-11-04 EC-class-vs-CLEAN30 amendment 2 (pre-declared exposure; no access):** the maintainer's
+[amendment 2](campaigns/ec_class_vs_clean30_2026-10/amendment2/amendment_draft.md), accepted before any G2 measurement or
+fold-0 fit, declares two future uses. (1) About two thirds of the fold-0 metallo training proteins are curated test
+proteins of folds 1–4, so fold-0 development (G2 timing units, fold-0 fits, CLEAN inner fits and exports) will expose
+the test labels of folds 1–4, not of fold 0; any later change that alters fold 1–4 behaviour labels those results
+"development-exposed". (2) Candidate F6 pretrains its whole-protein branch on the non-metalloenzyme and metalloenzyme
+proteins of each fold's full official training file (training side only; no test file). Neither use has occurred;
+nothing was read for this entry.
+
 ## Current bundles
 
 ### Hugging Face repository inventory

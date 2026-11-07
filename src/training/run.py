@@ -1477,6 +1477,44 @@ def metric_sort_value(record: dict[str, Any], selection_metric: str) -> tuple[fl
     return metric_value, True
 
 
+def campaign_precision_policy(device: str) -> dict[str, Any]:
+    """TF32 off for an EC class campaign unit (amendment 2, rule A2-GOV-3), recorded through
+    ``ec_clean30.runtime_precision.configure_and_record``. A CUDA unit refuses without that module or with a
+    policy that does not validate; a CPU unit without the module records that the policy was not applied."""
+    kind = torch.device(device).type
+    try:
+        from ec_clean30 import runtime_precision
+    except ImportError:
+        if kind == "cuda":
+            raise ValueError("A CUDA campaign unit needs ec_clean30.runtime_precision (TF32 off); refused.") from None
+        return {"device": kind, "status": "runtime_precision_unavailable"}
+    try:
+        return dict(runtime_precision.configure_and_record(kind))
+    except RuntimeError as exc:
+        raise ValueError(f"The campaign unit's precision policy does not validate: {exc}") from exc
+
+
+def rbf_distance_inputs(config: TrainConfig, graphs: list[Any], normalization_stats: Any) -> dict[str, Any] | None:
+    """For a raw-distance RBF run, the raw distance tensors must reach the encoders (amendment 2, rule
+    A2-TRN-2): checked on a normalised copy of the first training graph (no random number is drawn). A campaign
+    unit refuses when they are missing; the model would otherwise fall back to normalised distances silently."""
+    if not (config.node_rbf_use_raw_distances or config.edge_rbf_use_raw_distances):
+        return None
+    from training.graph_dataset import apply_feature_normalization
+
+    probe = apply_feature_normalization(graphs[0].clone(), normalization_stats) if graphs else None
+    required = {"node": ("x_dist_raw_raw", config.node_rbf_use_raw_distances),
+                "edge": ("edge_dist_raw_raw", config.edge_rbf_use_raw_distances)}
+    present = {side: bool(flag) and probe is not None and hasattr(probe, name)
+               for side, (name, flag) in required.items()}
+    missing = [name for side, (name, flag) in required.items() if flag and not present[side]]
+    if missing and config.campaign_run_identity:
+        raise ValueError(f"Raw-distance RBFs are requested but the training graphs lack {missing}; refused.")
+    return {"node": required["node"][0] if present["node"] else None,
+            "edge": required["edge"][0] if present["edge"] else None,
+            "missing": missing, "checked_on": "a normalised copy of the first training graph"}
+
+
 def prepare_run(config: TrainConfig) -> PreparedRun:
     configure_active_metal_label_scheme(config.metal_label_scheme)
     config = resolve_selection_metric(config)
@@ -1506,6 +1544,8 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
         else None
     )
     runtime_environment = runtime_environment_payload()
+    if config.campaign_run_identity:
+        runtime_environment["precision_policy"] = campaign_precision_policy(config.device)
     source_artifacts = source_artifacts_payload(config)
     source_control = source_control_payload(Path(__file__).resolve().parents[2])
     config_payload["git_commit"] = source_control.get("commit")
@@ -1682,6 +1722,14 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
         ec_auxiliary_vocabularies = assign_ec_auxiliary_targets(split, config)
         if global_esm_report is not None:
             global_esm_report["standardization"] = standardize_global_esm_vectors(split, config)
+        wp_pretraining = None
+        if config.global_esm_branch_init == "pretrained_frozen":
+            # Family F6 (amendment 2, rule A2-F6-5): pretrain the whole-protein branch before the model is built,
+            # on an isolated random-number stream; the C-GF control file of an inner fit is written here.
+            from training.global_esm_pretraining import run_global_esm_pretraining
+
+            wp_pretraining = run_global_esm_pretraining(config, train_pockets=split.train_pockets,
+                                                        val_pockets=split.val_pockets, run_dir=run_dir)
         split_diagnostics = build_split_diagnostics(
             split,
             config,
@@ -1715,6 +1763,8 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             dataset_summary["ec_auxiliary_objectives"] = {"vocabularies": ec_auxiliary_vocabularies}
         if global_esm_report is not None:
             dataset_summary["global_esm"] = global_esm_report
+        if wp_pretraining is not None:
+            dataset_summary["global_esm_pretrain"] = dict(wp_pretraining.summary)
         train_graphs = build_graph_data_list(
             split.train_pockets,
             esm_dim=config.esm_dim,
@@ -1774,6 +1824,9 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             ),
         )
         normalization_stats = compute_feature_normalization_stats(train_graphs, clamp_value=5.0)
+        raw_rbf_inputs = rbf_distance_inputs(config, train_graphs, normalization_stats)
+        if raw_rbf_inputs is not None:
+            dataset_summary["rbf_distance_inputs"] = raw_rbf_inputs
         train_sampler = None
         if config.balance_metal_site_symbols and task_predicts_metal(config.task):
             sampler_generator = torch.Generator()
@@ -1976,6 +2029,10 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             )
             model = model.to(config.device)
             dataset_summary["ec_auxiliary_objectives"]["attachments"] = attachments
+        if wp_pretraining is not None:
+            from training.global_esm_pretraining import install_pretrained_global_branch
+
+            dataset_summary["global_esm_pretrain"]["install"] = install_pretrained_global_branch(model, wp_pretraining)
         steps_per_epoch = math.ceil(len(train_loader) / config.grad_accum_steps)
         param_groups, optimizer_groups = build_optimizer_param_groups(model, config, steps_per_epoch=steps_per_epoch)
         for flag in optimizer_groups["ignored_flags"]:
