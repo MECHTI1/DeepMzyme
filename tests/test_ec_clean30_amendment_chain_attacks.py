@@ -366,8 +366,8 @@ def test_the_receipt_check_refuses_drafts_edits_other_chains_moved_heads_and_dir
     with pytest.raises(AmendmentChainError, match=r"HEAD is not published"):
         harness.check_receipt(copied, out)
     harness._git(repo, "push", "--quiet", "origin", "main")
-    receipt_path = receipt["result"]["dry_run_evidence"]["receipts"]["0"]["path"]
-    harness.commit_change(copied, receipt_path, (repo / receipt_path).read_text() + " ")
+    bound_path = copied["record"]["evidence"]["verification"]["path"]
+    harness.commit_change(copied, bound_path, (repo / bound_path).read_text() + " ")
     with pytest.raises(AmendmentChainError, match=r"changed after the receipt and is not an execution file"):
         harness.check_receipt(copied, out)
 
@@ -603,8 +603,7 @@ def _failed_dry_run(record, repo):
     receipt = json.loads((repo / binding["path"]).read_text())
     receipt["status"] = "failed"
     (repo / binding["path"]).write_text(json.dumps(receipt, sort_keys=True))
-    digest = harness._file_sha(repo, binding["path"])
-    binding["sha256"] = record["bound_files"]["dry_run_v2_fold0"]["sha256"] = digest
+    binding["sha256"] = harness._file_sha(repo, binding["path"])
 
 
 def _foreign_parent(record, repo):
@@ -670,9 +669,9 @@ def test_a_receipt_refuses_a_bound_file_that_changed_since_it_was_written(tmp_pa
 
 def test_a_bound_file_edited_after_publication_is_refused_on_the_live_tree(base, tmp_path_factory):
     copied = copy(base, tmp_path_factory)
-    receipt = copied["record"]["dry_runs"]["receipts"]["2"]["path"]
-    harness.commit_change(copied, receipt, (copied["repo"] / receipt).read_text() + " ")
-    with pytest.raises(AmendmentChainError, match=r"\[C8\] dry_runs.receipts.2: .* does not hash to its recorded "
+    bound = copied["record"]["evidence"]["futility_oc"]["path"]
+    harness.commit_change(copied, bound, (copied["repo"] / bound).read_text() + " ")
+    with pytest.raises(AmendmentChainError, match=r"\[C8\] evidence.futility_oc: .* does not hash to its recorded "
                                                   r"SHA-256 on the live tree"):
         harness.verify(copied)
 

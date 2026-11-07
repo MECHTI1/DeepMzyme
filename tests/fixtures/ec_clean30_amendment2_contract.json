@@ -87,7 +87,7 @@
       },
       "receipts": {
        "key": "fold",
-       "map": "file_binding"
+       "map": "private_file_binding"
       },
       "rule": {
        "const": "r_cmd_v2"
@@ -123,7 +123,7 @@
     },
     "inputs": {
      "keys": {
-      "clean_tie_exposure": "file_binding",
+      "clean_tie_exposure": "private_file_binding",
       "f6_corpus": "object",
       "f6_holdout": "object"
      }
@@ -267,10 +267,26 @@
       "path": "relative_path",
       "sha256": "sha256"
      }
+    },
+    "private_file_binding": {
+     "keys": {
+      "path": "private_path",
+      "private": {
+       "const": true
+      },
+      "sha256": "sha256"
+     }
     }
    },
    "required_bindings": {
-    "description": "Role table (finding: bound-at-build notes become required bindings): every link of sequence 2 or higher binds each role by SHA-256 at the link's commit; the record builder refuses a record without one, and the verifier refuses the link (C8). The bound files hash also on the live tree of the tip.",
+    "description": "Role table (finding: bound-at-build notes become required bindings): every link of sequence 2 or higher binds each role by SHA-256; the record builder refuses a record without one, and the verifier refuses the link (C8). Public roles are committed files, hashed at the link's commit and on the live tree of the tip. The private roles (private_roles, with the dry-run-v2 receipts dry_runs.receipts) are bound privately: every binding below one is {path, sha256, private: true} below private_root, a gitignored file that is never committed and is read from the verification repository's working tree; every other binding is public and never carries private.",
+    "private_roles": [
+     "dry_runs.receipts",
+     "inputs.clean_tie_exposure",
+     "inputs.f6_corpus",
+     "inputs.f6_holdout"
+    ],
+    "private_root": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/",
     "roles": {
      "data_state.attestation_at_build": "file_binding",
      "dry_runs.v1_resolved_config": "file_binding",
@@ -284,7 +300,7 @@
     },
     "shapes": {
      "corpus_bindings": "{tables, union_fasta}: tables are fold_bindings, union_fasta is a file binding",
-     "file_binding": "{path, sha256}: a repository file and its SHA-256",
+     "file_binding": "{path, sha256}: a committed repository file and its SHA-256; below a private role {path, sha256, private: true}: a gitignored, untracked file below PRIVATE_BINDING_ROOT",
      "fold_bindings": "folds '0' to '4' exactly, each a file binding or a non-empty object of file bindings"
     }
    },
@@ -292,7 +308,7 @@
     "boolean": "true or false",
     "commit": "a full commit SHA (40 lower-case hexadecimal digits)",
     "const": "exactly this value",
-    "file_binding": "{path, sha256}: a repository file at the link's commit and its SHA-256",
+    "file_binding": "{path, sha256}: a committed repository file at the link's commit and its SHA-256; never flagged private",
     "fold": "key kind: exactly the outer folds '0' to '4'",
     "function": "key kind: '<relative_path>::<top-level name>'",
     "integer": "an integer (not a boolean)",
@@ -300,6 +316,8 @@
     "list": "a JSON list",
     "map": "an object whose keys are of the given key kind and whose values are of the given shape",
     "object": "a JSON object",
+    "private_file_binding": "{path, sha256, private: true} and no other key: a gitignored, untracked file below the private root, read from the verification repository's working tree, never from git",
+    "private_path": "a safe repository-relative path of a file below DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/ (gitignored; no '..', '.' or empty component)",
     "relative_path": "a repository-relative path without '..'; a folder ends in '/'",
     "rule_id": "key kind: a rule identifier",
     "sha256": "64 lower-case hexadecimal digits",
@@ -608,13 +626,13 @@
   ]
  },
  "record_builder": {
-  "bind_roles": "--bind NAME=PATH with a dotted NAME (a role of required_bindings, or a key below one such as inputs.f6_holdout.0 or inputs.f6_corpus.union_fasta) places the binding at that record path",
+  "bind_roles": "--bind NAME=PATH with a dotted NAME (a role of required_bindings, or a key below one such as inputs.f6_holdout.0 or inputs.f6_corpus.union_fasta) places the binding at that record path; a name below a private role is bound privately",
   "build_inputs": {
-   "dry_run_receipts": "fold -> the dry-run-v2 receipt inside the repository (a passed, real plan-v2 dry run of that fold on a clean tree); fills dry_runs.receipts, and the receipts' common HEAD, an ancestor of HEAD, fills dry_runs.source_commit",
+   "dry_run_receipts": "fold -> the dry-run-v2 receipt below the private root (a passed, real plan-v2 dry run of that fold on a clean tree), bound privately; fills dry_runs.receipts, and the receipts' common HEAD, an ancestor of HEAD, fills dry_runs.source_commit",
    "plan_v2": "fold -> the plan-v2 record written by plan-v2 (format deepmzyme_ec_clean30_fold_plan_v2); fills plans.v2_plan_sha256, and each plan_sha256 equals campaign.build_fold_plan_v2 in the live tree"
   },
   "computed_at_build": {
-   "bound_files": "every bound file inside the repository; bound_files.decisions is the decisions file",
+   "bound_files": "every public bound file inside the repository, committed with the link; bound_files.decisions is the decisions file",
    "confirmation_status": "confirmed",
    "decisions_file": "check_decisions_file: sha256, maintainer and answers",
    "execution_file_set": "every tracked src/ and scripts/ file that neither the composite pins before link 2 (Freeze 1 and link 1) nor source_changes name, from the live tree; amendment_rules.partition refuses a scientific or post-fit analysis role and the set must equal the draft's execution_file_set.declared",
@@ -709,6 +727,19 @@
    "plan_v2",
    "dry_run_receipts"
   ],
+  "private_bindings": {
+   "file": "a regular file reached without a symbolic link in any component below the repository root, inside the repository lexically and by its real path, below the root, not tracked by git (index or HEAD) and ignored by a pattern of a .gitignore tracked at HEAD, unmodified and in a folder that contains the file (git check-ignore -v without system, global or core.excludesFile excludes; .git/info/exclude and negated patterns are refused); a dry-run-v2 receipt names the fold view whose manifest SHA-256 Freeze 1 records",
+   "public": "every other binding is public {path, sha256}, never flagged private and never below the root",
+   "record": "path and SHA-256 only; no private content enters the record or the rendering amendment.md",
+   "roles": [
+    "dry_runs.receipts",
+    "inputs.clean_tie_exposure",
+    "inputs.f6_corpus",
+    "inputs.f6_holdout"
+   ],
+   "root": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/",
+   "shape": "{path, sha256, private: true}, no other key"
+  },
   "removed_draft_keys": [
    "status_note",
    "source_changes_pending"
@@ -753,7 +784,8 @@
    "ec_clean30.amendment_rules:check_analysis_completion",
    "ec_clean30.amendment_rules:scientific_identity",
    "ec_clean30.amendment_rules:function_closure_sha256",
-   "ec_clean30.amendment_rules:policy_records"
+   "ec_clean30.amendment_rules:policy_records",
+   "ec_clean30.amendment_rules:binding_privacy_problems"
   ],
   "selector": [
    "ec_clean30.selector:verified_refit_recipe",
@@ -777,6 +809,7 @@
   "live_tree": "only the tip is compared with the live tree",
   "per_link_authentication": "a detached checkout of the link's published source commit (phase3._baseline_authentication pattern); link 1 by the unchanged freeze.verify_s1_amendment there",
   "precedence_helpers": "ec_clean30.amendment_chain:record_precedence_problems and require_record_precedence (keyword repo): a record under a chain is made at the commit that published the chain's last scientific link or a descendant (git_head or provenance.git.head) that is published on origin/main; its created_utc is a secondary check",
+  "private_bindings": "C8 and C11 read every binding below a private role from the verification repository's working tree, never from git, and refuse one that is absent, does not hash, has a symbolic link in its path, lies outside the private root or is tracked at the link's commit; a private role bound publicly and a public binding flagged private are refused; a nested verification in a checkout reads them from the outermost verification repository, whose root the parent passes as an argument of the fixed chain probe (never an environment variable); C11 also requires each receipt to name the fold view whose manifest SHA-256 Freeze 1 records and carries that SHA-256 in dry_run_evidence, which the view binding compares without reading the private receipt",
   "receipt_check": {
    "code_files": [
     "src/ec_clean30/amendment_chain.py",
@@ -805,7 +838,7 @@
     "the tree is clean",
     "every link file and rendering has its receipt bytes",
     "the live scientific and post-fit analysis pins and the pinned execution functions hold",
-    "every file the tip binds hashes on the live tree",
+    "every public file the tip binds hashes on the live tree; the receipt's public and private bindings equal those of the tip link file; private bindings are never read (a pod holds none)",
     "the verifier files equal the receipt's",
     "receipt_sha256 over the canonical rest",
     "expected_chain, when given"

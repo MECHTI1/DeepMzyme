@@ -17,6 +17,10 @@ The amendment-2 record builder (``ec_clean30.amendment2``) and the general chain
   frozen gates inside execution files.
 - Bindings: ``REQUIRED_BINDINGS`` is the role table of the files every link of sequence 2 or higher binds by
   SHA-256 (``required_binding_problems``); ``DECISIONS_FORMAT`` and ``CONFIRMATION_IDS`` fix the decisions file.
+  ``PRIVATE_ROLES`` are the roles whose files stay private (the repository is public): every binding below one is
+  ``{"path", "sha256", "private": true}`` with a path below the gitignored ``PRIVATE_BINDING_ROOT``, matched by
+  digest in the working tree and never committed; every other binding is public ``{"path", "sha256"}`` and committed
+  (``is_file_binding``, ``is_private_binding``, ``binding_privacy_problems``).
 - Change classes (rule A2-GOV-7): ``check_change_class`` checks a link of sequence 3 or higher against the files
   it changes and the previous link's function pins; ``check_analysis_completion`` checks the extra limits of class
   (a2); ``FUTILITY_POINTER_FORMAT`` and ``FUTILITY_RECORD_FORMAT`` name the fold-0 futility files such a link binds.
@@ -32,6 +36,7 @@ import hashlib
 import importlib
 import json
 from pathlib import Path
+import posixpath
 import re
 import subprocess
 from typing import Any, Callable, Iterable, Mapping, Optional, Sequence
@@ -93,10 +98,21 @@ REQUIRED_BINDINGS: Mapping[str, str] = {
     "inputs.f6_holdout": "fold_bindings",
 }
 BINDING_SHAPES: Mapping[str, str] = {
-    "file_binding": "{path, sha256}: a repository file and its SHA-256",
+    "file_binding": ("{path, sha256}: a committed repository file and its SHA-256; below a private role "
+                     "{path, sha256, private: true}: a gitignored, untracked file below PRIVATE_BINDING_ROOT"),
     "fold_bindings": "folds '0' to '4' exactly, each a file binding or a non-empty object of file bindings",
     "corpus_bindings": "{tables, union_fasta}: tables are fold_bindings, union_fasta is a file binding",
 }
+# Private bindings (the repository is public). The files of these roles hold per-fold counts, accessions or host
+# details that the campaign does not publish before Stage 7 (five per-fold counts give the test-side counts by
+# subtraction). They live below the gitignored campaign data root, are never committed and are matched by SHA-256
+# in the working tree; only their path and SHA-256 enter the record. Every binding below a private role is private
+# and every other binding is public (contract fixture: record_shape.required_bindings.private_roles).
+PRIVATE_BINDING_ROOT = f"DeepMzyme_Data/campaigns/{CAMPAIGN_ID}/"
+PRIVATE_ROLES: tuple[str, ...] = (
+    "dry_runs.receipts", "inputs.clean_tie_exposure", "inputs.f6_corpus", "inputs.f6_holdout",
+)
+PRIVATE_BINDING_KEYS: tuple[str, ...] = ("path", "private", "sha256")
 N_OUTER_FOLDS = 5
 
 TRACKED_CODE_FOLDERS: tuple[str, ...] = ("src", "scripts")
@@ -506,8 +522,38 @@ def _safe_relative(value: Any) -> bool:
 
 
 def is_file_binding(value: Any) -> bool:
-    return (isinstance(value, Mapping) and _safe_relative(value.get("path")) and isinstance(value.get("sha256"), str)
+    """A public file binding ``{path, sha256}`` (further descriptive keys allowed, never ``private``)."""
+    return (isinstance(value, Mapping) and "private" not in value and _safe_relative(value.get("path"))
+            and isinstance(value.get("sha256"), str) and bool(_SHA256_RE.fullmatch(value["sha256"])))
+
+
+def is_private_role(where: Any) -> bool:
+    """Whether the dotted record path ``where`` is a private role or lies below one."""
+    return isinstance(where, str) and any(where == role or where.startswith(role + ".") for role in PRIVATE_ROLES)
+
+
+def is_private_path(value: Any) -> bool:
+    """A safe repository-relative POSIX path of a file below ``PRIVATE_BINDING_ROOT`` (no ``..``, ``.`` or empty
+    component, not absolute)."""
+    if not (_safe_relative(value) and value.startswith(PRIVATE_BINDING_ROOT)
+            and len(value) > len(PRIVATE_BINDING_ROOT)):
+        return False
+    return all(part not in ("", ".", "..") for part in value.split("/"))
+
+
+def is_private_binding(value: Any) -> bool:
+    """A private file binding: exactly ``{path, sha256, private: true}`` with ``is_private_path`` (no other key, so a
+    private binding carries no private content into the record)."""
+    return (isinstance(value, Mapping) and sorted(value) == list(PRIVATE_BINDING_KEYS) and value.get("private") is True
+            and is_private_path(value.get("path")) and isinstance(value.get("sha256"), str)
             and bool(_SHA256_RE.fullmatch(value["sha256"])))
+
+
+def _below_private_root(path: Any) -> bool:
+    if not isinstance(path, str):
+        return False
+    normal = posixpath.normpath(path.lstrip("/"))
+    return (normal + "/").startswith(PRIVATE_BINDING_ROOT)
 
 
 def binding_at(record: Mapping[str, Any], role: str) -> Any:
@@ -518,32 +564,38 @@ def binding_at(record: Mapping[str, Any], role: str) -> Any:
     return value
 
 
-def _shape_problems(value: Any, shape: str, where: str) -> list[str]:
+def _shape_problems(value: Any, shape: str, where: str, private: bool = False) -> list[str]:
+    """``value`` against a binding shape; with ``private`` every file binding of it is a private binding."""
+    leaf = is_private_binding if private else is_file_binding
+    kind = (f"private file binding {{path, sha256, private: true}} below {PRIVATE_BINDING_ROOT}" if private
+            else "file binding {path, sha256}")
     if shape == "file_binding":
-        return [] if is_file_binding(value) else [f"{where} is not a file binding {{path, sha256}}"]
+        return [] if leaf(value) else [f"{where} is not a {kind}"]
     if shape == "fold_bindings":
         folds = [str(fold) for fold in range(N_OUTER_FOLDS)]
         if not (isinstance(value, Mapping) and sorted(value) == folds):
             return [f"{where} does not bind exactly the folds 0-{N_OUTER_FOLDS - 1}"]
         problems = []
         for fold, item in sorted(value.items()):
-            if is_file_binding(item):
+            if leaf(item):
                 continue
-            if not (isinstance(item, Mapping) and item and all(is_file_binding(entry) for entry in item.values())):
-                problems.append(f"{where}.{fold} is neither a file binding nor an object of file bindings")
+            if not (isinstance(item, Mapping) and item and "path" not in item
+                    and all(leaf(entry) for entry in item.values())):
+                problems.append(f"{where}.{fold} is neither a {kind} nor an object of them")
         return problems
     if shape == "corpus_bindings":
         if not isinstance(value, Mapping):
             return [f"{where} is not an object of corpus bindings {{tables, union_fasta}}"]
-        return (_shape_problems(value.get("tables"), "fold_bindings", f"{where}.tables")
-                + _shape_problems(value.get("union_fasta"), "file_binding", f"{where}.union_fasta"))
+        return (_shape_problems(value.get("tables"), "fold_bindings", f"{where}.tables", private)
+                + _shape_problems(value.get("union_fasta"), "file_binding", f"{where}.union_fasta", private))
     return [f"{where} has the unknown binding shape {shape!r}"]
 
 
 def required_binding_problems(record: Mapping[str, Any]) -> list[str]:
-    """Every role of ``REQUIRED_BINDINGS`` holds a binding of its shape (the files are hashed by the caller)."""
+    """Every role of ``REQUIRED_BINDINGS`` holds a binding of its shape, private below ``PRIVATE_ROLES`` and public
+    elsewhere (the files are hashed by the caller)."""
     return [problem for role, shape in sorted(REQUIRED_BINDINGS.items())
-            for problem in _shape_problems(binding_at(record, role), shape, role)]
+            for problem in _shape_problems(binding_at(record, role), shape, role, is_private_role(role))]
 
 
 def file_bindings(value: Any, where: str) -> list[tuple[str, Any, Any]]:
@@ -562,6 +614,52 @@ def file_bindings(value: Any, where: str) -> list[tuple[str, Any, Any]]:
 
     walk(value, where)
     return entries
+
+
+def binding_items(value: Any, where: str) -> list[tuple[str, Mapping[str, Any]]]:
+    """Every object below ``value`` that holds ``path`` and ``sha256``, as ``(where, object)`` (the order and the
+    dotted ``where`` of ``file_bindings``)."""
+    items: list[tuple[str, Mapping[str, Any]]] = []
+
+    def walk(item: Any, at: str) -> None:
+        if isinstance(item, Mapping):
+            if "path" in item and "sha256" in item:
+                items.append((at, item))
+            for key, child in sorted(item.items(), key=lambda pair: str(pair[0])):
+                walk(child, f"{at}.{key}")
+        elif isinstance(item, list):
+            for index, child in enumerate(item):
+                walk(child, f"{at}[{index}]")
+
+    walk(value, where)
+    return items
+
+
+def binding_privacy_problems(record: Mapping[str, Any], sections: Iterable[str]) -> list[str]:
+    """Every file binding below the record ``sections`` has the privacy of its role: below ``PRIVATE_ROLES`` exactly
+    ``{path, sha256, private: true}`` with a safe path below ``PRIVATE_BINDING_ROOT``; anywhere else a public
+    ``{path, sha256}`` without ``private`` and outside the private root. Each problem starts with the binding's
+    dotted record path."""
+    problems: list[str] = []
+    for section in sections:
+        for where, item in binding_items(record.get(section), section):
+            path = item.get("path")
+            if is_private_role(where):
+                if item.get("private") is not True:
+                    problems.append(f"{where} binds a private input publicly; a private role holds "
+                                    f"{{path, sha256, private: true}} below {PRIVATE_BINDING_ROOT}")
+                elif not is_private_path(path):
+                    problems.append(f"{where}: the private path {path!r} is not a safe repository-relative path "
+                                    f"below {PRIVATE_BINDING_ROOT}")
+                elif not is_private_binding(item):
+                    problems.append(f"{where} is not a private file binding {{path, sha256, private: true}} (no "
+                                    "other key)")
+            elif "private" in item:
+                problems.append(f"{where} flags a public binding private; only {list(PRIVATE_ROLES)} are private")
+            elif _below_private_root(path):
+                problems.append(f"{where} binds {path!r} below the private binding root publicly; a public binding "
+                                "is a committed repository file")
+    return problems
 
 
 # ---------------------------------------------------------------------------

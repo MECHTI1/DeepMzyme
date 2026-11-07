@@ -12,7 +12,7 @@ change of the contract and needs both sides' tests to be updated in the same cha
 |---|---|---|
 | `src/ec_clean30/amendment_rules.py` (shared rules), `src/ec_clean30/amendment_chain.py` (this verifier), the contract fixture, the record builder `src/ec_clean30/amendment2.py` and every other file of the [scope list](amendment_draft.json) | science side | scientific |
 | `src/ec_clean30/runtime_precision.py`, the CUDA path of `scripts/run_clean_split30_comparator.py` | execution v5 | scientific, pinned in amendment 2 |
-| the declared closed list `execution_file_set.declared` of the [draft record](amendment_draft.json): `phase3.py`, `phase4.py`, `workstation.py`, `runpod_bootstrap.py`, `runpod_controller.py`, `container_caps.py` and their three runner scripts (execution v4), with `execution_v5.py` and `hot_storage.py` pending | execution v5 | execution (closed list, manifest v5) |
+| the declared closed list `execution_file_set.declared` of the [draft record](amendment_draft.json): `phase3.py`, `phase4.py`, `workstation.py`, `runpod_bootstrap.py`, `runpod_controller.py`, `container_caps.py`, `execution_v5.py`, `hot_storage.py` and the three runner scripts of phases 3 and 4 and the workstation; `execution_file_set.pending` is empty | execution v5 | execution (closed list, manifest v5) |
 
 Neither side edits the other's files, with one delegated line: the execution-v5 commit that adds the comparator's
 module-level `runtime_precision` import also adds `"src/ec_clean30/runtime_precision.py"` to
@@ -37,9 +37,10 @@ Both return the keys `links`, `chain`, `fit_chain`, `tip_sequence`, `composite_s
   reimplement them.
 - `freeze.verify_s1_amendment` is never called on the live tree; it compares the whole live tree with the Freeze-1
   pins plus the S1 changes and therefore fails after any amendment-2 edit.
-- **Full clone only.** `verify_chain` runs on the workstation's full clone. It refuses a partial clone (promisor
-  remote, partial-clone filter or promisor packs, also behind an alternate object store) before any other check,
-  and its message names `check_chain_receipt`.
+- **Full clone only.** `verify_chain` runs on the workstation's full clone, the checkout that also holds the private
+  files at their bound paths (a fresh clone has none and is refused by C8 and C11). It refuses a partial clone
+  (promisor remote, partial-clone filter or promisor packs, also behind an alternate object store) before any other
+  check, and its message names `check_chain_receipt`.
 - **Foreign code.** Called with a `repo` whose verifier is not the caller's own file, `verify_chain` runs that
   repository's verifier in a fresh interpreter; with `require_published` it does so only when the four verifier
   files (`amendment_chain.py`, `amendment_rules.py`, `freeze.py`, `provenance.py`) are byte-identical to the
@@ -53,6 +54,12 @@ Both return the keys `links`, `chain`, `fit_chain`, `tip_sequence`, `composite_s
   level hands its children 20 s less. A timed-out group is killed with its grandchildren, and a child's temporary
   files live in a folder of its parent that is removed whatever happens. A malformed depth or deadline variable is
   refused.
+- **Private bindings.** The repository is public, so the files of the private roles (see
+  [Private bindings](#private-bindings)) are never committed. `verify_chain` reads them from the working tree of the
+  repository it verifies, never from git; a nested verification in a checkout of a link's commit, which holds no
+  private file, reads them from the outermost verification repository, whose root the parent passes as an argument
+  of the fixed chain probe (an absolute directory, or the nested verification is refused). No environment variable
+  names that root, so a top-level call always reads the working tree of the repository it verifies.
 
 ## Chain receipts (workstation, pod and per unit)
 
@@ -62,13 +69,17 @@ Both return the keys `links`, `chain`, `fit_chain`, `tip_sequence`, `composite_s
   - the key: the tip's SHA-256, HEAD, the SHA-256 of `git status --porcelain=v1 --untracked-files=all`,
     `origin/main`, the SHA-256 of the four verifier files, `require_published` and `expected_chain`; the key is taken
     before and after the verification, and a difference refuses the receipt;
-  - the full `verify_chain` result, the SHA-256 of every link file and rendering, and every file the tip binds;
+  - the full `verify_chain` result, the SHA-256 of every link file and rendering, every public file the tip binds
+    (`bindings`) and, apart, the private bindings that `verify_chain` checked (`private_bindings`: where, path and
+    SHA-256 only);
   - `receipt_sha256`, the SHA-256 of the canonical receipt without that field.
 - **Checked on a pod and per unit.** `check_chain_receipt(receipt_path, *, repo, expected_chain=None)` returns the
   result read from the receipt after a cheap re-check of `repo`:
   - HEAD equals the receipt's HEAD, or is a descendant of it, published on `origin/main`, whose changes since the
     receipt touch only execution files;
-  - the tree is clean, every link file and rendering has its receipt bytes, every file the tip binds hashes;
+  - the tree is clean, every link file and rendering has its receipt bytes, the receipt's public and private
+    bindings are exactly those of the tip link file, and every public file the tip binds hashes; private bindings
+    are never read (a pod holds none of them);
   - the live scientific and post-fit analysis pins hold and the pinned execution functions recompute to their pins;
   - the verifier files equal those of the receipt, `receipt_sha256` holds and `expected_chain`, when given, equals
     the chain.
@@ -120,10 +131,10 @@ A failure of any check refuses the chain; nothing is downgraded to a warning.
 | C5 | **Scope.** `source_changes` equals the set of tracked `src/` and `scripts/` files whose bytes differ between the previous composite pins and this link's pins; each `before` equals the previous composite pin (null for a new file); no pinned scientific file is deleted; no execution file is in scope. | An unlisted changed scientific file; an execution file in scope; a deletion. |
 | C6 | **Live source (tip only).** Every scientific file equals the composite scientific pins and post-fit analysis files the analysis pins, except within a class-(a2) link's limits; the pinned function closures equal their pins. That the execution files equal the execution manifest in force is checked by manifest v5, not by this verifier. | A scientific file edited after publication. |
 | C7 | **Partition and import isolation.** The execution file set is closed, sorted, disjoint from the scientific and analysis sets and free of forbidden roles (`amendment_rules.partition`); a fresh interpreter that imports `campaign`, `commands`, `views`, `provenance`, `identity`, `selection`, `selector`, `stats`, `futility`, `clean_sanity`, `amendment_rules`, `amendment_chain` and `runtime_precision` loads no execution file, no post-fit analysis file and no untracked file; the static import closure of no scientific or analysis file (the trainer and embedding modules included) holds an execution file; analysis code is reached only through the pinned channels and no execution file imports it; no execution file reaches a private name of a scientific or analysis module. | An execution file that imports, reads or sets a private name of a scientific module (absolute or relative import, module attribute, `getattr`/`setattr`, `importlib`); a scientific module that loads an execution file. |
-| C8 | **Evidence.** Every bound file (decisions, verification, futility operating characteristics, plans, dry-run receipts, inputs, fixtures, the attestation) hashes to its recorded SHA-256 at the link's commit; every role of the [role table](#required-bindings) is bound; the decisions file itself settles every confirmation, has no placeholder token and no absolute path and equals the record's `decisions_file`; the rule text hashes and is found exactly once in the reviewed document `amendment<n>/amendment_draft.md`. With HEAD past the tip's commit, the tip's bound files also hash on the live tree. | A changed evidence file; a role still holding a note; an unsettled decisions file; rule text that is not the reviewed document's. |
+| C8 | **Evidence.** Every public bound file (decisions, verification, futility operating characteristics, plans, fixtures, the attestation) hashes to its recorded SHA-256 at the link's commit; every private binding (dry-run receipts, tie exposure, F6 inputs) hashes in the verification repository's working tree, is reached without a symbolic link, lies below the private root and is not tracked at the link's commit; every binding has the privacy of its role (`amendment_rules.binding_privacy_problems`); every role of the [role table](#required-bindings) is bound; the decisions file itself settles every confirmation, has no placeholder token and no absolute path and equals the record's `decisions_file`; the rule text hashes and is found exactly once in the reviewed document `amendment<n>/amendment_draft.md`. With HEAD past the tip's commit, the tip's bound files also hash on the live tree and no private file is tracked there. | A changed evidence file; a role still holding a note; a private input bound publicly, committed, altered, absent or behind a link; a public binding flagged private; an unsettled decisions file; rule text that is not the reviewed document's. |
 | C9 | **Policies.** Each `rules` entry names its registered function; every rule policy, the analysis rule included, equals the canonical output of its registered function at the link's commit, recomputed in a fresh interpreter so that no scientific process loads analysis code. | A tampered policy; copied policy hashes over a redefined rule. |
 | C10 | **Plans.** The five v1 plan SHA-256 values equal Freeze 1; the five v2 plan records equal `campaign.build_fold_plan_v2` at the tip. | Any v1 or v2 plan drift. |
-| C11 | **Dry runs.** Five dry-run-v2 receipts exist, hash, passed, and ran on a clean tree at the recorded source commit; the Freeze-1 in-view receipts are byte-unchanged; `r_cmd_v2_check` passes from that commit to the tip; the per-unit view binding (`phase3._bind_view`) additionally requires the fold's amendment-2 dry-run evidence and hashes the bytes it reads. | A missing receipt; a rewritten in-view receipt; a protected-file change after the dry runs. |
+| C11 | **Dry runs.** Five dry-run-v2 receipts are bound privately, are read from the verification repository's working tree (never from git), are not tracked at the link's commit, exist, hash, passed, and ran on a clean tree at the recorded source commit on the fold view whose manifest SHA-256 Freeze 1 records; the Freeze-1 in-view receipts are byte-unchanged; `r_cmd_v2_check` passes from that commit to the tip. The result's `dry_run_evidence` carries each fold's receipt binding with that view manifest SHA-256 (a digest, never a count); the per-unit view binding (`phase3._bind_view`) requires the fold's amendment-2 dry-run evidence, compares the view's manifest SHA-256 with it and hashes the in-view receipt it reads, and never reads the private receipt. | A missing, altered, publicly bound or committed receipt; a receipt of a dirty tree or of another view; a rewritten in-view receipt; a protected-file change after the dry runs. |
 | C12 | **Publication.** With `require_published`, each link's source commit is an ancestor of `origin/main` and its log publishes the link; HEAD is published. | An unpublished link; a log without the line. |
 | C13 | **Data state.** Link 2 records an empty fold-0 record list and zero completed G2 units. A link of sequence 3 or higher carries its change class, timestamps and fold-0 record list and passes `amendment_rules.check_change_class` (for a defect, every defect field; for classes execution and analysis completion, the previous link's pinned execution and analysis functions). A `FUT` entry binds its pointer file and futility record as repository files (see [Record shape](#record-shape)); a FUT record is never taken from the link's own statement. | A later link without its class or fold-0 records; a defect amendment after a bound `stop_futility`; an execution link that re-pins `lane_gate`. |
 | C14 | **Scientific identity.** `amendment_rules.scientific_identity` over exactly `SCIENTIFIC_IDENTITY_KEYS`; no execution pin, manifest hash, commit, provider, hardware or session field, also inside the deferred-input specifications. A chain of two or more links always has one. | A record holding a commit or a manifest hash. |
@@ -144,12 +155,12 @@ reads it; both are tested against the fixture, and neither copies the other's va
 | `execution_file_set` | `{files, names_sha256}`: the sorted execution file list and the SHA-256 of that list |
 | `pinned_execution_functions`, `pinned_analysis_functions` | `"<path>::<name>"` -> closure SHA-256 (`amendment_rules.function_closure_sha256`) |
 | `plans` | `v1_plan_sha256` and `v2_plan_sha256`, each fold `0`-`4` -> plan SHA-256 |
-| `dry_runs` | `rule` (`r_cmd_v2`), `source_commit` (full commit), `receipts` (fold -> `{path, sha256}`), `in_view_receipts_unchanged` (fold -> SHA-256), `v1_resolved_config` (`{path, sha256}`) |
+| `dry_runs` | `rule` (`r_cmd_v2`), `source_commit` (full commit), `receipts` (fold -> `{path, sha256, private: true}`), `in_view_receipts_unchanged` (fold -> SHA-256), `v1_resolved_config` (`{path, sha256}`) |
 | `source_changes` | path -> `{before, after}` (`before` is null for a new file) |
 | `unchanged_scientific_files` | a list of repository paths; a folder ends in `/` |
 | `data_state` | link 2: `fold0_records_at_draft` = `[]`, `g2_completed_units` = `0` and `attestation_at_build` (`{path, sha256}`) |
 | `evidence` | `futility_oc`, `interface_contract`, `power_simulation` and `verification`, each `{path, sha256}` |
-| `inputs` | `clean_tie_exposure` (`{path, sha256}`), `f6_holdout` (fold bindings) and `f6_corpus` (`{tables, union_fasta}`) |
+| `inputs` | `clean_tie_exposure` (`{path, sha256, private: true}`), `f6_holdout` (fold bindings) and `f6_corpus` (`{tables, union_fasta}`), every file bound privately |
 | `fixtures` | `refusals` and `decisions`, each `{path, sha256}` |
 | `rules` | rule ID -> `{policy_function, analysis}` for every registered rule and `r_cmd_v2` |
 | `rule_policy_sha256` | rule ID -> SHA-256 of its canonical policy record |
@@ -160,7 +171,8 @@ reads it; both are tested against the fixture, and neither copies the other's va
 | `fold0_records` (sequence 3 or higher) | a list of `{kind, sha256}`; a fold-0 futility record has `kind` `FUT`, its `decision` and `pointer` and `record`, each `{path, sha256}` |
 
 A file binding is any `{path, sha256}` object below `bound_files`, `fixtures`, `evidence`, `inputs`, `plans`,
-`dry_runs` or `data_state` (`record_shape.file_binding_sections`); C8 hashes each at the link's commit.
+`dry_runs` or `data_state` (`record_shape.file_binding_sections`); C8 hashes each public one at the link's commit and
+each private one in the verification repository's working tree.
 
 ### Required bindings
 
@@ -168,7 +180,40 @@ The fixture's `record_shape.required_bindings` is the role table (`amendment_rul
 sequence 2 or higher binds each role by SHA-256: `data_state.attestation_at_build`, `dry_runs.v1_resolved_config`,
 `evidence.futility_oc`, `evidence.interface_contract`, `evidence.power_simulation` and `evidence.verification` (one
 file each), `inputs.clean_tie_exposure` (one file), `inputs.f6_holdout` (folds `0` to `4`, each one file or an
-object of files) and `inputs.f6_corpus` (`tables` by fold and `union_fasta`).
+object of files) and `inputs.f6_corpus` (`tables` by fold and `union_fasta`). The last three are private roles.
+
+### Private bindings
+
+The repository is public. Some inputs hold per-fold counts, accessions with their EC classes, training sequences,
+absolute paths or host names; five per-fold counts would give the test-side counts by subtraction, which the
+campaign does not publish before Stage 7. `amendment_rules.PRIVATE_ROLES` (fixture
+`record_shape.required_bindings.private_roles`) names them: `dry_runs.receipts` (the five dry-run-v2 receipts),
+`inputs.clean_tie_exposure`, `inputs.f6_holdout` (every fold entry and every file of an object of files) and
+`inputs.f6_corpus` (every table file and `union_fasta`).
+
+- **Shape.** Every binding below a private role is exactly `{path, sha256, private: true}`: no other key, so no
+  private content enters the record. `path` is a safe repository-relative POSIX path below the gitignored campaign
+  data root `amendment_rules.PRIVATE_BINDING_ROOT` = `DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/`; the
+  files live in its `amendment2/` folder. Every other binding is public `{path, sha256}`, never carries `private`,
+  never lies below that root and is committed with the link.
+- **Builder.** A private file is a regular file inside the repository (lexically and by its real path), reached
+  without a symbolic link in any component below the repository root, below the private root, not tracked by git
+  (index or HEAD) and ignored by a pattern of a `.gitignore` that is tracked at HEAD, unmodified and in a folder
+  that contains the file (`git check-ignore -v`, with system, global and repository `core.excludesFile` off; a match
+  in `.git/info/exclude` or a negated pattern is refused, since a local exclude holds in one clone only). A dry-run
+  receipt must also name the fold view whose manifest SHA-256 Freeze 1 records. Only its path and SHA-256 are
+  recorded; the rendering
+  `amendment.md` lists them in a table of private bindings and nothing else of them.
+- **Verifier.** C8 and C11 read private files from the verification repository's working tree, never from git, and
+  refuse one that is absent, does not hash, has a symbolic link in its path, lies outside the private root or is
+  tracked at the link's commit; a private role bound publicly and a public binding flagged private are refused. The
+  C11 content checks run on the private receipt bytes unchanged.
+- **Execution side.** It matches these files by digest only: `phase3._bound_pretrain_file` and `phase4` compare a
+  file's SHA-256 with `amendment_rules.file_bindings(binding_at(tip, role))` (a host that runs these checks holds
+  the private F6 and tie files it uses at their bound paths), and `phase3._bind_view` compares the view's manifest
+  SHA-256 with the fold's `fold_dry_run_evidence` (C11 checked the private receipt on the workstation). A pod, a
+  partial clone of `origin` that holds no private file, checks the chain receipt and binds its views without the
+  dry-run-v2 receipts.
 
 ### Bound futility files
 
@@ -196,17 +241,18 @@ same decision, binding, the same fit chain), as repository files committed with 
     exists and the registry names it);
   - `live_constants_sha256`, `rule_policy_sha256` and `selection_policy_sha256_v2`.
 - **Build inputs:** the five plan-v2 records (`plan-v2`; each equals `campaign.build_fold_plan_v2` live) fill
-  `plans.v2_plan_sha256`; the five dry-run-v2 receipts, which must lie inside the repository, fill `dry_runs.receipts`,
-  and their common clean HEAD fills `dry_runs.source_commit`; every required role is bound with
+  `plans.v2_plan_sha256`; the five dry-run-v2 receipts, written once below the private root and bound privately, fill
+  `dry_runs.receipts`, and their common clean HEAD fills `dry_runs.source_commit`; every required role is bound with
   `--bind ROLE=PATH` (a dotted name, or a key below one such as `inputs.f6_holdout.0` or
-  `inputs.f6_corpus.union_fasta`). The builder never fabricates them.
+  `inputs.f6_corpus.union_fasta`), privately below a private role. The builder never fabricates them.
 - **Refused, in this order:** another draft format; a draft without its contract shape; an invalid decisions file;
   missing build inputs; a pending source change; a pending execution file; base documents that do not hash; a scope
   list that differs from the live tree, or a pinned file changed outside it; a derived execution set with a
   scientific or post-fit analysis role, or other than the declared closed list; pinned-function names that differ
-  from the registries; build inputs that do not check; a rule-text document other than `amendment_draft.md`; a
-  required binding that is absent; file bindings that do not hash. Nothing is written on a refusal, and an existing
-  record is never rewritten.
+  from the registries; build inputs that do not check (a private file outside the private root or the repository,
+  behind a symbolic link, tracked or not ignored by git, or a dry-run receipt of a dirty tree included); a rule-text
+  document other than `amendment_draft.md`; a required binding that is absent or does not have the privacy of its
+  role; file bindings that do not hash. Nothing is written on a refusal, and an existing record is never rewritten.
 
 ## Scientific identity and execution manifests
 
@@ -269,12 +315,8 @@ Where the review offered a design choice that the rule text leaves open, the str
 - `runtime_precision.py` stays a scientific file (pending as a source change), never a pending execution file;
 - Freeze 2 of this campaign is the document `freeze2.json` in the campaign folder.
 
-Open before the record is built: the private-name rule refuses seven reads that the execution-v4 files make today
-(`phase3.py`: `freeze._amendment_code`, `views._set_permissions`, `views._remove_tree`,
-`ec_prediction_export._graph_options`, `._prediction_loader` and `._predict`; `phase4.py`: the comparator's `_run`).
-Either the execution side replaces them with public names that the science side adds to those scientific files in
-amendment 2's scope, or the maintainer approves a closed, pinned list of exceptions; until then link 2 does not
-verify.
+The private-name rule holds on the live tree: the declared execution files reach no private name of a scientific or
+post-fit analysis module.
 
 ## Tests that prove the contract
 
@@ -296,6 +338,15 @@ verify.
   gate pins, roles, decisions, rule text, policies, live constants, dry runs, data state, source parent); bound files
   on the live tree; time budgets, process groups and malformed variables; and a sequence-3 link of each class, accepted from
   a later HEAD and through its receipt in a partial clone.
+- `tests/test_ec_clean30_amendment_chain_private.py` (science side, staged): private bindings; the shared shape
+  rules; the builder's refusals (a public or committed copy, a path outside the root or the repository, a symbolic
+  link, a tracked or unignored file, a dirty dry-run receipt, a private binding in the draft) and its rendering of
+  paths and digests only; the verifier's refusals at link 2's commit and from a later HEAD (a private role bound
+  publicly, a public role flagged private, a path outside the root, with `..` or absolute, a private file tracked at
+  the link's commit or later, altered, absent or behind a link, an altered or dirty dry-run receipt); a top-level
+  call that exports a nesting depth and a private root naming another working tree; a root ignored only by a local
+  exclude or by an uncommitted `.gitignore` change; the chain receipt checked in a pod without the private files; the
+  digest match of the execution side and the view binding on a pod clone without the dry-run-v2 receipts.
 - `tests/test_ec_clean30_amendment2_build_chain.py` (science side, staged): link 2 built by the real
   `build_amendment2` on the same synthetic published repository, rendered, published and accepted by `verify_chain`;
   a published builder output without one required key refused; both sides' names equal to the fixture's record shape;
@@ -316,6 +367,11 @@ verify.
 4. Execution v5: plan-v2 dispatch, futility gate, CLEAN sanity hooks, F6 input build, refit and fold 1-4 queues,
    G2 v2.
 5. Protected-source freeze, then the five plan-v2 records, the five dry-run-v2 runs, the required role files and the
-   record build (`amend-2` with `--plan-v2 FOLD=PATH`, `--dry-run-receipt FOLD=PATH` and `--bind ROLE=PATH`).
+   record build (`amend-2` with `--plan-v2 FOLD=PATH`, `--dry-run-receipt FOLD=PATH` and `--bind ROLE=PATH`); the
+   dry-run-v2 receipts, the tie exposure and the F6 inputs are written once below
+   `DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/` and bound privately.
 6. The maintainer reviews and pushes the link, its rendering and its log line in one commit;
-   `verify-amendment-chain` runs on a clean full clone of `origin/main` and writes the receipt that the pods check.
+   `verify-amendment-chain` runs in the workstation's clean full checkout at the published `origin/main` HEAD, which
+   holds the private files at their bound paths below
+   `DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/`, and writes the receipt that the pods check
+   (a fresh clone of `origin/main` holds no private file and is refused by C8 and C11).

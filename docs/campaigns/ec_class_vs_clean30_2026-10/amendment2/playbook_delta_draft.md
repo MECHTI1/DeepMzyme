@@ -20,16 +20,48 @@ above stay for replay. Every real action below refuses a chain that is not publi
 fit identity carries the fit chain. Plans v2 live beside the Freeze-1 plans, which are never rewritten.
 
 Before publication (CPU, training side only; the hold-out lists are built in a scratch copy of the overlay's
-identity files, and the overlay is never written):
+identity files, and the overlay is never written; each fold's cache-free corpus table is built from that copy, and
+the training-side union FASTA once):
 
 ```bash
 D=docs/campaigns/ec_class_vs_clean30_2026-10; A2="$D/amendment2"; F=$(sha256sum "$D/freeze1.json" | cut -d' ' -f1)
 for K in 0 1 2 3 4; do
   "${SMALL[@]}" "$PY" "$R" plan-v2 --fold "$K" --out "$C/plans_v2/fold$K.json" &&
   "${CAP[@]}" "$PY" "$R" pretrain-corpus holdout-lists --overlay "$O" --campaign-root "$C" --fold "$K" \
-    --freeze1-sha256 "$F" || break; done
+    --freeze1-sha256 "$F" &&
+  "${CAP[@]}" "$PY" "$R" pretrain-corpus build --campaign-root "$C" --fold "$K" --official-split-dir SPLITS \
+    --identity-work "$C/amendment2/f6_holdout/fold$K/work" || break; done
+"${CAP[@]}" "$PY" "$R" pretrain-corpus fasta --campaign-root "$C" --official-split-dir SPLITS
 "${SMALL[@]}" "$PY" scripts/run_ec_clean30_clean_sanity.py tie-exposure --official-training-file TRAIN_FILE \
   --fold K --r2-list R2_LIST --out "$C/amendment2/clean_tie_exposure.json"   # one file/fold pair per fold
+```
+
+Private inputs. The repository is public and `$C` is gitignored. The dry-run-v2 receipts, the tie exposure and the
+F6 hold-out lists and corpus hold per-fold counts, accessions, absolute paths or host names, so each is written once
+below `$C/amendment2/` and bound privately in the record, by path and SHA-256 only
+(`{path, sha256, private: true}`); no byte copy of them goes into `docs/` or any other tracked folder. The record
+build reads them in place; `verify-amendment-chain` checks them in the workstation's full checkout, which holds
+them at their bound paths (a fresh clone has none and is refused). A pod checks the chain receipt and binds its fold
+views without the dry-run-v2 receipts; a host that attaches F6 inputs or prepares the final CLEAN inputs holds the
+fold's F6 files at their bound paths. Each fold binds an object of files: `tables.K.table` (`corpus.tsv`, matched by
+the F6 attach) and `tables.K.receipt` (`corpus_table_receipt.json`, matched by the final CLEAN inputs), and
+`f6_holdout.K.receipt` (`holdout_lists_receipt.json`, matched by the F6 attach). The repeated dry runs, at the frozen
+source commit on a clean tree, and the record build:
+
+```bash
+for K in 0 1 2 3 4; do
+  "${SMALL[@]}" "$PY" "$R" dry-run-v2 --view "$C/views/fold$K" --out "$C/amendment2/dry_runs/fold$K.json" ||
+    break; done
+P="$C/amendment2"; IN=(--bind "inputs.clean_tie_exposure=$P/clean_tie_exposure.json"
+  --bind "inputs.f6_corpus.union_fasta=$P/f6_corpus/union_training.fasta")
+for K in 0 1 2 3 4; do
+  IN+=(--plan-v2 "$K=$C/plans_v2/fold$K.json" --dry-run-receipt "$K=$P/dry_runs/fold$K.json"
+    --bind "inputs.f6_holdout.$K.receipt=$P/f6_holdout/fold$K/holdout_lists_receipt.json"
+    --bind "inputs.f6_corpus.tables.$K.table=$P/f6_corpus/fold$K/corpus.tsv"
+    --bind "inputs.f6_corpus.tables.$K.receipt=$P/f6_corpus/fold$K/corpus_table_receipt.json"); done
+"${SMALL[@]}" "$PY" "$R" amend-2 --draft "$A2/amendment_draft.json" --decisions "$A2/maintainer_decisions.json" \
+  --amendment-draft-md "$A2/amendment_draft.md" "${IN[@]}" --bind ROLE=PATH ... \
+  --render "$A2/amendment.md" --out "$A2/amendment.json"     # ROLE=PATH: the public roles, committed files
 ```
 
 F6 inputs for one fold view `V`, after the ESMC union cache exists. The union cache and its CPU parity sample use
@@ -88,8 +120,8 @@ descriptive field of the FUT record. `dry-run` keeps checking v1 plans for repla
 | `"$E" from-model`, `"$E" sequences` | new flag `--forward-precision` (`sdk` default and historical, or `fp32`) | implemented (staged) |
 | `"$E" compare` | new flag `--kind` (`chain_mean` default, or `sequence_mean`) | implemented (staged) |
 | `scripts/run_ec_clean30_clean_sanity.py` with `sample`, `in-sample` and `held-out` (each with the fit's precision-policy log), `tie-exposure`, `disposition` (`--arm` for a held-out arm) | new script | implemented (staged) |
-| `"$R" dry-run-v2 --view V --out F [--runs-dir RUNS]` | plan-v2 dry run against the declared pretraining-input stub; receipt written once outside the view, the in-view receipt unchanged | implemented (staged) |
-| `"$R" amend-2 --draft D --decisions F --amendment-draft-md "$A2/amendment_draft.md" --bind ROLE=PATH ... --render "$A2/amendment.md" --out "$A2/amendment.json"`, `"$R" verify-amendment-chain ... [--expected-chain SHA ...]` | record build from the reviewed document and its rendering; chain receipt through the general chain verifier on a full clone (`amendment_chain.chain_receipt_record`), checked on pods and per unit by `amendment_chain.check_chain_receipt` | implemented (staged) |
+| `"$R" dry-run-v2 --view V --out F [--runs-dir RUNS]` | plan-v2 dry run against the declared pretraining-input stub; receipt written once outside the view, below `"$C/amendment2/"`, and bound privately; the in-view receipt unchanged | implemented (staged) |
+| `"$R" amend-2 --draft D --decisions F --amendment-draft-md "$A2/amendment_draft.md" --bind ROLE=PATH ... --render "$A2/amendment.md" --out "$A2/amendment.json"`, `"$R" verify-amendment-chain ... [--expected-chain SHA ...]` | record build from the reviewed document and its rendering; the dry-run-v2 receipts and the tie-exposure and F6 inputs below `"$C/amendment2/"` bound privately (path and SHA-256 only), every other bound file committed; chain receipt through the general chain verifier on a full clone (`amendment_chain.chain_receipt_record`), checked on pods and per unit by `amendment_chain.check_chain_receipt` | implemented (staged) |
 | `"$R" refit-recipe ... [--amendment-chain-receipt F]`, `"$R" futility ... [--amendment-chain-receipt F]` | verified refit recipe of one fold for the scoring manifest (rule A2-SEL-9); the receipt is checked instead of verifying the chain again | implemented (staged) |
 | `"$R" pretrain-corpus build`, `"$R" pretrain-corpus fasta` | cache-free corpus table per fold; training-side union FASTA for the ESMC union cache | implemented (staged) |
 | `scripts/run_ec_clean30_clean_sanity.py verify-all` | receipt over every record and disposition | implemented (staged) |

@@ -1048,15 +1048,9 @@ def _bind_view(view: views.View, source: Mapping[str, Any]) -> None:
 
         verified = authenticated_chain(source)
         evidence = amendment_chain.fold_dry_run_evidence(verified, view.fold)
-        receipt_path = _safe_file(REPO_ROOT, evidence["receipt"]["path"])
-        receipt_bytes = receipt_path.read_bytes()
-        _require(hashlib.sha256(receipt_bytes).hexdigest() == evidence["receipt"]["sha256"],
-                 "Amendment-2 fold dry-run receipt bytes differ (C11).")
-        receipt = json.loads(receipt_bytes)
-        _require(receipt.get("status") == "passed" and receipt.get("fold") == view.fold
-                 and receipt.get("plan_version") == 2
-                 and receipt.get("provenance", {}).get("git", {}).get("head") == evidence["source_commit"]
-                 and receipt.get("view_manifest_sha256") == view.manifest_sha256
+        # The dry-run-v2 receipt is private (never on a pod): the chain verification checked its bytes, status,
+        # fold, plan version and clean source commit, and carries its view manifest SHA-256 (C11).
+        _require(evidence["receipt"].get("view_manifest_sha256") == view.manifest_sha256
                  and evidence["in_view_receipt_sha256"] == _sha(view.receipts / views.DRY_RUN_RECEIPT_NAME),
                  "Amendment-2 dry-run evidence does not bind this fold view (C11).")
 

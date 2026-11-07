@@ -119,7 +119,8 @@ def test_the_builder_writes_the_contract_record_shape_from_the_draft_and_the_liv
     assert record["dry_runs"]["source_commit"] == built["commits"]["D"]
     assert record["dry_runs"]["receipts"] == {fold: {"path": build.RECEIPT_PATH.format(fold=fold),
                                                      "sha256": harness._file_sha(built["repo"],
-                                                                                 build.RECEIPT_PATH.format(fold=fold))}
+                                                                                 build.RECEIPT_PATH.format(fold=fold)),
+                                                     "private": True}
                                               for fold in build.FOLDS}
     assert record["bound_files"] == {"decisions": {"path": build.DECISIONS_PATH,
                                                    "sha256": harness._file_sha(built["repo"], build.DECISIONS_PATH)}}
@@ -127,9 +128,10 @@ def test_the_builder_writes_the_contract_record_shape_from_the_draft_and_the_liv
     # Every required role is bound at its record path (the draft held notes there), the rule text comes from the
     # reviewed document and the rendering is the other file.
     assert rules.required_binding_problems(record) == []
-    assert record["inputs"]["f6_holdout"]["3"] == {"path": f"{harness.DOCS}/amendment2/f6_holdout/fold3.tsv",
+    assert record["inputs"]["f6_holdout"]["3"] == {"path": f"{harness.PRIVATE}/f6_holdout/fold3.tsv",
                                                    "sha256": harness._file_sha(
-                                                       built["repo"], f"{harness.DOCS}/amendment2/f6_holdout/fold3.tsv")}
+                                                       built["repo"], f"{harness.PRIVATE}/f6_holdout/fold3.tsv"),
+                                                   "private": True}
     assert record["rule_text"]["source"] == BUILDER["rule_text_source"]
     assert record["execution_file_set"]["files"] == draft["execution_file_set"]["declared"]
     rendering = (built["repo"] / BUILDER["rendering"]).read_text()
@@ -149,7 +151,11 @@ def test_verify_chain_accepts_link_2_built_by_the_real_builder(built):
     assert verified["pinned_analysis_functions"] == record["pinned_analysis_functions"]
     assert verified["plan_records"] == {"v1": record["plans"]["v1_plan_sha256"],
                                         "v2": record["plans"]["v2_plan_sha256"]}
-    assert verified["dry_run_evidence"]["receipts"] == record["dry_runs"]["receipts"]
+    views = built["freeze1_doc"]["views"]
+    assert verified["dry_run_evidence"]["receipts"] == {
+        fold: {"path": item["path"], "sha256": item["sha256"],
+               "view_manifest_sha256": views[fold]["view_manifest_sha256"]}
+        for fold, item in record["dry_runs"]["receipts"].items()}
     assert verified["dry_run_evidence"]["source_commit"] == built["commits"]["D"]
     assert len(verified["scientific_identity_sha256"]) == 64
 

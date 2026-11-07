@@ -356,7 +356,7 @@
     "futility_spec": "bound through rules.futility_predictive_cluster_bootstrap_v1 (futility.policy_record); no separate file",
     "interface_contract": {
       "path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/interface_contract.md",
-      "sha256": "00778b43904b0ebfd2112cd39c34af783b65df525410db67dd5db66dc61788b6"
+      "sha256": "1c169d02fd08c8914770fbf6a91fc911fcc308a5f4dbc03de0efadace9b12fe9"
     },
     "power_simulation": {
       "path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/power_simulation.md",
@@ -393,7 +393,7 @@
   "fixtures": {
     "contract": {
       "path": "tests/fixtures/ec_clean30_amendment2_contract.json",
-      "sha256": "8597bcf6d4238385f63e27db7abd582794a0c7f01c0a191da4adffb04ae89a49"
+      "sha256": "1aa11047bbb3a44f16a1d640a7585648c7a883e9391c3a31a28c221b873e91aa"
     },
     "decisions": {
       "path": "tests/fixtures/ec_clean30_amendment2_decisions.json",
@@ -637,7 +637,7 @@
       "written_by": "science"
     },
     "src/ec_clean30/amendment2.py": {
-      "after": "9515f1ac6674842f1368b3b6b363d1a246d3d46d4c16747983502b0c2adc4930",
+      "after": "9615bca08765bb8905aa0ecf51e544f8f4886717d4c4de2c4455e433a814d08b",
       "before": null,
       "note": "keyed chain receipt and refit-recipe receipt read by the scoring pass, dry-run-v2, decisions-file checks, record builder (declared execution list, required bindings, rule text from amendment_draft.md) and rendering",
       "r_cmd_class": "added",
@@ -652,7 +652,7 @@
       "written_by": "science"
     },
     "src/ec_clean30/amendment_chain.py": {
-      "after": "e1ab8ff8743fc6a836db7ed864378b890847c5b88e2493c630f288a48ad9526b",
+      "after": "e7235f3bb6283fd783faf4fcebef5a051888c95c4da8c5b75142aa37a367e678",
       "before": null,
       "note": "general chain verifier and its receipt check (interface_contract.md); pinned here, never an execution file",
       "r_cmd_class": "added",
@@ -668,7 +668,7 @@
       "written_by": "science"
     },
     "src/ec_clean30/amendment_rules.py": {
-      "after": "0dcd12db94f263d45209944045774743bd233868f552ef770d4f7106c7a78e78",
+      "after": "0114d3ef1be4338de4cf7681cbaf58dafe8fee4ebf8d92843a172791e4be6c8c",
       "before": null,
       "note": "shared by the builder and the chain verifier: link paths and log lines, role table, private names, change classes with function pins; class (a2) compares every rule's policy SHA-256",
       "r_cmd_class": "added",

@@ -32,7 +32,8 @@ FOLDS = [str(fold) for fold in range(5)]
 DOCS = harness.DOCS
 DRAFT_PATH = f"{DOCS}/amendment2/amendment_draft.json"
 DECISIONS_PATH = f"{DOCS}/amendment2/maintainer_decisions.json"
-RECEIPT_PATH = f"{DOCS}/amendment2/dry_runs/fold{{fold}}.json"
+# Dry-run-v2 receipts are private inputs: gitignored, below amendment_rules.PRIVATE_BINDING_ROOT.
+RECEIPT_PATH = f"{harness.PRIVATE}/dry_runs/fold{{fold}}.json"
 RULE_TEXT = harness.RULE_TEXT
 R_CMD_V2_FUNCTION = next(spec for spec in CONTRACT["science_api"]["rules"] if spec.endswith(":r_cmd_v2_check"))
 
@@ -48,11 +49,18 @@ def _relative(value: Any) -> bool:
             and ".." not in value.split("/"))
 
 
+def _private_path(value: Any) -> bool:
+    root = SHAPE["required_bindings"]["private_root"]
+    return (_relative(value) and value.startswith(root) and len(value) > len(root)
+            and all(part not in ("", ".") for part in value.split("/")))
+
+
 _TOKENS = {
     "sha256": lambda value: isinstance(value, str) and bool(_SHA256.fullmatch(value)),
     "sha256_or_null": lambda value: value is None or (isinstance(value, str) and bool(_SHA256.fullmatch(value))),
     "commit": lambda value: isinstance(value, str) and bool(_COMMIT.fullmatch(value)),
     "relative_path": _relative,
+    "private_path": _private_path,
     "string": lambda value: isinstance(value, str) and bool(value.strip()),
     "integer": lambda value: isinstance(value, int) and not isinstance(value, bool),
     "boolean": lambda value: isinstance(value, bool),
@@ -109,28 +117,40 @@ def _role_value(record: Mapping[str, Any], role: str) -> Any:
     return value
 
 
-def _binding_shape_problems(value: Any, kind: str, where: str) -> list[str]:
+def _leaf_problems(value: Any, where: str, private: bool) -> list[str]:
+    """A file binding: ``private_file_binding`` (exactly path, sha256 and private) below a private role,
+    ``file_binding`` without ``private`` elsewhere."""
+    if private:
+        problems = shape_problems(value, "private_file_binding", where)
+        if isinstance(value, Mapping) and sorted(value) != ["path", "private", "sha256"]:
+            problems.append(f"{where} holds other keys than path, sha256 and private")
+        return problems
+    problems = shape_problems(value, "file_binding", where)
+    return problems + ([f"{where} is flagged private"] if isinstance(value, Mapping) and "private" in value else [])
+
+
+def _binding_shape_problems(value: Any, kind: str, where: str, private: bool = False) -> list[str]:
     """One role of ``record_shape.required_bindings`` against its shape kind (read from the fixture's words)."""
     if kind == "file_binding":
-        return shape_problems(value, "file_binding", where)
+        return _leaf_problems(value, where, private)
     if kind == "fold_bindings":
         if not (isinstance(value, Mapping) and sorted(value) == FOLDS):
             return [f"{where} does not bind the folds 0-4"]
         problems: list[str] = []
         for fold, item in value.items():
             if isinstance(item, Mapping) and "path" in item:
-                problems += shape_problems(item, "file_binding", f"{where}.{fold}")
+                problems += _leaf_problems(item, f"{where}.{fold}", private)
             elif isinstance(item, Mapping) and item:
                 problems += [problem for name, entry in item.items()
-                             for problem in shape_problems(entry, "file_binding", f"{where}.{fold}.{name}")]
+                             for problem in _leaf_problems(entry, f"{where}.{fold}.{name}", private)]
             else:
                 problems.append(f"{where}.{fold} binds no file")
         return problems
     if kind == "corpus_bindings":
         if not isinstance(value, Mapping):
             return [f"{where} is not an object"]
-        return (_binding_shape_problems(value.get("tables"), "fold_bindings", f"{where}.tables")
-                + _binding_shape_problems(value.get("union_fasta"), "file_binding", f"{where}.union_fasta"))
+        return (_binding_shape_problems(value.get("tables"), "fold_bindings", f"{where}.tables", private)
+                + _binding_shape_problems(value.get("union_fasta"), "file_binding", f"{where}.union_fasta", private))
     raise ValueError(f"unknown binding shape {kind!r}")
 
 
@@ -141,8 +161,9 @@ def record_shape_problems(record: Mapping[str, Any]) -> list[str]:
                 if key not in record]
     for key, spec in SHAPE["fields"].items():
         problems += shape_problems(record[key], spec, key) if key in record else [f"lacks {key}"]
+    private_roles = SHAPE["required_bindings"]["private_roles"]
     for role, kind in SHAPE["required_bindings"]["roles"].items():
-        problems += _binding_shape_problems(_role_value(record, role), kind, role)
+        problems += _binding_shape_problems(_role_value(record, role), kind, role, role in private_roles)
     state = record.get("data_state") or {}
     problems += [f"data_state.{key} is not {value!r}" for key, value in SHAPE["link2"]["data_state"].items()
                  if state.get(key) != value or type(state.get(key)) is not type(value)]
@@ -214,7 +235,8 @@ def write_build_inputs(world: dict) -> dict[str, Any]:
         relative = RECEIPT_PATH.format(fold=fold)
         harness._write(repo, relative, json.dumps({
             "format": amendment2.DRY_RUN_V2_RECEIPT_FORMAT, "schema_version": 1, "status": "passed", "fold": int(fold),
-            "plan_version": 2, "provenance": {"smoke": False, "git": {"head": commits["D"], "clean": True}}},
+            "plan_version": 2, "view_manifest_sha256": world["freeze1_doc"]["views"][fold]["view_manifest_sha256"],
+            "provenance": {"smoke": False, "git": {"head": commits["D"], "clean": True}}},
             sort_keys=True))
         receipts[fold] = repo / relative
         plan = root / "campaign" / "plans_v2" / f"fold{fold}.json"

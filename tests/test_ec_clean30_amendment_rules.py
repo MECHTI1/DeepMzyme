@@ -230,15 +230,19 @@ def test_link_paths_log_lines_and_the_role_table():
     assert sorted(problem.split(" ")[0] for problem in rules.required_binding_problems(record)) == sorted(
         rules.REQUIRED_BINDINGS)
     binding = {"path": "docs/x.json", "sha256": a}
-    folds = {str(fold): binding for fold in range(5)}
+    hidden = {"path": f"{rules.PRIVATE_BINDING_ROOT}amendment2/x.json", "sha256": a, "private": True}
+    folds = {str(fold): hidden for fold in range(5)}
     full = {"data_state": {"attestation_at_build": binding}, "dry_runs": {"v1_resolved_config": binding},
             "evidence": {name: binding for name in ("futility_oc", "interface_contract", "power_simulation",
                                                     "verification")},
-            "inputs": {"clean_tie_exposure": binding, "f6_holdout": {**folds, "4": {"inner0": binding}},
-                       "f6_corpus": {"tables": folds, "union_fasta": binding}}}
+            "inputs": {"clean_tie_exposure": hidden, "f6_holdout": {**folds, "4": {"inner0": hidden}},
+                       "f6_corpus": {"tables": folds, "union_fasta": hidden}}}
     assert rules.required_binding_problems(full) == []
-    for role, value in (("inputs.f6_holdout", {"0": binding}), ("inputs.f6_corpus", {"tables": folds}),
-                        ("evidence.verification", {"path": "/abs.json", "sha256": a})):
+    for role, value in (("inputs.f6_holdout", {"0": hidden}), ("inputs.f6_corpus", {"tables": folds}),
+                        ("evidence.verification", {"path": "/abs.json", "sha256": a}),
+                        ("evidence.verification", hidden), ("inputs.clean_tie_exposure", binding),
+                        ("inputs.f6_corpus", {"tables": folds, "union_fasta": {**hidden, "count": 3}}),
+                        ("inputs.f6_holdout", {**folds, "2": {**hidden, "path": "docs/x.json"}})):
         broken = json.loads(json.dumps(full))
         target = broken
         for key in role.split(".")[:-1]:

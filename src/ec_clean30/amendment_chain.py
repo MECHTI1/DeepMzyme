@@ -57,6 +57,16 @@ How a chain is authenticated
 - Every git call and fresh interpreter runs without the caller's ``GIT_*`` variables, without system or global git
   configuration and in its own process group under one shrinking time budget; a timed-out group is killed and its
   temporary files go with it.
+- Private bindings (``amendment_rules.PRIVATE_ROLES``: the dry-run-v2 receipts, the CLEAN tie exposure and the F6
+  hold-out lists and corpus; the repository is public). C8 and C11 read them from the working tree of the
+  verification repository, never from git, and refuse one that is absent, does not hash, has a symbolic link in its
+  path, lies outside ``amendment_rules.PRIVATE_BINDING_ROOT`` or is tracked at the link's commit; a private role
+  bound publicly and a public binding flagged private are refused (``amendment_rules.binding_privacy_problems``).
+  A nested verification in a checkout of a link's commit reads them from the outermost verification repository,
+  whose root the parent passes as an argument of the fixed chain probe (never through the environment, so a
+  top-level call always reads its own working tree). Public bindings are
+  read from git at the link's commit. ``check_chain_receipt`` never reads a private file: the receipt lists the
+  private bindings apart, and a pod holds none of them.
 
 Helpers for consumers: ``check_chain_receipt``, ``record_precedence_problems`` (C15 by git ancestry and
 publication), ``fold_dry_run_evidence``, ``identity_record``, ``import_isolation_problems``,
@@ -190,6 +200,7 @@ def _sha256(data: bytes) -> str:
 
 
 _DEADLINES: list[float] = []
+_PRIVATE_ROOTS: list[Path] = []
 
 
 def _environment_number(name: str, kind: type) -> Any:
@@ -337,6 +348,60 @@ def _working_tree_bytes(repo: Path, path: str) -> Optional[bytes]:
     return target.read_bytes() if target.is_file() else None
 
 
+def _probe_private_root(raw: Any) -> Path:
+    """The private root a parent verification passed to the chain probe: an absolute directory."""
+    _require(isinstance(raw, str) and os.path.isabs(raw) and Path(raw).is_dir(),
+             f"The chain probe names no private root directory ({str(raw)[:40]!r}); the verification is refused.")
+    return Path(os.path.realpath(raw))
+
+
+def _private_root(repo: Path) -> Path:
+    return _PRIVATE_ROOTS[-1] if _PRIVATE_ROOTS else Path(repo)
+
+
+def _private_file(root: Path, path: Any) -> tuple[Optional[bytes], Optional[str]]:
+    """The bytes of a private binding's file in the working tree of ``root`` (never from git), or why there are
+    none."""
+    if not rules.is_private_path(path):
+        return None, f"lies outside the private binding root {rules.PRIVATE_BINDING_ROOT}"
+    cursor = Path(root)
+    for part in Path(path).parts:
+        cursor = cursor / part
+        if cursor.is_symlink():
+            return None, "has a symbolic link in its path in the verification repository's working tree"
+    data = _working_tree_bytes(Path(root), path)
+    if data is None:
+        return None, ("is absent from the verification repository's working tree (a private input is never read "
+                      "from git)")
+    return data, None
+
+
+def _private_reader(root: Path) -> Callable[[str], tuple[Optional[bytes], Optional[str]]]:
+    return lambda path: _private_file(root, path)
+
+
+def _tracked_check(repo: Path, commit: Optional[str]) -> Callable[[str], Optional[bool]]:
+    """Whether a path is tracked at ``commit`` (without one: at HEAD or in the index); None when git cannot tell."""
+    def tracked(path: str) -> Optional[bool]:
+        if not _safe_relative(path):
+            return None
+        revisions = [commit] if commit is not None else ["HEAD"]
+        for revision in revisions:
+            code, out = _git(repo, "--literal-pathspecs", "ls-tree", "-z", "--name-only", revision, "--", path)
+            if code == 0 and out:
+                return True
+            if code != 0 and commit is not None:
+                return None
+        if commit is None:
+            code, out = _git(repo, "--literal-pathspecs", "ls-files", "-z", "--", path)
+            if code != 0:
+                return None
+            return bool(out)
+        return False
+
+    return tracked
+
+
 def _reader(repo: Path, commit: Optional[str]) -> Callable[[str], Optional[bytes]]:
     """Bytes of a repository file at ``commit`` (from the object store), or in the working tree without one."""
     if commit is None:
@@ -384,9 +449,12 @@ _PRELUDE = "import json, sys\nsys.path.insert(0, sys.argv[1])\nargs = json.loads
 _FAIL = ("except Exception as exc:\n"
          "    print(json.dumps({'error': type(exc).__name__ + ': ' + str(exc)}))\n"
          "    sys.exit(3)\n")
+# The parent's private root (``_PRIVATE_ROOTS``) is an argument of this fixed probe: the working tree whose private
+# files the nested verification reads. It is never taken from the environment.
 _CHAIN_PROBE = _PRELUDE + (
     "from ec_clean30 import amendment_chain\n"
     "try:\n"
+    "    amendment_chain._PRIVATE_ROOTS.append(amendment_chain._probe_private_root(args['private_root']))\n"
     "    result = amendment_chain.verify_chain(args['tip'], expected_freeze1_sha256=args['freeze1'],\n"
     "        expected_freeze1b_sha256=args['freeze1b'], repo=args['repo'],\n"
     "        require_published=args['require_published'], expected_chain=args['chain'])\n"
@@ -786,19 +854,53 @@ def evidence_entries(record: Mapping[str, Any]) -> list[tuple[str, Any, Any]]:
     return [entry for section in EVIDENCE_SECTIONS for entry in rules.file_bindings(record.get(section), section)]
 
 
-def binding_hash_problems(read: Callable[[str], Optional[bytes]], record: Mapping[str, Any], *,
-                          where: str = "at the link's commit") -> list[str]:
-    """C8: every file binding of the record's evidence sections hashes to its recorded SHA-256."""
-    problems = []
-    for at, path, digest in evidence_entries(record):
-        if not _safe_relative(path) or not _is_sha256(digest):
-            problems.append(f"[C8] {at} is a malformed file binding")
-            continue
+def _default_private_reader(read: Callable[[str], Optional[bytes]]
+                            ) -> Callable[[str], tuple[Optional[bytes], Optional[str]]]:
+    def private_read(path: str) -> tuple[Optional[bytes], Optional[str]]:
         data = read(path)
-        if data is None:
-            problems.append(f"[C8] {at}: {path} does not exist {where}")
-        elif provenance.sha256_bytes(data) != digest:
-            problems.append(f"[C8] {at}: {path} does not hash to its recorded SHA-256 {where}")
+        return data, None if data is not None else "does not exist"
+
+    return private_read
+
+
+def binding_hash_problems(read: Callable[[str], Optional[bytes]], record: Mapping[str, Any], *,
+                          where: str = "at the link's commit",
+                          private_read: Optional[Callable[[str], tuple[Optional[bytes], Optional[str]]]] = None,
+                          tracked: Optional[Callable[[str], Optional[bool]]] = None) -> list[str]:
+    """C8: every file binding of the record's evidence sections has the privacy of its role
+    (``amendment_rules.binding_privacy_problems``) and hashes to its recorded SHA-256. A public binding is read with
+    ``read`` (git at the link's commit); a private binding with ``private_read`` (``(bytes, reason)`` from the
+    verification repository's working tree; the verifier always passes it) and, with ``tracked``, must not be
+    tracked ``where``."""
+    private_read = private_read or _default_private_reader(read)
+    problems = [f"[C8] {problem}" for problem in rules.binding_privacy_problems(record, EVIDENCE_SECTIONS)]
+    for section in EVIDENCE_SECTIONS:
+        for at, item in rules.binding_items(record.get(section), section):
+            path, digest = item.get("path"), item.get("sha256")
+            if not _safe_relative(path) or not _is_sha256(digest):
+                problems.append(f"[C8] {at} is a malformed file binding")
+                continue
+            if rules.is_private_role(at):
+                if not rules.is_private_binding(item):
+                    continue  # refused above; a public copy of a private input is never read
+                data, reason = private_read(path)
+                if data is None:
+                    problems.append(f"[C8] {at}: the private file {path} {reason}")
+                elif provenance.sha256_bytes(data) != digest:
+                    problems.append(f"[C8] {at}: the private file {path} does not hash to its recorded SHA-256 in "
+                                    "the verification repository's working tree")
+                state = tracked(path) if tracked is not None else False
+                if state is None:
+                    problems.append(f"[C8] {at}: git cannot tell whether the private file {path} is tracked {where}")
+                elif state:
+                    problems.append(f"[C8] {at}: the private file {path} is tracked {where} (a private input was "
+                                    "published)")
+                continue
+            data = read(path)
+            if data is None:
+                problems.append(f"[C8] {at}: {path} does not exist {where}")
+            elif provenance.sha256_bytes(data) != digest:
+                problems.append(f"[C8] {at}: {path} does not hash to its recorded SHA-256 {where}")
     return problems
 
 
@@ -859,12 +961,16 @@ def rule_text_problems(read: Callable[[str], Optional[bytes]], record: Mapping[s
     return problems
 
 
-def evidence_problems(read: Callable[[str], Optional[bytes]], record: Mapping[str, Any]) -> list[str]:
-    """C8: every bound file hashes to its recorded SHA-256 at the link's commit; every role of
-    ``amendment_rules.REQUIRED_BINDINGS`` is bound; the decisions file is bound, settles every confirmation and equals
-    the record's ``decisions_file``; the record states that its confirmations and provisional markers are settled;
-    the rule text is the reviewed document's; the refusal and decision fixtures are bound."""
-    problems = binding_hash_problems(read, record)
+def evidence_problems(read: Callable[[str], Optional[bytes]], record: Mapping[str, Any], *,
+                      private_read: Optional[Callable[[str], tuple[Optional[bytes], Optional[str]]]] = None,
+                      tracked: Optional[Callable[[str], Optional[bool]]] = None) -> list[str]:
+    """C8: every bound file hashes to its recorded SHA-256 (public bindings at the link's commit, private bindings in
+    the verification repository's working tree and untracked at the link's commit, see ``binding_hash_problems``);
+    every role of ``amendment_rules.REQUIRED_BINDINGS`` is bound with the privacy of its role; the decisions file is
+    bound, settles every confirmation and equals the record's ``decisions_file``; the record states that its
+    confirmations and provisional markers are settled; the rule text is the reviewed document's; the refusal and
+    decision fixtures are bound."""
+    problems = binding_hash_problems(read, record, private_read=private_read, tracked=tracked)
     problems += [f"[C8] {problem}" for problem in rules.required_binding_problems(record)]
     if record.get("confirmation_status") != CONFIRMED or record.get("provisional_markers_settled") is not True:
         problems.append("[C8] the record does not state that its confirmations and provisional markers are settled")
@@ -940,12 +1046,23 @@ def _in_view_receipts(freeze1: Mapping[str, Any]) -> dict[str, Any]:
             for fold in _folds()}
 
 
+def _frozen_view_manifests(freeze1: Mapping[str, Any]) -> dict[str, Any]:
+    """Freeze 1's view manifest SHA-256 of each fold (the view each dry-run-v2 receipt must name)."""
+    return {fold: ((freeze1.get("views") or {}).get(fold) or {}).get("view_manifest_sha256") for fold in _folds()}
+
+
 def dry_run_problems(read: Callable[[str], Optional[bytes]], record: Mapping[str, Any],
-                     freeze1: Mapping[str, Any]) -> tuple[list[str], dict[str, Any]]:
-    """C11 (record side): five dry-run-v2 receipts exist, hash, passed and ran on a clean tree at the recorded source
-    commit; the Freeze-1 in-view receipt SHA-256 values are unchanged. The in-view bytes are compared by the per-unit
-    view binding (``fold_dry_run_evidence``)."""
+                     freeze1: Mapping[str, Any], *, tracked: Optional[Callable[[str], Optional[bool]]] = None
+                     ) -> tuple[list[str], dict[str, Any]]:
+    """C11 (record side): five dry-run-v2 receipts are bound privately (``{path, sha256, private: true}`` below
+    ``amendment_rules.PRIVATE_BINDING_ROOT``; ``read`` gives their bytes from the verification repository's working
+    tree, never from git, and with ``tracked`` none is tracked at the link's commit), exist, hash, passed and ran on a
+    clean tree at the recorded source commit, on the view whose manifest SHA-256 Freeze 1 records for that fold; the
+    Freeze-1 in-view receipt SHA-256 values are unchanged. The returned evidence gives each fold's receipt binding
+    ``{path, sha256}`` with that view manifest SHA-256 (a digest, never a count), so that the per-unit view binding
+    (``fold_dry_run_evidence``) needs no receipt bytes on a pod; the in-view bytes are compared there."""
     folds = _folds()
+    manifests = _frozen_view_manifests(freeze1)
     dry = record.get("dry_runs") if isinstance(record.get("dry_runs"), Mapping) else {}
     problems = []
     source = dry.get("source_commit")
@@ -962,7 +1079,17 @@ def dry_run_problems(read: Callable[[str], Optional[bytes]], record: Mapping[str
         if not (isinstance(binding, Mapping) and _safe_relative(binding.get("path")) and _is_sha256(binding.get("sha256"))):
             problems.append(f"[C11] the fold-{fold} receipt binding is malformed")
             continue
-        bound[fold] = {"path": binding["path"], "sha256": binding["sha256"]}
+        bound[fold] = {"path": binding["path"], "sha256": binding["sha256"],
+                       "view_manifest_sha256": manifests.get(fold)}
+        if not rules.is_private_binding(binding):
+            problems.append(f"[C11] the fold-{fold} receipt is not bound privately ({{path, sha256, private: true}} "
+                            f"below {rules.PRIVATE_BINDING_ROOT})")
+            continue
+        state = tracked(binding["path"]) if tracked is not None else False
+        if state is not False:
+            problems.append(f"[C11] the fold-{fold} dry-run-v2 receipt is tracked at the link's commit (a private "
+                            "receipt was published)" if state else
+                            f"[C11] git cannot tell whether the fold-{fold} dry-run-v2 receipt is tracked")
         data = read(binding["path"])
         if data is None or provenance.sha256_bytes(data) != binding["sha256"]:
             problems.append(f"[C11] the fold-{fold} dry-run-v2 receipt is missing or does not hash")
@@ -979,6 +1106,9 @@ def dry_run_problems(read: Callable[[str], Optional[bytes]], record: Mapping[str
             problems.append(f"[C11] the fold-{fold} receipt is not a passed, real plan-v2 dry run of that fold")
         if git.get("head") != source or git.get("clean") is not True:
             problems.append(f"[C11] the fold-{fold} dry run did not run on a clean tree at the recorded source commit")
+        if not (_is_sha256(manifests.get(fold)) and isinstance(receipt, dict)
+                and receipt.get("view_manifest_sha256") == manifests[fold]):
+            problems.append(f"[C11] the fold-{fold} dry run did not run on the fold view that Freeze 1 records")
     in_view = _in_view_receipts(freeze1)
     if dry.get("in_view_receipts_unchanged") != in_view:
         problems.append("[C11] the Freeze-1 in-view dry-run receipts differ from Freeze 1")
@@ -1422,7 +1552,8 @@ def _authenticate_in_checkout(repo: Path, links: Sequence[_Link], freeze1: Mappi
     with _checkout(repo, target.commit, extra_paths=extra) as checkout:
         result = _run_fresh(checkout, _CHAIN_PROBE, {
             "tip": str(checkout / target.path), "freeze1": rules.FREEZE1_SHA256, "freeze1b": rules.FREEZE1B_SHA256,
-            "repo": str(checkout), "require_published": require_published, "chain": chain},
+            "repo": str(checkout), "require_published": require_published, "chain": chain,
+            "private_root": str(_private_root(repo))},
             what=f"[C4] Link {target.sequence} at its source commit {target.commit[:12]}")
     _require(isinstance(result, dict) and set(result) == set(RESULT_KEYS) and result.get("chain") == chain
              and result.get("tip_sequence") == target.sequence,
@@ -1495,6 +1626,8 @@ def _authenticate_here(repo: Path, links: Sequence[_Link], freeze1: Mapping[str,
     tip, record = links[-1], links[-1].document
     sequence = tip.sequence
     read = _reader(repo, tip.commit)
+    private_read = _private_reader(_private_root(repo))
+    is_tracked = _tracked_check(repo, tip.commit)
     before = links[-2]
     if sequence == rules.AMENDMENT2_SEQUENCE:
         _authenticate_link1(repo, links[0], freeze1, require_published)
@@ -1540,7 +1673,7 @@ def _authenticate_here(repo: Path, links: Sequence[_Link], freeze1: Mapping[str,
             and freeze._is_ancestor(repo, parent, head)):
         problems.append(f"[C5] the source parent commit of link {sequence} is not an ancestor of its commit")
     # C8, C9, pins and live constants.
-    problems += evidence_problems(read, record)
+    problems += evidence_problems(read, record, private_read=private_read, tracked=is_tracked)
     live_policies, policy_probe_problems = _policy_probe(repo)
     problems += policy_probe_problems
     problems += policy_problems(record, {**rules.rule_policy_sha256(include_analysis=False), **live_policies})
@@ -1555,7 +1688,8 @@ def _authenticate_here(repo: Path, links: Sequence[_Link], freeze1: Mapping[str,
         problems.append("[C9] live_constants_sha256 differs from freeze.live_constants() at the link's commit")
     # C10, C11.
     plan_problems, plans = plan_records(record, freeze1)
-    receipt_problems, dry_run = dry_run_problems(read, record, freeze1)
+    receipt_problems, dry_run = dry_run_problems(lambda path: private_read(path)[0], record, freeze1,
+                                                 tracked=is_tracked)
     problems += plan_problems + receipt_problems
     if _is_commit(dry_run["source_commit"]):
         if head is None or not freeze._is_ancestor(repo, dry_run["source_commit"], head):
@@ -1621,7 +1755,9 @@ def _cross_check(state: Mapping[str, Any], links: Sequence[_Link], freeze1: Mapp
                 "pinned_execution_functions": dict(record.get("pinned_execution_functions") or {}),
                 "pinned_analysis_functions": dict(record.get("pinned_analysis_functions") or {}),
                 "dry_run_evidence": {"source_commit": dry.get("source_commit"),
-                                     "receipts": {fold: {"path": item.get("path"), "sha256": item.get("sha256")}
+                                     "receipts": {fold: {"path": item.get("path"), "sha256": item.get("sha256"),
+                                                         "view_manifest_sha256": _frozen_view_manifests(freeze1).get(
+                                                             fold)}
                                                   for fold, item in sorted(receipts.items())
                                                   if isinstance(item, Mapping)},
                                      "in_view_receipts_unchanged": _in_view_receipts(freeze1)}}
@@ -1669,7 +1805,8 @@ def _live_problems(repo: Path, links: Sequence[_Link], state: Mapping[str, Any],
         # HEAD is past the tip's commit: the files the tip binds must still hash on the live tree (bound files under
         # docs/ and tests/ are free for r_cmd_v2). At the tip's commit with a clean tree C8 has proved it already.
         problems += binding_hash_problems(lambda path: _working_tree_bytes(repo, path), record,
-                                          where="on the live tree")
+                                          where="on the live tree", private_read=_private_reader(_private_root(repo)),
+                                          tracked=_tracked_check(repo, None))
         problems += import_isolation_problems(repo, execution, tracked)
         scan = source_scan(repo, tracked)
         problems += analysis_channel_problems(repo, part["scientific_files"], scan=scan)
@@ -1726,6 +1863,15 @@ def _verify_chain(tip_path: Any, *, expected_freeze1_sha256: Any, expected_freez
         _absolute, tip = freeze._amendment_repo_file(tip_path, repo, "The chain tip", document=True)
     except freeze.Freeze1Error as exc:
         raise AmendmentChainError(str(exc)) from None
+    with _private_files_of(repo):
+        return _verify_located(repo, tip, tip_path, expected_freeze1_sha256=expected_freeze1_sha256,
+                               expected_freeze1b_sha256=expected_freeze1b_sha256,
+                               require_published=require_published, expected=expected)
+
+
+def _verify_located(repo: Path, tip: str, tip_path: Any, *, expected_freeze1_sha256: Any,
+                    expected_freeze1b_sha256: Any, require_published: bool, expected: Optional[list[str]]
+                    ) -> dict[str, Any]:
     if not _runs_from(repo):
         own, foreign = _code_sha256(Path(__file__).resolve().parents[2]), _code_sha256(repo)
         _require(not require_published or own == foreign,
@@ -1734,7 +1880,8 @@ def _verify_chain(tip_path: Any, *, expected_freeze1_sha256: Any, expected_freez
                  "runs inside the verified repository.")
         result = _run_fresh(repo, _CHAIN_PROBE, {
             "tip": str(repo / tip), "freeze1": expected_freeze1_sha256, "freeze1b": expected_freeze1b_sha256,
-            "repo": str(repo), "require_published": require_published, "chain": expected},
+            "repo": str(repo), "require_published": require_published, "chain": expected,
+            "private_root": str(_private_root(repo))},
             what="The verifier of the verified repository")
         _require(isinstance(result, dict) and set(result) == set(RESULT_KEYS),
                  "The verifier of the verified repository returned another result shape.")
@@ -1747,6 +1894,17 @@ def _verify_chain(tip_path: Any, *, expected_freeze1_sha256: Any, expected_freez
     _require(expected_freeze1b_sha256 == rules.FREEZE1B_SHA256,
              "The chain names another Freeze 1b than amendment_rules.FREEZE1B_SHA256.")
     return _verify_here(repo, tip, require_published, expected)
+
+
+@contextmanager
+def _private_files_of(repo: Path) -> Iterator[None]:
+    """Private bindings are read from ``repo``'s working tree, or, in a nested verification, from the root that the
+    parent passed to the chain probe (``_probe_private_root``); nothing is taken from the environment."""
+    _PRIVATE_ROOTS.append(_PRIVATE_ROOTS[-1] if _PRIVATE_ROOTS else Path(repo))
+    try:
+        yield
+    finally:
+        _PRIVATE_ROOTS.pop()
 
 
 def _verify_here(repo: Path, tip: str, require_published: bool, expected_chain: Optional[list[str]]) -> dict[str, Any]:
@@ -1812,9 +1970,11 @@ def chain_receipt_record(tip_path: str | os.PathLike, *, expected_freeze1_sha256
                          expected_freeze1b_sha256: str, repo: str | os.PathLike, require_published: bool = True,
                          expected_chain: Optional[Sequence[str]] = None) -> dict[str, Any]:
     """``verify_chain`` on a full clone and its receipt: format ``CHAIN_RECEIPT_FORMAT``, the receipt key (taken
-    before and after the verification, which must agree), the full result, the bytes of every link and rendering
-    and every file the tip binds, and ``receipt_sha256`` over the canonical rest. ``amendment2.write_chain_receipt``
-    writes it once; ``check_chain_receipt`` refuses one made without ``require_published``."""
+    before and after the verification, which must agree), the full result, the bytes of every link and rendering,
+    every public file the tip binds (``bindings``, re-hashed by ``check_chain_receipt``), the private bindings that
+    ``verify_chain`` checked in the working tree (``private_bindings``: where, path and SHA-256 only, never re-read
+    on a pod) and ``receipt_sha256`` over the canonical rest. ``amendment2.write_chain_receipt`` writes it once;
+    ``check_chain_receipt`` refuses one made without ``require_published``."""
     with _verification():
         try:
             repo = Path(os.path.realpath(os.fspath(repo)))
@@ -1838,8 +1998,7 @@ def chain_receipt_record(tip_path: str | os.PathLike, *, expected_freeze1_sha256
                               "rendering": None if rendered is None else {"path": rendering,
                                                                           "sha256": _sha256(rendered)}})
             document = _parse(_working_tree_bytes(repo, tip) or b"", "The chain tip")
-            bindings = [] if result["tip_sequence"] == 1 else [
-                {"where": where, "path": path, "sha256": digest} for where, path, digest in evidence_entries(document)]
+            bindings, private_bindings = _receipt_bindings(document, result["tip_sequence"])
             receipt = {
                 "format": CHAIN_RECEIPT_FORMAT, "schema_version": CHAIN_RECEIPT_SCHEMA_VERSION, "verified": True,
                 "published": bool(result["published"]), "draft": not require_published,
@@ -1849,7 +2008,7 @@ def chain_receipt_record(tip_path: str | os.PathLike, *, expected_freeze1_sha256
                 "scientific_identity_sha256": result["scientific_identity_sha256"],
                 "tip": {"path": tip, "sha256": before["tip_sha256"]}, "tip_sha256": before["tip_sha256"],
                 "freeze1_sha256": rules.FREEZE1_SHA256, "freeze1b_sha256": rules.FREEZE1B_SHA256,
-                "key": before, "links": links, "bindings": bindings,
+                "key": before, "links": links, "bindings": bindings, "private_bindings": private_bindings,
                 "result": {key: result[key] for key in RESULT_KEYS},
             }
             receipt["receipt_sha256"] = rules.sha256_canonical(receipt)
@@ -1860,14 +2019,26 @@ def chain_receipt_record(tip_path: str | os.PathLike, *, expected_freeze1_sha256
             raise AmendmentChainError(f"No chain receipt ({type(exc).__name__}: {exc}).") from exc
 
 
+def _receipt_bindings(document: Mapping[str, Any], tip_sequence: Any) -> tuple[list[dict], list[dict]]:
+    """The tip's file bindings split into the public ones (re-hashed on the live tree by ``check_chain_receipt``)
+    and the private ones (``amendment_rules.PRIVATE_ROLES``; recorded by path and SHA-256, never re-read)."""
+    if tip_sequence == 1:
+        return [], []
+    entries = [{"where": where, "path": path, "sha256": digest} for where, path, digest in evidence_entries(document)]
+    return ([entry for entry in entries if not rules.is_private_role(entry["where"])],
+            [entry for entry in entries if rules.is_private_role(entry["where"])])
+
+
 def check_chain_receipt(receipt_path: str | os.PathLike, *, repo: str | os.PathLike,
                         expected_chain: Optional[Sequence[str]] = None) -> dict[str, Any]:
     """The ``verify_chain`` result of a published chain, read from its receipt (``chain_receipt_record``, written
     by ``verify-amendment-chain`` on the workstation's full clone) after a cheap re-check of ``repo``: HEAD is the
     receipt's HEAD, or a published descendant of it that changes only execution files; the tree is clean; every
     link and rendering has its receipt bytes; the live scientific and analysis pins and the pinned execution
-    functions hold; every file the tip binds hashes; the verifier files and the receipt's own SHA-256 agree. Works in
-    a blobless partial clone (it reads only the checked-out files, commits and trees). A receipt made without
+    functions hold; the receipt's public and private bindings are exactly those of the tip link file; every public
+    file the tip binds hashes; the verifier files and the receipt's own SHA-256 agree. Private bindings were checked
+    by ``verify_chain`` on the workstation and are never read here (a pod holds none of them). Works in a blobless
+    partial clone (it reads only the checked-out files, commits and trees). A receipt made without
     ``require_published`` is refused. Returns exactly ``RESULT_KEYS``."""
     with _verification():
         try:
@@ -1964,10 +2135,23 @@ def _check_receipt(receipt: Any, repo: Path, expected_chain: Optional[list[str]]
         exec_problems, _ = _function_pin_problems(repo, result["pinned_execution_functions"],
                                                   rules.PINNED_EXECUTION_FUNCTIONS, execution, "execution", "C6")
         problems += exec_problems
-        bindings = receipt.get("bindings")
-        if not isinstance(bindings, list):
+        bindings, private_bindings = receipt.get("bindings"), receipt.get("private_bindings")
+        if not isinstance(bindings, list) or not isinstance(private_bindings, list):
             problems.append("[C8] the chain receipt lists no bound files")
-            bindings = []
+            bindings, private_bindings = [], []
+        tip_item = receipt.get("tip")
+        tip_data = _working_tree_bytes(repo, tip_item.get("path")) if isinstance(tip_item, Mapping) else None
+        if tip_data is None or _sha256(tip_data) != receipt.get("tip_sha256") or _sha256(tip_data) != chain[-1]:
+            problems.append("[C2] the live tip link file differs from the receipt's tip")
+        else:
+            expected_bindings = _receipt_bindings(_parse(tip_data, "The chain tip"), len(chain))
+            if [bindings, private_bindings] != list(expected_bindings):
+                problems.append("[C8] the receipt's public and private bindings differ from those of the tip link")
+        for item in private_bindings:
+            if not (isinstance(item, Mapping) and rules.is_private_role(item.get("where"))
+                    and rules.is_private_path(item.get("path")) and _is_sha256(item.get("sha256"))):
+                label = item.get("where") if isinstance(item, Mapping) else repr(item)
+                problems.append(f"[C8] the receipt names a malformed private binding {label}")
         for item in bindings:
             data = _working_tree_bytes(repo, item.get("path")) if isinstance(item, Mapping) else None
             if data is None or _sha256(data) != item.get("sha256"):
@@ -2052,13 +2236,16 @@ def require_record_precedence(verified: Mapping[str, Any], records: Sequence[Map
 
 def fold_dry_run_evidence(verified: Mapping[str, Any], fold: int) -> dict[str, Any]:
     """The fold's amendment-2 dry-run evidence that the per-unit view binding requires in addition to the Freeze-1
-    in-view receipt (C11): the dry-run-v2 receipt binding, its source commit and the Freeze-1 in-view receipt
-    SHA-256 the view must still hold. A consumer hashes the bytes it reads against these values."""
+    in-view receipt (C11): the dry-run-v2 receipt binding ``{path, sha256, view_manifest_sha256}`` (the private
+    receipt was read and checked by ``verify_chain`` on the workstation; a pod holds no copy), its source commit and
+    the Freeze-1 in-view receipt SHA-256 the view must still hold. A consumer compares its view's manifest SHA-256
+    and the in-view receipt bytes it reads against these values."""
     evidence = verified.get("dry_run_evidence")
     key = str(fold)
     receipt = (evidence.get("receipts") or {}).get(key) if isinstance(evidence, Mapping) else None
     in_view = (evidence.get("in_view_receipts_unchanged") or {}).get(key) if isinstance(evidence, Mapping) else None
-    _require(isinstance(receipt, Mapping) and _is_sha256(receipt.get("sha256")) and _is_sha256(in_view)
+    _require(isinstance(receipt, Mapping) and _is_sha256(receipt.get("sha256"))
+             and _is_sha256(receipt.get("view_manifest_sha256")) and _is_sha256(in_view)
              and _is_commit(evidence.get("source_commit")),
              f"[C11] The chain holds no amendment-2 dry-run evidence for fold {key}; the view binding is refused.")
     return {"fold": int(fold), "source_commit": evidence["source_commit"], "receipt": dict(receipt),

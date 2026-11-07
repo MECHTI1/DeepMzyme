@@ -28,6 +28,12 @@ the draft; the derived execution file set must equal the draft's declared closed
 dry-run-v2 receipts and every role of ``amendment_rules.REQUIRED_BINDINGS`` are build inputs, and the builder
 refuses without them.
 
+Private bindings (the repository is public): the files of ``amendment_rules.PRIVATE_ROLES`` (the dry-run-v2
+receipts, the CLEAN tie exposure and the F6 hold-out lists and corpus) are bound as
+``{"path", "sha256", "private": true}``. Each is a regular file below ``amendment_rules.PRIVATE_BINDING_ROOT`` of
+the repository, reached without a symbolic link, untracked and ignored by git; only its path and SHA-256 enter the
+record and the rendering, never its content. Every other bound file is public and committed with the link.
+
 Receipt and record formats are fixed here; ``scoring`` repeats the two receipt format names (a test keeps them
 equal) so that the scorer imports nothing from this module.
 """
@@ -37,8 +43,9 @@ import argparse
 import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
+import subprocess
 import sys
 from typing import Any, Mapping, Optional, Sequence
 
@@ -272,6 +279,76 @@ def _repo_relative(repo: Path, path: Path, what: str) -> str:
     return absolute.relative_to(root).as_posix()
 
 
+def _git_status(repo: Path, *args: str, literal: bool = True, stdin: Optional[str] = None) -> tuple[int, str]:
+    """``git <args>`` in ``repo`` without the caller's ``GIT_*`` variables (a hook's ``GIT_DIR`` would point git at
+    another repository) and without system or global git configuration, with literal pathspecs unless ``literal`` is
+    false (``check-ignore`` takes plain paths)."""
+    env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    env.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull})
+    try:
+        completed = subprocess.run(["git", *(["--literal-pathspecs"] if literal else []), *args], cwd=str(repo),
+                                   env=env, input=stdin, capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return 127, str(exc)
+    return completed.returncode, completed.stdout
+
+
+def _private_binding(repo: Path, path: Path, what: str) -> dict[str, Any]:
+    """The private binding ``{"path", "sha256", "private": true}`` of a file of a private role: a regular file inside
+    ``repo`` (lexically and by its real path), reached without a symbolic link in any component, below
+    ``amendment_rules.PRIVATE_BINDING_ROOT``, not tracked by git (in the index or at HEAD) and ignored by a
+    ``.gitignore`` committed at HEAD (``_committed_ignore``; a local exclude holds in one clone only). Only the path
+    and the SHA-256 are recorded."""
+    root = Path(os.path.realpath(os.fspath(repo)))
+    given = Path(os.path.abspath(os.fspath(path)))
+    # The repository root as the path names it lexically (links above the root are allowed, none below it).
+    anchor = next((parent for parent in reversed(given.parents) if Path(os.path.realpath(parent)) == root), None)
+    _require(anchor is not None, f"{what} is outside the repository; a private input lives below "
+                                 f"{amendment_rules.PRIVATE_BINDING_ROOT} of the repository.")
+    relative = given.relative_to(anchor).as_posix()
+    cursor = anchor
+    for part in PurePosixPath(relative).parts:
+        cursor = cursor / part
+        _require(not cursor.is_symlink(), f"{what} ({relative}) has a symbolic link in its path; a private input is "
+                                          "a regular file reached without links.")
+    _require(given.is_file(), f"{what} ({relative}) is missing or not a regular file.")
+    real = Path(os.path.realpath(given))
+    _require(root in real.parents and real.relative_to(root).as_posix() == relative,
+             f"{what} ({relative}) does not resolve to itself inside the repository.")
+    _require(amendment_rules.is_private_path(relative),
+             f"{what} ({relative}) is not below the private binding root {amendment_rules.PRIVATE_BINDING_ROOT}.")
+    code_index, index = _git_status(root, "ls-files", "-z", "--", relative)
+    code_head, head = _git_status(root, "ls-tree", "-z", "--name-only", "HEAD", "--", relative)
+    _require(code_index == 0 and not index and (code_head != 0 or not head),
+             f"{what} ({relative}) is tracked by git; a private input is never committed (the repository is "
+             "public).")
+    _require(_committed_ignore(root, relative),
+             f"{what} ({relative}) is not ignored by a .gitignore committed at HEAD; the private binding root must be "
+             "gitignored so that a private input is never committed (.git/info/exclude and core.excludesFile hold in "
+             "one clone only).")
+    return {"path": relative, "sha256": sha256_file(given), "private": True}
+
+
+def _committed_ignore(root: Path, relative: str) -> bool:
+    """Whether git ignores ``relative`` by a pattern of a ``.gitignore`` file that is tracked at HEAD, unmodified in
+    the working tree and in a folder that contains ``relative``, so that every clone ignores it too. Global and
+    repository ``core.excludesFile`` are switched off; a match in ``.git/info/exclude`` or a negated pattern is not
+    accepted."""
+    code, out = _git_status(root, "-c", f"core.excludesFile={os.devnull}", "check-ignore", "-v", "-z", "--stdin",
+                            literal=False, stdin=relative + "\0")
+    fields = out.split("\0")
+    if code != 0 or len(fields) != 5 or fields[3] != relative or fields[4] != "" or fields[2].startswith("!"):
+        return False
+    source = PurePosixPath(fields[0])
+    folder = source.parent.as_posix()
+    if (source.is_absolute() or source.name != ".gitignore" or ".." in source.parts
+            or not (folder == "." or relative.startswith(folder + "/"))):
+        return False
+    code_head, head = _git_status(root, "ls-tree", "-z", "--name-only", "HEAD", "--", source.as_posix())
+    code_diff, _diff = _git_status(root, "diff", "--quiet", "HEAD", "--", source.as_posix())
+    return code_head == 0 and head == source.as_posix() + "\0" and code_diff == 0
+
+
 def draft_shape_problems(draft: Mapping[str, Any]) -> list[str]:
     """What the reviewed draft lacks against the contract's ``record_builder`` section: the draft keys, the
     sub-keys of the listed sections, the pinned-function name lists (path -> top-level names) and the scope list."""
@@ -312,15 +389,25 @@ def _fold_inputs(inputs: Optional[Mapping[Any, Path]], what: str) -> dict[str, P
 
 
 def _file_binding_problems(repo: Path, record: Mapping[str, Any]) -> list[str]:
-    """Every ``{"path", "sha256"}`` entry below ``FILE_BINDING_SECTIONS`` names a repository file with that SHA-256."""
-    problems: list[str] = []
+    """Every ``{"path", "sha256"}`` entry below ``FILE_BINDING_SECTIONS`` has the privacy of its role
+    (``amendment_rules.binding_privacy_problems``) and names a repository file with that SHA-256; a private one also
+    passes ``_private_binding`` (below the private root, no link, untracked, ignored)."""
+    problems: list[str] = list(amendment_rules.binding_privacy_problems(record, FILE_BINDING_SECTIONS))
 
     def walk(value: Any, where: str) -> None:
         if isinstance(value, Mapping):
             if "path" in value and "sha256" in value:
                 path = value.get("path")
                 target = Path(repo) / path if isinstance(path, str) and not os.path.isabs(path) else None
-                if target is None or ".." in Path(path).parts or not target.is_file():
+                if amendment_rules.is_private_role(where) and amendment_rules.is_private_binding(value):
+                    try:
+                        binding = _private_binding(repo, Path(repo) / path, where)
+                    except AmendmentRecordError as exc:
+                        problems.append(str(exc))
+                    else:
+                        if binding["sha256"] != value.get("sha256"):
+                            problems.append(f"{where}: {path} does not hash to its recorded SHA-256")
+                elif target is None or ".." in Path(path).parts or not target.is_file():
                     problems.append(f"{where}: {path} is not a repository file")
                 elif sha256_file(target) != value.get("sha256"):
                     problems.append(f"{where}: {path} does not hash to its recorded SHA-256")
@@ -437,15 +524,17 @@ def _plan_v2_hashes(plan_paths: Mapping[str, Path]) -> dict[str, str]:
     return hashes
 
 
-def _dry_run_evidence(repo: Path, receipt_paths: Mapping[str, Path]) -> dict[str, Any]:
-    """The dry-run-v2 receipts (passed, real plan-v2 dry runs of their folds on a clean tree) bound inside the
-    repository, and their common HEAD, which must be an ancestor of HEAD."""
+def _dry_run_evidence(repo: Path, receipt_paths: Mapping[str, Path], freeze1: Mapping[str, Any]) -> dict[str, Any]:
+    """The dry-run-v2 receipts (passed, real plan-v2 dry runs of their folds on a clean tree, each on the fold view
+    whose manifest SHA-256 Freeze 1 records), bound privately below ``amendment_rules.PRIVATE_BINDING_ROOT`` (they
+    hold absolute paths, the host name and per-fold counts), and their common HEAD, which must be an ancestor of
+    HEAD."""
     from ec_clean30 import freeze
 
     receipts, heads = {}, set()
     for fold, path in sorted(receipt_paths.items()):
         what = f"The dry-run-v2 receipt of fold {fold}"
-        relative = _repo_relative(repo, path, what)
+        binding = _private_binding(repo, Path(path), what)
         receipt = _read_json(path, what)
         provenance = receipt.get("provenance") if isinstance(receipt, dict) else None
         provenance = provenance if isinstance(provenance, Mapping) else {}
@@ -455,8 +544,13 @@ def _dry_run_evidence(repo: Path, receipt_paths: Mapping[str, Path]) -> dict[str
                  and receipt.get("plan_version") == 2 and provenance.get("smoke") is False
                  and git.get("clean") is True and _is_commit(git.get("head")),
                  f"{what} is not a passed, real plan-v2 dry run of that fold on a clean tree.")
+        frozen = (((freeze1.get("views") or {}).get(fold) or {}).get("view_manifest_sha256")
+                  if isinstance(freeze1.get("views"), Mapping) else None)
+        _require(_is_sha256(frozen) and receipt.get("view_manifest_sha256") == frozen,
+                 f"{what} names another view manifest than the fold-{fold} view of Freeze 1.")
         heads.add(git["head"])
-        receipts[fold] = {"path": relative, "sha256": sha256_file(path)}
+        _require(sha256_file(path) == binding["sha256"], f"{what} changed while it was read.")
+        receipts[fold] = binding
     _require(len(heads) == 1, f"The dry-run-v2 receipts name {len(heads)} source commits; the five dry runs run at one.")
     (source,) = heads
     head = freeze._resolve_commit(Path(repo), "HEAD")
@@ -490,14 +584,16 @@ def build_amendment2(*, draft_path: Path, decisions_path: Path, amendment_draft_
     draft's declared closed list) and the closure SHA-256 of every pinned function. A ``bound_files`` name with a
     dot is a role of ``amendment_rules.REQUIRED_BINDINGS`` (or a key below one, such as ``inputs.f6_holdout.0``)
     and is placed at that record path; any other name goes to ``bound_files``. ``plan_v2`` (fold -> plan-v2 record)
-    and ``dry_run_receipts`` (fold -> dry-run-v2 receipt inside the repository) are build inputs for all five folds.
+    and ``dry_run_receipts`` (fold -> dry-run-v2 receipt below ``amendment_rules.PRIVATE_BINDING_ROOT``) are build
+    inputs for all five folds. A name below ``amendment_rules.PRIVATE_ROLES`` and every dry-run-v2 receipt are bound
+    privately (``_private_binding``); every other file is bound publicly and is committed with the link.
 
     Refused, in this order: another draft format; a draft without its contract shape; an invalid decisions file;
     missing build inputs; a pending source change; a pending execution file; base documents that do not hash; a
     scope list that differs from the live tree; a derived execution set with a scientific role or other than the
     declared closed list; pinned-function names that differ from the registries; build inputs that do not check; a
     rule-text document other than ``amendment_draft.md``; a required binding that is absent; file bindings that do
-    not hash.
+    not hash or do not have the privacy of their role.
     """
     from ec_clean30 import selection
 
@@ -529,7 +625,7 @@ def build_amendment2(*, draft_path: Path, decisions_path: Path, amendment_draft_
     part = _scope(repo, draft, _previous_pins(repo, draft))
     pins = _function_pins(repo, draft, part["execution_files"])
     v2_plans = _plan_v2_hashes(plans)
-    dry_runs = _dry_run_evidence(repo, receipt_paths)
+    dry_runs = _dry_run_evidence(repo, receipt_paths, _base_document(repo, draft["base_freeze1"], "base Freeze 1"))
     source = _repo_relative(repo, Path(amendment_draft_md), "The reviewed document")
     _require(source == RULE_TEXT_SOURCE, f"The rule text is read from the reviewed document {RULE_TEXT_SOURCE}, "
                                          f"not from {source} (the rendering {RENDERING_PATH} is written from the "
@@ -537,10 +633,14 @@ def build_amendment2(*, draft_path: Path, decisions_path: Path, amendment_draft_
     bound, roles = {}, {}
     for name, path in sorted(bound_files.items()):
         _require(name != DECISIONS_BINDING, f"bound_files.{DECISIONS_BINDING} is the decisions file itself.")
-        binding = {"path": _repo_relative(repo, Path(path), f"Bound file {name}"), "sha256": sha256_file(path)}
         if "." in name:
             _require(any(name == role or name.startswith(role + ".") for role in amendment_rules.REQUIRED_BINDINGS),
                      f"--bind {name} names no role of amendment_rules.REQUIRED_BINDINGS.")
+        if amendment_rules.is_private_role(name):
+            roles[name] = _private_binding(repo, Path(path), f"Bound file {name}")
+            continue
+        binding = {"path": _repo_relative(repo, Path(path), f"Bound file {name}"), "sha256": sha256_file(path)}
+        if "." in name:
             roles[name] = binding
         else:
             bound[name] = binding
@@ -594,6 +694,14 @@ def render_amendment2(record: Mapping[str, Any]) -> str:
         lines.append(f"| {key} | {answer['choice']} | {'yes' if answer['accepted_default'] else 'no'} |")
     lines += ["", "## Bound files", "", "| Name | Path | SHA-256 |", "|---|---|---|"]
     lines += [f"| {name} | `{item['path']}` | `{item['sha256']}` |" for name, item in sorted(record["bound_files"].items())]
+    private = [(where, item) for section in FILE_BINDING_SECTIONS
+               for where, item in amendment_rules.binding_items(record.get(section), section)
+               if amendment_rules.is_private_role(where)]
+    if private:
+        lines += ["", "## Private bindings", "",
+                  f"Gitignored files below `{amendment_rules.PRIVATE_BINDING_ROOT}`, bound by path and SHA-256 only; "
+                  "they are not published.", "", "| Role | Path | SHA-256 |", "|---|---|---|"]
+        lines += [f"| `{where}` | `{item.get('path')}` | `{item.get('sha256')}` |" for where, item in private]
     lines += ["", "## Rule policies", "", "| Rule | Policy SHA-256 |", "|---|---|"]
     lines += [f"| `{rule}` | `{digest}` |" for rule, digest in sorted(record["rule_policy_sha256"].items())]
     lines += ["", text.rstrip("\n"), ""]
@@ -611,11 +719,13 @@ def add_amendment2_arguments(sub: Any) -> None:
         amend.add_argument("--" + flag, required=True)
     amend.add_argument("--bind", action="append", default=[],
                        help="NAME=PATH of a bound file (repeatable); a dotted NAME is a required role, such as "
-                            "evidence.verification or inputs.f6_holdout.0.")
+                            "evidence.verification or inputs.f6_holdout.0; a private role's file lies below "
+                            f"{amendment_rules.PRIVATE_BINDING_ROOT} and is bound privately.")
     amend.add_argument("--plan-v2", action="append", default=[],
                        help="FOLD=PATH of a plan-v2 record (build input; one per fold 0-4).")
     amend.add_argument("--dry-run-receipt", action="append", default=[],
-                       help="FOLD=PATH of a dry-run-v2 receipt inside the repository (build input; one per fold 0-4).")
+                       help="FOLD=PATH of a dry-run-v2 receipt below the gitignored private binding root "
+                            f"{amendment_rules.PRIVATE_BINDING_ROOT} (build input; one per fold 0-4; bound privately).")
     amend.add_argument("--render", default=None, help=f"Write the rendering here, {RENDERING_PATH} (written once).")
     amend.set_defaults(handler=action_amend2)
     chain = sub.add_parser("verify-amendment-chain", help="Authenticate the amendment chain; write its receipt.")

@@ -5,10 +5,12 @@ the real verifier, rule, freeze, provenance and record-builder modules, and smal
 other campaign module. Its history is that of the campaign: Freeze 1 (commit A), link 1 by the real
 ``freeze.build_s1_amendment`` (B), several execution-only commits with a merge (E1, E2 on a side branch, E3, M),
 the amendment-2 source with the synthetic refusal and decision-fixture tests (dry-run commit D) and link 2 (S2)
-with every required binding filled, its reviewed document, rendering and strict log line. The verifier always runs
-in the synthetic repository's own interpreter (``verify``), as a real verification runs inside the verified
-repository. Expected contract values are read from ``tests/fixtures/ec_clean30_amendment2_contract.json``. No
-campaign record, view or data folder is read. ``tests/test_ec_clean30_amendment_chain_attacks.py`` holds the
+with every required binding filled, its reviewed document, rendering and strict log line. The private inputs (the
+dry-run-v2 receipts, the CLEAN tie exposure and the F6 hold-out lists and corpus) live below the gitignored
+``amendment_rules.PRIVATE_BINDING_ROOT`` of the synthetic repository and are bound privately, never committed. The
+verifier always runs in the synthetic repository's own interpreter (``verify``), as a real verification runs inside
+the verified repository. Expected contract values are read from ``tests/fixtures/ec_clean30_amendment2_contract.json``.
+No campaign record, view or data folder is read. ``tests/test_ec_clean30_amendment_chain_attacks.py`` holds the
 end-to-end refusals, the sequence-3 links of every class, receipts and pod partial clones on this harness.
 """
 from __future__ import annotations
@@ -44,6 +46,8 @@ DECISIONS_FIXTURE = "tests/fixtures/ec_clean30_amendment2_decisions.json"
 DECISIONS_PATH = f"{DOCS}/amendment2/maintainer_decisions.json"
 RULE_TEXT = "## Rule text\n\n**A2-X-1** A synthetic rule.\n\n"
 FOLDS = [str(fold) for fold in range(5)]
+# The gitignored folder of the private inputs in the synthetic repository.
+PRIVATE = f"{rules.PRIVATE_BINDING_ROOT}amendment2"
 
 
 # ---------------------------------------------------------------------------
@@ -187,7 +191,7 @@ _STUBS = {
     "scripts/score_ec_clean30_comparison.py": '"""Synthetic scorer runner (post-fit analysis)."""\n',
     "scripts/run_ec_clean30_campaign.py": '"""Synthetic campaign runner."""\n' + "".join(
         f"\n\ndef {name}():\n    return None\n" for name in freeze.PINNED_RUNNER_FUNCTIONS),
-    ".gitignore": "__pycache__/\n",
+    ".gitignore": "__pycache__/\nDeepMzyme_Data\n",
 }
 _AMENDMENT2_STUBS = {
     "src/ec_clean30/runtime_precision.py": '"""Synthetic runtime-precision module."""\nPOLICY = "tf32 off"\n',
@@ -316,6 +320,12 @@ def _binding(repo: Path, relative: str) -> dict:
     return {"path": relative, "sha256": _file_sha(repo, relative)}
 
 
+def _private_binding(repo: Path, relative: str) -> dict:
+    """A private binding of a gitignored file below ``amendment_rules.PRIVATE_BINDING_ROOT``."""
+    assert relative.startswith(rules.PRIVATE_BINDING_ROOT)
+    return {"path": relative, "sha256": _file_sha(repo, relative), "private": True}
+
+
 def _tree_pins(repo: Path) -> dict[str, str]:
     return {path: _file_sha(repo, path) for path in rules.tracked_source_files(repo)}
 
@@ -346,11 +356,17 @@ def place(record: dict, role: str, value: Any) -> None:
     cursor[keys[-1]] = value
 
 
-def write_role_files(repo: Path, folder: str = f"{DOCS}/amendment2") -> dict[str, Any]:
-    """Synthetic files for every role of ``amendment_rules.REQUIRED_BINDINGS``, as ``role -> binding``."""
+def write_role_files(repo: Path, folder: str = f"{DOCS}/amendment2", private: str = PRIVATE) -> dict[str, Any]:
+    """Synthetic files for every role of ``amendment_rules.REQUIRED_BINDINGS``, as ``role -> binding``: public files
+    in ``folder`` (committed with the link), the files of ``amendment_rules.PRIVATE_ROLES`` in the gitignored
+    ``private`` folder (bound privately)."""
     def put(name: str, text: str) -> dict:
         _write(repo, f"{folder}/{name}", text)
         return _binding(repo, f"{folder}/{name}")
+
+    def hide(name: str, text: str) -> dict:
+        _write(repo, f"{private}/{name}", text)
+        return _private_binding(repo, f"{private}/{name}")
 
     roles = {
         "data_state.attestation_at_build": put("data_state_attestation.json",
@@ -360,10 +376,10 @@ def write_role_files(repo: Path, folder: str = f"{DOCS}/amendment2") -> dict[str
         "evidence.interface_contract": put("interface_contract.md", "# Synthetic contract\n"),
         "evidence.power_simulation": put("power_simulation.md", "# Synthetic power simulation\n"),
         "evidence.verification": put("verification.json", '{"status": "passed"}\n'),
-        "inputs.clean_tie_exposure": put("clean_tie_exposure.json", '{"ties": 0}\n'),
-        "inputs.f6_corpus": {"tables": {fold: put(f"f6_corpus/fold{fold}.tsv", f"corpus {fold}\n") for fold in FOLDS},
-                             "union_fasta": put("f6_corpus/union.fasta", ">p\nMKV\n")},
-        "inputs.f6_holdout": {fold: put(f"f6_holdout/fold{fold}.tsv", f"holdout {fold}\n") for fold in FOLDS},
+        "inputs.clean_tie_exposure": hide("clean_tie_exposure.json", '{"ties": 0}\n'),
+        "inputs.f6_corpus": {"tables": {fold: hide(f"f6_corpus/fold{fold}.tsv", f"corpus {fold}\n") for fold in FOLDS},
+                             "union_fasta": hide("f6_corpus/union.fasta", ">p\nMKV\n")},
+        "inputs.f6_holdout": {fold: hide(f"f6_holdout/fold{fold}.tsv", f"holdout {fold}\n") for fold in FOLDS},
     }
     assert set(roles) == set(rules.REQUIRED_BINDINGS)
     return roles
@@ -382,12 +398,13 @@ def _link2_record(repo: Path, *, values: dict, freeze1_sha: str, freeze1_doc: di
     required binding, the decisions file, the fixtures and the reviewed rule-text document."""
     receipts = {}
     for fold in FOLDS:
-        relative = f"{DOCS}/amendment2/dry_runs/fold{fold}.json"
+        relative = f"{PRIVATE}/dry_runs/fold{fold}.json"
         _write(repo, relative, json.dumps({
             "format": amendment2.DRY_RUN_V2_RECEIPT_FORMAT, "schema_version": 1, "status": "passed",
             "fold": int(fold), "plan_version": 2,
+            "view_manifest_sha256": freeze1_doc["views"][fold]["view_manifest_sha256"],
             "provenance": {"smoke": False, "git": {"head": dry_run_commit, "clean": True}}}, sort_keys=True))
-        receipts[fold] = _binding(repo, relative)
+        receipts[fold] = _private_binding(repo, relative)
     answers = {key: {"choice": "the recommended default", "accepted_default": True}
                for key in amendment2.CONFIRMATION_IDS}
     _write(repo, DECISIONS_PATH, json.dumps({"format": amendment2.DECISIONS_FORMAT, "maintainer": "synthetic",
@@ -431,8 +448,7 @@ def _link2_record(repo: Path, *, values: dict, freeze1_sha: str, freeze1_doc: di
         "status": "built", "confirmation_status": amendment_chain.CONFIRMED, "provisional_markers_settled": True,
         "decisions_file": {"sha256": _file_sha(repo, DECISIONS_PATH), "maintainer": "synthetic", "answers": answers},
         "rule_text": rule_text,
-        "bound_files": {"decisions": _binding(repo, DECISIONS_PATH),
-                        **{f"dry_run_v2_fold{fold}": item for fold, item in receipts.items()}},
+        "bound_files": {"decisions": _binding(repo, DECISIONS_PATH)},
         "rule_policy_sha256": values["rule_policy_sha256"],
         "selection_policy_sha256_v2": values["selection_policy_sha256_v2"],
     }
@@ -492,7 +508,8 @@ def build_source_world(root: Path, *, execution_after_link1: bool = False, drift
     freeze1_doc = {"format": freeze.FREEZE1_DOCUMENT_FORMAT, "schema_version": 1, "campaign_id": rules.CAMPAIGN_ID,
                    "amendments": [], "code": {"tracked_file_sha256": _tree_pins(repo)},
                    "plans": {fold: {"plan_sha256": values["v1"][fold]} for fold in FOLDS},
-                   "views": {fold: {"dry_run_receipt": {"sha256": _sha(f"in-view receipt {fold}".encode())}}
+                   "views": {fold: {"dry_run_receipt": {"sha256": _sha(f"in-view receipt {fold}".encode())},
+                                    "view_manifest_sha256": _sha(f"view manifest {fold}".encode())}
                              for fold in FOLDS}}
     (repo / FREEZE1_PATH).parent.mkdir(parents=True, exist_ok=True)
     (repo / FREEZE1_PATH).write_bytes(freeze.canonical_bytes(freeze1_doc))
@@ -1081,6 +1098,16 @@ def test_dry_run_receipts_and_plans_are_checked_against_freeze1(world):
     problems, _ = amendment_chain.dry_run_problems(_reader({**files, receipt: json.dumps(failed).encode()}), changed,
                                                    freeze1_doc)
     assert any("did not run on a clean tree" in problem for problem in problems)
+    assert all(evidence["receipts"][fold]["view_manifest_sha256"] == freeze1_doc["views"][fold]["view_manifest_sha256"]
+               for fold in FOLDS)
+    # A receipt of another view than the fold view Freeze 1 records.
+    other = json.loads(files[receipt])
+    other["view_manifest_sha256"] = "0" * 64
+    changed = json.loads(json.dumps(record))
+    changed["dry_runs"]["receipts"]["1"]["sha256"] = _sha(json.dumps(other).encode())
+    problems, _ = amendment_chain.dry_run_problems(_reader({**files, receipt: json.dumps(other).encode()}), changed,
+                                                   freeze1_doc)
+    assert problems == ["[C11] the fold-1 dry run did not run on the fold view that Freeze 1 records"]
     changed = json.loads(json.dumps(record))
     changed["dry_runs"]["in_view_receipts_unchanged"]["2"] = "0" * 64
     problems, _ = amendment_chain.dry_run_problems(_reader(files), changed, freeze1_doc)
@@ -1093,6 +1120,11 @@ def test_dry_run_receipts_and_plans_are_checked_against_freeze1(world):
 def test_the_view_binding_requires_the_folds_amendment2_dry_run_evidence(verified):
     binding = amendment_chain.fold_dry_run_evidence(verified, 3)
     assert binding["receipt"] == verified["dry_run_evidence"]["receipts"]["3"]
+    assert len(binding["receipt"]["view_manifest_sha256"]) == 64
+    without_view = json.loads(json.dumps(verified))
+    del without_view["dry_run_evidence"]["receipts"]["3"]["view_manifest_sha256"]
+    with pytest.raises(AmendmentChainError, match=r"no amendment-2 dry-run evidence for fold 3"):
+        amendment_chain.fold_dry_run_evidence(without_view, 3)
     view_binding_without_dry_run_evidence = {**verified, "dry_run_evidence": None}
     with pytest.raises(AmendmentChainError, match=r"no amendment-2 dry-run evidence for fold 3"):
         amendment_chain.fold_dry_run_evidence(view_binding_without_dry_run_evidence, 3)
