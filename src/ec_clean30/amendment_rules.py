@@ -35,6 +35,7 @@ import ast
 import hashlib
 import importlib
 import json
+import os
 from pathlib import Path
 import posixpath
 import re
@@ -109,6 +110,12 @@ BINDING_SHAPES: Mapping[str, str] = {
 # in the working tree; only their path and SHA-256 enter the record. Every binding below a private role is private
 # and every other binding is public (contract fixture: record_shape.required_bindings.private_roles).
 PRIVATE_BINDING_ROOT = f"DeepMzyme_Data/campaigns/{CAMPAIGN_ID}/"
+# Data-root links (``private_link_problem``): the campaign data may live on another disk, so each component of the
+# private binding root itself ("DeepMzyme_Data", "DeepMzyme_Data/campaigns" and the campaign folder) may be a symbolic
+# link to a directory outside the repository; every folder below the campaign folder and the file itself are real.
+PRIVATE_ROOT_LINK_COMPONENTS: tuple[str, ...] = tuple(
+    "/".join(PRIVATE_BINDING_ROOT.rstrip("/").split("/")[:count])
+    for count in range(1, len(PRIVATE_BINDING_ROOT.rstrip("/").split("/")) + 1))
 PRIVATE_ROLES: tuple[str, ...] = (
     "dry_runs.receipts", "inputs.clean_tie_exposure", "inputs.f6_corpus", "inputs.f6_holdout",
 )
@@ -554,6 +561,46 @@ def _below_private_root(path: Any) -> bool:
         return False
     normal = posixpath.normpath(path.lstrip("/"))
     return (normal + "/").startswith(PRIVATE_BINDING_ROOT)
+
+
+def private_link_problem(root: Any, path: Any) -> Optional[str]:
+    """Why the private file ``path`` (``is_private_path``) of the working tree ``root`` breaks the data-root link
+    rule, as a phrase that follows the file's name, or None. The rule: a symbolic link is allowed only on a component
+    of ``PRIVATE_ROOT_LINK_COMPONENTS`` (the data root itself), and such a link points to an existing directory
+    outside the repository ``root`` (by its real path), so a private file is never a repository file reached by
+    another name; every component below the campaign folder (its subfolders and the file itself) is not a link; a
+    file reached through data-root links resolves outside the repository, one reached without a link resolves to
+    itself. The record builder (``amendment2._private_binding``) and the chain verifier (``amendment_chain``, C8 and
+    C11) both apply it, so the two cannot drift."""
+    if not is_private_path(path):
+        return f"is not below the private binding root {PRIVATE_BINDING_ROOT}"
+    base = Path(os.path.realpath(os.fspath(root)))
+    lexical = Path(os.fspath(root))
+    parts = path.split("/")
+    linked = False
+    for count in range(1, len(parts) + 1):
+        component = "/".join(parts[:count])
+        cursor = lexical.joinpath(*parts[:count])
+        if not cursor.is_symlink():
+            continue
+        if component not in PRIVATE_ROOT_LINK_COMPONENTS:
+            return (f"has a symbolic link at {component}, below the campaign folder; only the data-root components "
+                    f"{list(PRIVATE_ROOT_LINK_COMPONENTS)} may be links (every folder below the campaign folder and "
+                    "the file itself are real)")
+        if not cursor.is_dir():
+            return (f"is reached through the data-root link {component}, which is dangling or not a directory; a "
+                    "data-root link points to an existing directory outside the repository")
+        target = Path(os.path.realpath(cursor))
+        if target == base or base in target.parents:
+            return (f"is reached through the data-root link {component}, which points into the repository; a "
+                    "data-root link points outside the repository (a private file is never a repository file "
+                    "reached by another name)")
+        linked = True
+    real = Path(os.path.realpath(lexical.joinpath(*parts)))
+    inside = real == base or base in real.parents
+    if (linked and inside) or (not linked and real != base.joinpath(*parts)):
+        return "does not resolve to itself inside the repository or to a file outside it through a data-root link"
+    return None
 
 
 def binding_at(record: Mapping[str, Any], role: str) -> Any:

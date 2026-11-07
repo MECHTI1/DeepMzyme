@@ -31,8 +31,10 @@ refuses without them.
 Private bindings (the repository is public): the files of ``amendment_rules.PRIVATE_ROLES`` (the dry-run-v2
 receipts, the CLEAN tie exposure and the F6 hold-out lists and corpus) are bound as
 ``{"path", "sha256", "private": true}``. Each is a regular file below ``amendment_rules.PRIVATE_BINDING_ROOT`` of
-the repository, reached without a symbolic link, untracked and ignored by git; only its path and SHA-256 enter the
-record and the rendering, never its content. Every other bound file is public and committed with the link.
+the repository, reached by the data-root link rule (``amendment_rules.private_link_problem``: only the components
+of the data root itself may be links, each to a directory outside the repository), untracked and ignored by git;
+only its path and SHA-256 enter the record and the rendering, never its content. Every other bound file is public
+and committed with the link.
 
 Receipt and record formats are fixed here; ``scoring`` repeats the two receipt format names (a test keeps them
 equal) so that the scorer imports nothing from this module.
@@ -47,6 +49,7 @@ from pathlib import Path, PurePosixPath
 import re
 import subprocess
 import sys
+import tempfile
 from typing import Any, Mapping, Optional, Sequence
 
 from ec_clean30 import amendment_rules
@@ -283,40 +286,59 @@ def _git_status(repo: Path, *args: str, literal: bool = True, stdin: Optional[st
     """``git <args>`` in ``repo`` without the caller's ``GIT_*`` variables (a hook's ``GIT_DIR`` would point git at
     another repository) and without system or global git configuration, with literal pathspecs unless ``literal`` is
     false (``check-ignore`` takes plain paths)."""
-    env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
-    env.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull})
     try:
         completed = subprocess.run(["git", *(["--literal-pathspecs"] if literal else []), *args], cwd=str(repo),
-                                   env=env, input=stdin, capture_output=True, text=True, timeout=60)
+                                   env=_git_env(), input=stdin, capture_output=True, text=True, timeout=60)
     except (OSError, subprocess.SubprocessError) as exc:
         return 127, str(exc)
     return completed.returncode, completed.stdout
 
 
+def _git_env() -> dict[str, str]:
+    """The environment of the builder's git calls: no ``GIT_*`` variable of the caller, no system or global
+    configuration."""
+    env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    env.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull})
+    return env
+
+
+def _head_blob(repo: Path, relative: str) -> Optional[bytes]:
+    """The content at HEAD of ``relative`` when HEAD tracks it as a regular file (mode 100644 or 100755), else None
+    (absent, a symbolic link or a folder: git reads no ``.gitignore`` of that kind)."""
+    code, listing = _git_status(repo, "ls-tree", "-z", "HEAD", "--", relative)
+    entry = listing.split("\0")[0] if code == 0 else ""
+    meta, _tab, name = entry.partition("\t")
+    fields = meta.split(" ")
+    if name != relative or len(fields) != 3 or fields[0] not in ("100644", "100755") or fields[1] != "blob":
+        return None
+    try:
+        completed = subprocess.run(["git", "cat-file", "blob", fields[2]], cwd=str(repo), env=_git_env(),
+                                   capture_output=True, timeout=60)
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise AmendmentRecordError(f"git cat-file of {relative} at HEAD failed: {exc}") from exc
+    return completed.stdout if completed.returncode == 0 else None
+
+
 def _private_binding(repo: Path, path: Path, what: str) -> dict[str, Any]:
-    """The private binding ``{"path", "sha256", "private": true}`` of a file of a private role: a regular file inside
-    ``repo`` (lexically and by its real path), reached without a symbolic link in any component, below
-    ``amendment_rules.PRIVATE_BINDING_ROOT``, not tracked by git (in the index or at HEAD) and ignored by a
-    ``.gitignore`` committed at HEAD (``_committed_ignore``; a local exclude holds in one clone only). Only the path
-    and the SHA-256 are recorded."""
+    """The private binding ``{"path", "sha256", "private": true}`` of a file of a private role: a regular file below
+    ``amendment_rules.PRIVATE_BINDING_ROOT`` of ``repo`` (lexically), reached by the data-root link rule
+    (``amendment_rules.private_link_problem``: only the components of the data root itself may be links, each to an
+    existing directory outside the repository; every folder below the campaign folder and the file itself are real),
+    not tracked by git (in the index or at HEAD) and ignored by a ``.gitignore`` committed at HEAD
+    (``_committed_ignore``; a local exclude holds in one clone only). Only the path and the SHA-256 are recorded."""
     root = Path(os.path.realpath(os.fspath(repo)))
     given = Path(os.path.abspath(os.fspath(path)))
-    # The repository root as the path names it lexically (links above the root are allowed, none below it).
+    # The repository root as the path names it lexically (links above the root are allowed; below it the data-root
+    # link rule decides).
     anchor = next((parent for parent in reversed(given.parents) if Path(os.path.realpath(parent)) == root), None)
     _require(anchor is not None, f"{what} is outside the repository; a private input lives below "
                                  f"{amendment_rules.PRIVATE_BINDING_ROOT} of the repository.")
     relative = given.relative_to(anchor).as_posix()
-    cursor = anchor
-    for part in PurePosixPath(relative).parts:
-        cursor = cursor / part
-        _require(not cursor.is_symlink(), f"{what} ({relative}) has a symbolic link in its path; a private input is "
-                                          "a regular file reached without links.")
-    _require(given.is_file(), f"{what} ({relative}) is missing or not a regular file.")
-    real = Path(os.path.realpath(given))
-    _require(root in real.parents and real.relative_to(root).as_posix() == relative,
-             f"{what} ({relative}) does not resolve to itself inside the repository.")
     _require(amendment_rules.is_private_path(relative),
              f"{what} ({relative}) is not below the private binding root {amendment_rules.PRIVATE_BINDING_ROOT}.")
+    problem = amendment_rules.private_link_problem(anchor, relative)
+    _require(problem is None, f"{what} ({relative}) {problem}.")
+    _require(given.is_file(), f"{what} ({relative}) is missing or not a regular file.")
     code_index, index = _git_status(root, "ls-files", "-z", "--", relative)
     code_head, head = _git_status(root, "ls-tree", "-z", "--name-only", "HEAD", "--", relative)
     _require(code_index == 0 and not index and (code_head != 0 or not head),
@@ -331,22 +353,72 @@ def _private_binding(repo: Path, path: Path, what: str) -> dict[str, Any]:
 
 def _committed_ignore(root: Path, relative: str) -> bool:
     """Whether git ignores ``relative`` by a pattern of a ``.gitignore`` file that is tracked at HEAD, unmodified in
-    the working tree and in a folder that contains ``relative``, so that every clone ignores it too. Global and
-    repository ``core.excludesFile`` are switched off; a match in ``.git/info/exclude`` or a negated pattern is not
-    accepted."""
-    code, out = _git_status(root, "-c", f"core.excludesFile={os.devnull}", "check-ignore", "-v", "-z", "--stdin",
-                            literal=False, stdin=relative + "\0")
-    fields = out.split("\0")
-    if code != 0 or len(fields) != 5 or fields[3] != relative or fields[4] != "" or fields[2].startswith("!"):
+    the working tree and in a folder that contains ``relative``, and whether a clone of HEAD with real folders ignores
+    it too. Global and repository ``core.excludesFile`` are switched off; a match in ``.git/info/exclude`` or a
+    negated pattern is not accepted. git does not look past a symbolic link, so a path through a data-root link
+    (``amendment_rules.PRIVATE_ROOT_LINK_COMPONENTS``) is asked here at its first link. That answer alone is not the
+    answer of another clone: a folder-only pattern (``name/``, a negation ``!name/`` included) never matches a link
+    but does match the real folder of a clone, so a negation that re-includes the folder there is invisible here.
+    Both questions are therefore asked: here, and of the full path in a throwaway repository that holds the
+    ``.gitignore`` files of HEAD in every folder that contains ``relative`` and ``relative`` itself as real folders
+    and an empty file (``_clone_ignores``)."""
+    queried = _first_link_prefix(root, relative)
+    source = _ignore_source(root, queried)
+    if source is None:
         return False
+    code_head, head = _git_status(root, "ls-tree", "-z", "--name-only", "HEAD", "--", source)
+    code_diff, _diff = _git_status(root, "diff", "--quiet", "HEAD", "--", source)
+    return code_head == 0 and head == source + "\0" and code_diff == 0 and _clone_ignores(root, relative)
+
+
+def _ignore_source(repo: Path, queried: str) -> Optional[str]:
+    """The ``.gitignore`` (repository-relative) whose pattern makes git in ``repo`` ignore ``queried``, when that
+    pattern is not negated, lies in a ``.gitignore`` of a folder that contains ``queried`` and ``core.excludesFile``
+    is switched off (a match in ``.git/info/exclude`` names no such file); otherwise None."""
+    code, out = _git_status(repo, "-c", f"core.excludesFile={os.devnull}", "check-ignore", "-v", "-z", "--stdin",
+                            literal=False, stdin=queried + "\0")
+    fields = out.split("\0")
+    if code != 0 or len(fields) != 5 or fields[3] != queried or fields[4] != "" or fields[2].startswith("!"):
+        return None
     source = PurePosixPath(fields[0])
     folder = source.parent.as_posix()
     if (source.is_absolute() or source.name != ".gitignore" or ".." in source.parts
-            or not (folder == "." or relative.startswith(folder + "/"))):
-        return False
-    code_head, head = _git_status(root, "ls-tree", "-z", "--name-only", "HEAD", "--", source.as_posix())
-    code_diff, _diff = _git_status(root, "diff", "--quiet", "HEAD", "--", source.as_posix())
-    return code_head == 0 and head == source.as_posix() + "\0" and code_diff == 0
+            or not (folder == "." or queried.startswith(folder + "/"))):
+        return None
+    return source.as_posix()
+
+
+def _clone_ignores(root: Path, relative: str) -> bool:
+    """Whether a clone of HEAD whose folders are real ignores ``relative``: a throwaway repository (no template, so
+    no ``.git/info/exclude``) gets, at its own path, the HEAD content of the ``.gitignore`` of every folder that
+    contains ``relative`` (the only ones git consults for it) and ``relative`` as real folders and an empty file;
+    git there must ignore it by a non-negated pattern of one of those files (``_ignore_source``)."""
+    parts = PurePosixPath(relative).parts
+    folders = ["/".join(parts[:count]) for count in range(len(parts))]
+    with tempfile.TemporaryDirectory(prefix="ec_clean30_ignore_") as scratch:
+        template, clone = Path(scratch) / "template", Path(scratch) / "clone"
+        template.mkdir()
+        code, _out = _git_status(Path(scratch), "init", "--quiet", f"--template={template}", str(clone))
+        if code != 0:
+            return False
+        for folder in folders:
+            name = f"{folder}/.gitignore" if folder else ".gitignore"
+            content = _head_blob(root, name)
+            if content is not None:
+                (clone / name).parent.mkdir(parents=True, exist_ok=True)
+                (clone / name).write_bytes(content)
+        (clone / relative).parent.mkdir(parents=True, exist_ok=True)
+        (clone / relative).write_bytes(b"")
+        return _ignore_source(clone, relative) is not None
+
+
+def _first_link_prefix(root: Path, relative: str) -> str:
+    """``relative`` up to and including its first symbolic link component, or ``relative`` itself without one."""
+    parts = PurePosixPath(relative).parts
+    for count in range(1, len(parts) + 1):
+        if Path(root).joinpath(*parts[:count]).is_symlink():
+            return "/".join(parts[:count])
+    return relative
 
 
 def draft_shape_problems(draft: Mapping[str, Any]) -> list[str]:

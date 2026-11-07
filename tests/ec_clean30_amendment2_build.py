@@ -331,10 +331,15 @@ def publish_link2(world: dict, message: str = "Link 2") -> str:
     return digest
 
 
-def build_world_with_builder(root: Path) -> dict:
-    """The source world, the maintainer's inputs, link 2 by the real builder with its rendering, published."""
+def build_world_with_builder(root: Path, *, external_data_root: bool = False) -> dict:
+    """The source world, the maintainer's inputs, link 2 by the real builder with its rendering, published. With
+    ``external_data_root`` the builder runs on the workstation layout: ``DeepMzyme_Data`` stays a real, gitignored
+    folder of the repository and its ``campaigns`` entry is a symbolic link to the folder ``harness.DATA_DISK`` of
+    the world, outside the repository (the build inputs keep their lexical paths through the link)."""
     world = harness.build_source_world(root, execution_after_link1=True)
     world["inputs"] = write_build_inputs(world)
+    if external_data_root:
+        harness.move_data_root_outside(world["repo"], root / harness.DATA_DISK)
     out = world["repo"] / rules.AMENDMENT2_PATH
     result = run_builder(world, out=out, render=world["repo"] / rules.rendering_path(rules.AMENDMENT2_PATH))
     assert "record" in result, result

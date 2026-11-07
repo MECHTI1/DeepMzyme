@@ -59,9 +59,11 @@ How a chain is authenticated
   temporary files go with it.
 - Private bindings (``amendment_rules.PRIVATE_ROLES``: the dry-run-v2 receipts, the CLEAN tie exposure and the F6
   hold-out lists and corpus; the repository is public). C8 and C11 read them from the working tree of the
-  verification repository, never from git, and refuse one that is absent, does not hash, has a symbolic link in its
-  path, lies outside ``amendment_rules.PRIVATE_BINDING_ROOT`` or is tracked at the link's commit; a private role
-  bound publicly and a public binding flagged private are refused (``amendment_rules.binding_privacy_problems``).
+  verification repository, never from git, and refuse one that is absent, does not hash, breaks the data-root link
+  rule (``amendment_rules.private_link_problem``: only the components of the data root itself may be links, each
+  to an existing directory outside the repository), lies outside ``amendment_rules.PRIVATE_BINDING_ROOT`` or is
+  tracked at the link's commit; a private role bound publicly and a public binding flagged private are refused
+  (``amendment_rules.binding_privacy_problems``).
   A nested verification in a checkout of a link's commit reads them from the outermost verification repository,
   whose root the parent passes as an argument of the fixed chain probe (never through the environment, so a
   top-level call always reads its own working tree). Public bindings are
@@ -361,15 +363,18 @@ def _private_root(repo: Path) -> Path:
 
 def _private_file(root: Path, path: Any) -> tuple[Optional[bytes], Optional[str]]:
     """The bytes of a private binding's file in the working tree of ``root`` (never from git), or why there are
-    none."""
+    none. The path follows the data-root link rule of the record builder (``rules.private_link_problem``): only the
+    components of the data root itself may be links, each to an existing directory outside ``root``."""
     if not rules.is_private_path(path):
         return None, f"lies outside the private binding root {rules.PRIVATE_BINDING_ROOT}"
-    cursor = Path(root)
-    for part in Path(path).parts:
-        cursor = cursor / part
-        if cursor.is_symlink():
-            return None, "has a symbolic link in its path in the verification repository's working tree"
-    data = _working_tree_bytes(Path(root), path)
+    problem = rules.private_link_problem(root, path)
+    if problem is not None:
+        return None, f"{problem} in the verification repository's working tree"
+    target = Path(root).joinpath(*path.split("/"))
+    try:
+        data = target.read_bytes() if target.is_file() else None
+    except OSError:
+        data = None
     if data is None:
         return None, ("is absent from the verification repository's working tree (a private input is never read "
                       "from git)")

@@ -9,8 +9,16 @@ tracks or does not ignore, a dry-run receipt of a dirty tree) and its rendering,
 only; the verifier's refusals at link 2's commit and from a later HEAD (a private role bound publicly, a public role
 flagged private, a path outside the root or with ``..``, a private file tracked at the link's commit, altered, absent
 or behind a symbolic link, an altered or dirty dry-run receipt); the chain receipt, which lists the private bindings
-apart and is checked on a pod without them; and the digest match of the execution side. Each refusal is matched by
-its exact message. No campaign record, view or data folder is read.
+apart and is checked on a pod without them; and the digest match of the execution side. The data-root link rule
+(``amendment_rules.private_link_problem``) runs on the workstation layout, where ``DeepMzyme_Data`` is a real,
+gitignored folder and ``DeepMzyme_Data/campaigns`` a link to a folder outside the repository: link 2 is built and
+verified there end to end, and builder and verifier alike accept data-root links outside the repository (the whole
+``DeepMzyme_Data`` folder on another disk included) and refuse a data-root link into the repository (the whole
+``DeepMzyme_Data`` folder replaced by a link to a tracked folder included), a dangling or non-directory one and a link
+at or below the ``amendment2`` folder or on the file itself. There the builder also asks a clone with real folders
+whether git ignores the file, so a committed folder-only negation that a link hides from git is refused. Each refusal
+is matched by its exact message. No campaign
+record, view or data folder is read.
 """
 from __future__ import annotations
 
@@ -50,6 +58,20 @@ def built(tmp_path_factory):
     return build.build_world_with_builder(tmp_path_factory.mktemp("private_built") / "world")
 
 
+@pytest.fixture(scope="module")
+def external(tmp_path_factory):
+    """The published chain on the workstation layout: DeepMzyme_Data is a real, gitignored folder of the repository
+    and DeepMzyme_Data/campaigns a symbolic link to a folder outside it."""
+    return harness.build_world(tmp_path_factory.mktemp("private_external") / "world", external_data_root=True)
+
+
+@pytest.fixture(scope="module")
+def built_external(tmp_path_factory):
+    """Link 2 built by the real builder on the workstation layout (see ``external``)."""
+    return build.build_world_with_builder(tmp_path_factory.mktemp("private_built_external") / "world",
+                                          external_data_root=True)
+
+
 def _copy(world: dict, factory) -> dict:
     copied = harness.copy_world(world, factory)
     if "inputs" in world:
@@ -70,6 +92,47 @@ def _refused(world: dict, out: Path, **overrides) -> str:
 
 def _lines(error: AmendmentChainError) -> list[str]:
     return [line.strip() for line in str(error).splitlines()]
+
+
+# The data-root link rule (amendment_rules.private_link_problem) and its three refusals, word for word.
+DATA_ROOT = "DeepMzyme_Data"
+CAMPAIGNS = "DeepMzyme_Data/campaigns"
+CAMPAIGN_FOLDER = f"DeepMzyme_Data/campaigns/{rules.CAMPAIGN_ID}"
+RECEIPT0 = f"{PRIVATE}/dry_runs/fold0.json"
+
+
+def _below(component: str) -> str:
+    return (f"has a symbolic link at {component}, below the campaign folder; only the data-root components "
+            f"{[DATA_ROOT, CAMPAIGNS, CAMPAIGN_FOLDER]} may be links (every folder below the campaign folder and the "
+            "file itself are real)")
+
+
+def _into(component: str) -> str:
+    return (f"is reached through the data-root link {component}, which points into the repository; a data-root link "
+            "points outside the repository (a private file is never a repository file reached by another name)")
+
+
+def _dangling(component: str) -> str:
+    return (f"is reached through the data-root link {component}, which is dangling or not a directory; a data-root "
+            "link points to an existing directory outside the repository")
+
+
+def _relink(link: Path, target: Path) -> None:
+    """Point the symbolic link ``link`` at ``target`` instead."""
+    assert link.is_symlink()
+    link.unlink()
+    link.symlink_to(target, target_is_directory=True)
+
+
+def _move_out(repo: Path, relative: str, outside: Path) -> Path:
+    """Move the real folder or file ``relative`` of the working tree (reached through the data-root links) to
+    ``outside`` and leave a symbolic link to it in its place."""
+    lexical = repo / relative
+    assert not lexical.is_symlink()
+    outside.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(lexical), str(outside))
+    lexical.symlink_to(outside, target_is_directory=outside.is_dir())
+    return outside
 
 
 # ---------------------------------------------------------------------------
@@ -184,15 +247,15 @@ def test_the_builder_refuses_a_public_copy_a_link_a_tracked_or_unignored_file_an
     error = _refused(copied, out, bind={"inputs.clean_tie_exposure": outside})
     assert error == ("AmendmentRecordError: Bound file inputs.clean_tie_exposure is outside the repository; a "
                      f"private input lives below {rules.PRIVATE_BINDING_ROOT} of the repository.")
-    # A symbolic link in the path below the repository root.
+    # A symbolic link below the campaign folder (the data-root link rule allows links on the data root only).
     real = repo / PRIVATE / "f6_corpus_real"
     shutil.copytree(repo / PRIVATE / "f6_corpus", real)
     linked = repo / PRIVATE / "f6_corpus_linked"
     linked.symlink_to(real, target_is_directory=True)
     relative = f"{PRIVATE}/f6_corpus_linked/fold0.tsv"
     error = _refused(copied, out, bind={"inputs.f6_corpus.tables.0": repo / relative})
-    assert error == (f"AmendmentRecordError: Bound file inputs.f6_corpus.tables.0 ({relative}) has a symbolic link "
-                     "in its path; a private input is a regular file reached without links.")
+    assert error == (f"AmendmentRecordError: Bound file inputs.f6_corpus.tables.0 ({relative}) "
+                     f"{_below(f'{PRIVATE}/f6_corpus_linked')}.")
     # A private file that git tracks (force-added below the ignored root).
     harness._git(repo, "add", "-f", "--", HOLDOUT3)
     error = _refused(copied, out)
@@ -349,7 +412,7 @@ def test_a_private_file_altered_absent_or_behind_a_link_is_refused_in_place_and_
              f"[C8] inputs.clean_tie_exposure: the private file {TIE} is absent from the verification repository's "
              "working tree (a private input is never read from git)"),
             ("linked", lambda repo: _link_corpus_folder(repo),
-             f"[C8] inputs.f6_corpus.tables.0: the private file {CORPUS0} has a symbolic link in its path in the "
+             f"[C8] inputs.f6_corpus.tables.0: the private file {CORPUS0} {_below(f'{PRIVATE}/f6_corpus')} in the "
              "verification repository's working tree")):
         copied = _copy(base, tmp_path_factory)
         change(copied["repo"])
@@ -417,6 +480,245 @@ def test_a_top_level_call_reads_its_own_working_tree_whatever_the_environment_na
         with pytest.raises(AmendmentChainError, match=r"The chain probe names no private root directory"):
             amendment_chain._probe_private_root(raw)
     assert amendment_chain._probe_private_root(str(elsewhere["repo"])) == Path(os.path.realpath(elsewhere["repo"]))
+
+
+# ---------------------------------------------------------------------------
+# Data-root links: the workstation layout and the links the rule refuses
+
+
+def test_the_data_root_link_components_are_the_components_of_the_private_root():
+    assert rules.PRIVATE_ROOT_LINK_COMPONENTS == (DATA_ROOT, CAMPAIGNS, CAMPAIGN_FOLDER)
+    assert rules.PRIVATE_BINDING_ROOT == CAMPAIGN_FOLDER + "/"
+    # The builder and the verifier call the one shared rule and check no link of their own.
+    import inspect
+
+    for function in (amendment2._private_binding, amendment_chain._private_file):
+        source = inspect.getsource(function)
+        assert "private_link_problem(" in source and "is_symlink" not in source, function.__name__
+
+
+def _assert_workstation_layout(world: dict) -> None:
+    repo = world["repo"]
+    assert (repo / DATA_ROOT).is_dir() and not (repo / DATA_ROOT).is_symlink()
+    assert (repo / CAMPAIGNS).is_symlink()
+    real = Path(os.path.realpath(repo / CAMPAIGNS))
+    assert real == world["root"] / harness.DATA_DISK / "campaigns"
+    assert Path(os.path.realpath(repo)) not in real.parents
+    assert harness._git(repo, "status", "--porcelain") == ""
+
+
+def test_the_builder_binds_private_inputs_on_another_disk_and_the_published_chain_verifies(
+        built_external, tmp_path_factory):
+    _assert_workstation_layout(built_external)
+    record, repo = built_external["record"], built_external["repo"]
+    private = {where: item for section in amendment2.FILE_BINDING_SECTIONS
+               for where, item in rules.binding_items(record.get(section), section) if rules.is_private_role(where)}
+    assert len(private) == 17 and rules.binding_privacy_problems(record, amendment2.FILE_BINDING_SECTIONS) == []
+    # Lexical repository paths below the private root, hashed through the data-root link.
+    assert all(rules.is_private_binding(item) and item["sha256"] == harness._file_sha(repo, item["path"])
+               for item in private.values())
+    assert record["dry_runs"]["receipts"]["0"]["path"] == RECEIPT0
+    assert harness.verify(built_external)["chain"] == [built_external["a1"], built_external["a2"]]
+    copied = _copy(built_external, tmp_path_factory)
+    _assert_workstation_layout(copied)
+    harness.commit_change(copied, WORKSTATION, EXECUTION_TEXT)
+    assert harness.verify(copied)["chain"] == [copied["a1"], copied["a2"]]
+
+
+def test_a_published_chain_on_the_workstation_layout_verifies_in_place_from_a_later_head_and_on_a_pod(
+        external, tmp_path_factory):
+    _assert_workstation_layout(external)
+    assert harness.verify(external)["chain"] == [external["a1"], external["a2"]]
+    copied = _copy(external, tmp_path_factory)
+    _assert_workstation_layout(copied)
+    harness.commit_change(copied, WORKSTATION, EXECUTION_TEXT)
+    assert harness.verify(copied)["chain"] == [copied["a1"], copied["a2"]]
+    out = copied["root"] / "receipt.json"
+    receipt = harness.write_receipt(copied, out)
+    assert receipt["private_bindings"]
+    pod = harness.partial_clone(copied, "pod")
+    assert not (pod / DATA_ROOT).exists()
+    assert harness.check_receipt(copied, out, repo=pod)["chain"] == [copied["a1"], copied["a2"]]
+
+
+def test_on_the_workstation_layout_git_is_asked_at_the_data_root_link_and_a_committed_gitignore_is_required(
+        built_external, tmp_path_factory):
+    # git does not look past a symbolic link: the builder asks it about DeepMzyme_Data/campaigns, which the committed
+    # pattern DeepMzyme_Data ignores (with every file below it, in every clone).
+    copied = _copy(built_external, tmp_path_factory)
+    repo = copied["repo"]
+    assert amendment2._first_link_prefix(repo, TIE) == CAMPAIGNS
+    assert amendment2._first_link_prefix(repo, "docs/x.json") == "docs/x.json"
+    assert amendment2._committed_ignore(repo, TIE)
+    out = copied["root"] / "scratch" / "refused.json"
+    gitignore = repo / ".gitignore"
+    gitignore.write_text(gitignore.read_text().replace("DeepMzyme_Data\n", ""))
+    harness._commit(repo, "A .gitignore without the private root")
+    assert _refused(copied, out) == (
+        f"AmendmentRecordError: The dry-run-v2 receipt of fold 0 ({RECEIPT0}) is not ignored by a .gitignore "
+        "committed at HEAD; the private binding root must be gitignored so that a private input is never committed "
+        "(.git/info/exclude and core.excludesFile hold in one clone only).")
+
+
+# (data-root link moved outside, the committed .gitignore lines that replace "DeepMzyme_Data", accepted?) A
+# folder-only negation ("!name/") never matches a link, so git asked at the link alone reports it ignored, yet it
+# re-includes the folder in a clone where that folder is real: the builder also asks a clone with real folders.
+IGNORE_CASES = [
+    ("campaigns_ignored_and_negated_as_a_folder", None,
+     ["DeepMzyme_Data/campaigns", "!DeepMzyme_Data/campaigns/"], False),
+    ("data_root_ignored_and_negated_as_a_folder", DATA_ROOT, ["DeepMzyme_Data", "!DeepMzyme_Data/"], False),
+    ("data_root_children_ignored_and_campaigns_negated_as_a_folder", None,
+     ["DeepMzyme_Data/*", "!DeepMzyme_Data/campaigns/"], False),
+    ("an_unrelated_negation", None, ["DeepMzyme_Data", "docs/*.tmp", "!docs/keep.tmp"], True),
+    ("the_data_root_on_another_disk_under_the_plain_pattern", DATA_ROOT, ["DeepMzyme_Data"], True),
+]
+
+
+@pytest.mark.parametrize("moved, lines, accepted", [case[1:] for case in IGNORE_CASES],
+                         ids=[case[0] for case in IGNORE_CASES])
+def test_on_the_workstation_layout_the_builder_requires_the_file_ignored_in_a_clone_with_real_folders(
+        built_external, tmp_path_factory, moved, lines, accepted):
+    copied = _copy(built_external, tmp_path_factory)
+    repo = copied["repo"]
+    if moved is not None:
+        _move_out(repo, moved, copied["root"] / "other_disk" / moved)
+    gitignore = repo / ".gitignore"
+    text = gitignore.read_text()
+    assert "\nDeepMzyme_Data\n" in text
+    if lines != [DATA_ROOT]:
+        gitignore.write_text(text.replace("\nDeepMzyme_Data\n", "\n" + "\n".join(lines) + "\n"))
+        harness._commit(repo, "Another .gitignore of the private root")
+    assert harness._git(repo, "status", "--porcelain") == ""
+    # What a clone of this commit with real folders sees.
+    clone = copied["root"] / "real_folder_clone"
+    harness._git(copied["root"], "clone", "--quiet", str(repo), str(clone))
+    (clone / RECEIPT0).parent.mkdir(parents=True)
+    (clone / RECEIPT0).write_text("{}\n")
+    untracked = harness._git(clone, "status", "--porcelain", "--untracked-files=all")
+    assert (f"?? {RECEIPT0}" in untracked.splitlines()) is not accepted, untracked
+    out = copied["root"] / "scratch" / "rebuilt.json"
+    if accepted:
+        result = build.run_builder(copied, out=out)
+        assert "record" in result, result
+        assert result["record"]["dry_runs"] == built_external["record"]["dry_runs"]
+        return
+    assert _refused(copied, out) == (
+        f"AmendmentRecordError: The dry-run-v2 receipt of fold 0 ({RECEIPT0}) is not ignored by a .gitignore "
+        "committed at HEAD; the private binding root must be gitignored so that a private input is never committed "
+        "(.git/info/exclude and core.excludesFile hold in one clone only).")
+
+
+def _data_root_outside(world):
+    # The whole DeepMzyme_Data folder on another disk (accepted: a data-root link to a folder outside the repository).
+    _move_out(world["repo"], DATA_ROOT, world["root"] / "other_disk" / DATA_ROOT)
+
+
+def _campaign_folder_outside(world):
+    _move_out(world["repo"], CAMPAIGN_FOLDER, world["root"] / "third_disk" / rules.CAMPAIGN_ID)
+
+
+def _data_root_into_the_repository(world):
+    # The whole DeepMzyme_Data folder replaced by a link to a tracked folder of the repository.
+    (world["root"] / "moved").mkdir(exist_ok=True)
+    shutil.move(str(world["repo"] / DATA_ROOT), str(world["root"] / "moved" / DATA_ROOT))
+    (world["repo"] / DATA_ROOT).symlink_to(world["repo"] / "docs", target_is_directory=True)
+
+
+def _campaigns_into_the_public_docs(world):
+    # DeepMzyme_Data/campaigns/<campaign>/amendment2/... would name docs/campaigns/<campaign>/amendment2/...
+    _relink(world["repo"] / CAMPAIGNS, world["repo"] / "docs" / "campaigns")
+
+
+def _campaign_folder_into_the_repository(world):
+    (world["root"] / "moved").mkdir(exist_ok=True)
+    shutil.move(str(world["repo"] / CAMPAIGN_FOLDER), str(world["root"] / "moved" / rules.CAMPAIGN_ID))
+    (world["repo"] / CAMPAIGN_FOLDER).symlink_to(world["repo"] / harness.DOCS, target_is_directory=True)
+
+
+def _campaigns_dangling(world):
+    _relink(world["repo"] / CAMPAIGNS, world["root"] / "unplugged_disk")
+
+
+def _campaigns_to_a_file(world):
+    (world["root"] / "not_a_folder").write_text("a file\n")
+    _relink(world["repo"] / CAMPAIGNS, world["root"] / "not_a_folder")
+
+
+def _amendment2_folder_linked(world):
+    _move_out(world["repo"], PRIVATE, world["root"] / "elsewhere" / "amendment2")
+
+
+def _corpus_folder_linked(world):
+    _move_out(world["repo"], f"{PRIVATE}/f6_corpus", world["root"] / "elsewhere" / "f6_corpus")
+
+
+def _file_linked(world):
+    _move_out(world["repo"], TIE, world["root"] / "elsewhere" / "clean_tie_exposure.json")
+
+
+# (change, the refused private file's builder name and record role and path, the reason; None: accepted)
+LINK_CASES = [
+    ("data_root_outside", _data_root_outside, None, None),
+    ("campaign_folder_outside", _campaign_folder_outside, None, None),
+    ("data_root_into_the_repository", _data_root_into_the_repository, "receipt", _into(DATA_ROOT)),
+    ("campaigns_into_the_public_docs", _campaigns_into_the_public_docs, "receipt", _into(CAMPAIGNS)),
+    ("campaign_folder_into_the_repository", _campaign_folder_into_the_repository, "receipt",
+     _into(CAMPAIGN_FOLDER)),
+    ("campaigns_dangling", _campaigns_dangling, "receipt", _dangling(CAMPAIGNS)),
+    ("campaigns_to_a_file", _campaigns_to_a_file, "receipt", _dangling(CAMPAIGNS)),
+    ("amendment2_folder_linked", _amendment2_folder_linked, "receipt", _below(PRIVATE)),
+    ("corpus_folder_linked", _corpus_folder_linked, "corpus", _below(f"{PRIVATE}/f6_corpus")),
+    ("file_linked", _file_linked, "tie", _below(TIE)),
+]
+# Builder: the first private file it binds that breaks the rule (the dry-run receipts come first). Verifier: a C8
+# line of a private file that breaks it.
+_BUILDER_FILE = {"receipt": f"The dry-run-v2 receipt of fold 0 ({RECEIPT0})",
+                 "corpus": f"Bound file inputs.f6_corpus.tables.0 ({CORPUS0})",
+                 "tie": f"Bound file inputs.clean_tie_exposure ({TIE})"}
+_VERIFIER_FILE = {"receipt": f"inputs.clean_tie_exposure: the private file {TIE}",
+                  "corpus": f"inputs.f6_corpus.tables.0: the private file {CORPUS0}",
+                  "tie": f"inputs.clean_tie_exposure: the private file {TIE}"}
+
+
+@pytest.mark.parametrize("change, refused, reason", [case[1:] for case in LINK_CASES],
+                         ids=[case[0] for case in LINK_CASES])
+def test_the_builder_applies_the_data_root_link_rule(built_external, tmp_path_factory, change, refused, reason):
+    copied = _copy(built_external, tmp_path_factory)
+    change(copied)
+    assert harness._git(copied["repo"], "status", "--porcelain") == ""
+    out = copied["root"] / "scratch" / "rebuilt.json"
+    if refused is None:
+        result = build.run_builder(copied, out=out)
+        assert "record" in result, result
+        keep = ("inputs", "dry_runs")
+        assert {key: result["record"][key] for key in keep} == {key: built_external["record"][key] for key in keep}
+        return
+    assert _refused(copied, out) == f"AmendmentRecordError: {_BUILDER_FILE[refused]} {reason}."
+
+
+@pytest.mark.parametrize("change, refused, reason", [case[1:] for case in LINK_CASES],
+                         ids=[case[0] for case in LINK_CASES])
+def test_the_verifier_applies_the_data_root_link_rule_in_place_and_from_a_later_head(
+        external, tmp_path_factory, change, refused, reason):
+    copied = _copy(external, tmp_path_factory)
+    change(copied)
+    assert harness._git(copied["repo"], "status", "--porcelain") == ""  # private files never dirty the tree
+    nested = f"[C4] Link 2 at its source commit {external['commits']['S2'][:12]} refused: "
+    if refused is None:
+        assert harness.verify(copied)["chain"] == [copied["a1"], copied["a2"]]
+        harness.commit_change(copied, WORKSTATION, EXECUTION_TEXT)
+        assert harness.verify(copied)["chain"] == [copied["a1"], copied["a2"]]
+        return
+    line = f"[C8] {_VERIFIER_FILE[refused]} {reason} in the verification repository's working tree"
+    with pytest.raises(AmendmentChainError) as refused_here:
+        harness.verify(copied)
+    assert line in _lines(refused_here.value), str(refused_here.value)
+    if refused == "receipt":
+        assert "[C11] the fold-0 dry-run-v2 receipt is missing or does not hash" in _lines(refused_here.value)
+    harness.commit_change(copied, WORKSTATION, EXECUTION_TEXT)
+    with pytest.raises(AmendmentChainError) as refused_later:
+        harness.verify(copied)
+    assert nested in str(refused_later.value) and line in str(refused_later.value), str(refused_later.value)
 
 
 # ---------------------------------------------------------------------------

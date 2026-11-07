@@ -326,6 +326,27 @@ def _private_binding(repo: Path, relative: str) -> dict:
     return {"path": relative, "sha256": _file_sha(repo, relative), "private": True}
 
 
+# The workstation layout of the campaign data: DeepMzyme_Data is a real, gitignored folder of the repository and its
+# campaigns entry is a symbolic link to a folder on another disk (a data-root link, amendment_rules.
+# PRIVATE_ROOT_LINK_COMPONENTS).
+DATA_DISK = "data_disk"
+DATA_ROOT_LINK = "DeepMzyme_Data/campaigns"
+
+
+def move_data_root_outside(repo: Path, outside: Path, component: str = DATA_ROOT_LINK) -> Path:
+    """Move the data-root ``component`` of ``repo`` (a component of ``amendment_rules.PRIVATE_ROOT_LINK_COMPONENTS``)
+    to the folder ``outside`` (not inside the repository) and leave a symbolic link to it in its place; returns the
+    new folder."""
+    assert component in rules.PRIVATE_ROOT_LINK_COMPONENTS
+    lexical = repo / component
+    assert lexical.is_dir() and not lexical.is_symlink()
+    target = outside / Path(component).name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(lexical), str(target))
+    lexical.symlink_to(target, target_is_directory=True)
+    return target
+
+
 def _tree_pins(repo: Path) -> dict[str, str]:
     return {path: _file_sha(repo, path) for path in rules.tracked_source_files(repo)}
 
@@ -571,11 +592,14 @@ def build_source_world(root: Path, *, execution_after_link1: bool = False, drift
 def build_world(root: Path, *, bad_rendering: bool = False, drift_at_link1: bool = False, log_link1: bool = True,
                 before_record: Optional[Callable[[Path], None]] = None,
                 mutate_record: Optional[Callable[[dict, Path], None]] = None,
-                before_link2_commit: Optional[Callable[[Path, dict], None]] = None) -> dict:
+                before_link2_commit: Optional[Callable[[Path, dict], None]] = None,
+                external_data_root: bool = False) -> dict:
     """The source world and link 2 (commit S2), published with its strict log line. Adversarial worlds:
     ``before_record(repo)`` changes the tree after the dry-run commit and before the record is assembled (so the
     record's scope holds the change), ``mutate_record(record, repo)`` edits the assembled record before it is
-    written, and ``before_link2_commit(repo, record)`` changes the tree just before the link-2 commit."""
+    written, and ``before_link2_commit(repo, record)`` changes the tree just before the link-2 commit. With
+    ``external_data_root`` the private files live in the workstation layout: ``DeepMzyme_Data/campaigns`` is a
+    symbolic link to the folder ``DATA_DISK`` of the world, outside the repository."""
     source = build_source_world(root, drift_at_link1=drift_at_link1, log_link1=log_link1)
     repo = source["repo"]
     if before_record is not None:
@@ -585,6 +609,8 @@ def build_world(root: Path, *, bad_rendering: bool = False, drift_at_link1: bool
                            dry_run_commit=source["commits"]["D"], previous_pins=source["previous_pins"])
     if mutate_record is not None:
         mutate_record(record, repo)
+    if external_data_root:
+        move_data_root_outside(repo, root / DATA_DISK)
     (repo / rules.AMENDMENT2_PATH).write_bytes(freeze.canonical_bytes(record))
     rendering = amendment2.render_amendment2(record) + ("drift\n" if bad_rendering else "")
     (repo / rules.rendering_path(rules.AMENDMENT2_PATH)).write_text(rendering, encoding="utf-8")
@@ -600,6 +626,14 @@ def copy_world(world: dict, factory) -> dict:
     root = factory.mktemp("chain_copy") / "world"
     shutil.copytree(world["root"], root, symlinks=True)
     copied = {**world, "root": root, "repo": root / "repo", "origin": root / "origin.git"}
+    # A data-root link into the world's own folders points into the copy instead (outermost component first).
+    for component in rules.PRIVATE_ROOT_LINK_COMPONENTS:
+        lexical = copied["repo"] / component
+        if lexical.is_symlink():
+            target = Path(os.readlink(lexical))
+            if target.is_absolute() and Path(world["root"]) in target.parents:
+                lexical.unlink()
+                lexical.symlink_to(root / target.relative_to(world["root"]), target_is_directory=True)
     _git(copied["repo"], "remote", "set-url", "origin", str(copied["origin"]))
     return copied
 

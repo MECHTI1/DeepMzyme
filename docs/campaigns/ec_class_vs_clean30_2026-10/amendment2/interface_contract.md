@@ -131,7 +131,7 @@ A failure of any check refuses the chain; nothing is downgraded to a warning.
 | C5 | **Scope.** `source_changes` equals the set of tracked `src/` and `scripts/` files whose bytes differ between the previous composite pins and this link's pins; each `before` equals the previous composite pin (null for a new file); no pinned scientific file is deleted; no execution file is in scope. | An unlisted changed scientific file; an execution file in scope; a deletion. |
 | C6 | **Live source (tip only).** Every scientific file equals the composite scientific pins and post-fit analysis files the analysis pins, except within a class-(a2) link's limits; the pinned function closures equal their pins. That the execution files equal the execution manifest in force is checked by manifest v5, not by this verifier. | A scientific file edited after publication. |
 | C7 | **Partition and import isolation.** The execution file set is closed, sorted, disjoint from the scientific and analysis sets and free of forbidden roles (`amendment_rules.partition`); a fresh interpreter that imports `campaign`, `commands`, `views`, `provenance`, `identity`, `selection`, `selector`, `stats`, `futility`, `clean_sanity`, `amendment_rules`, `amendment_chain` and `runtime_precision` loads no execution file, no post-fit analysis file and no untracked file; the static import closure of no scientific or analysis file (the trainer and embedding modules included) holds an execution file; analysis code is reached only through the pinned channels and no execution file imports it; no execution file reaches a private name of a scientific or analysis module. | An execution file that imports, reads or sets a private name of a scientific module (absolute or relative import, module attribute, `getattr`/`setattr`, `importlib`); a scientific module that loads an execution file. |
-| C8 | **Evidence.** Every public bound file (decisions, verification, futility operating characteristics, plans, fixtures, the attestation) hashes to its recorded SHA-256 at the link's commit; every private binding (dry-run receipts, tie exposure, F6 inputs) hashes in the verification repository's working tree, is reached without a symbolic link, lies below the private root and is not tracked at the link's commit; every binding has the privacy of its role (`amendment_rules.binding_privacy_problems`); every role of the [role table](#required-bindings) is bound; the decisions file itself settles every confirmation, has no placeholder token and no absolute path and equals the record's `decisions_file`; the rule text hashes and is found exactly once in the reviewed document `amendment<n>/amendment_draft.md`. With HEAD past the tip's commit, the tip's bound files also hash on the live tree and no private file is tracked there. | A changed evidence file; a role still holding a note; a private input bound publicly, committed, altered, absent or behind a link; a public binding flagged private; an unsettled decisions file; rule text that is not the reviewed document's. |
+| C8 | **Evidence.** Every public bound file (decisions, verification, futility operating characteristics, plans, fixtures, the attestation) hashes to its recorded SHA-256 at the link's commit; every private binding (dry-run receipts, tie exposure, F6 inputs) hashes in the verification repository's working tree, follows the data-root link rule (see [private bindings](#private-bindings)), lies below the private root and is not tracked at the link's commit; every binding has the privacy of its role (`amendment_rules.binding_privacy_problems`); every role of the [role table](#required-bindings) is bound; the decisions file itself settles every confirmation, has no placeholder token and no absolute path and equals the record's `decisions_file`; the rule text hashes and is found exactly once in the reviewed document `amendment<n>/amendment_draft.md`. With HEAD past the tip's commit, the tip's bound files also hash on the live tree and no private file is tracked there. | A changed evidence file; a role still holding a note; a private input bound publicly, committed, altered, absent or behind a link; a public binding flagged private; an unsettled decisions file; rule text that is not the reviewed document's. |
 | C9 | **Policies.** Each `rules` entry names its registered function; every rule policy, the analysis rule included, equals the canonical output of its registered function at the link's commit, recomputed in a fresh interpreter so that no scientific process loads analysis code. | A tampered policy; copied policy hashes over a redefined rule. |
 | C10 | **Plans.** The five v1 plan SHA-256 values equal Freeze 1; the five v2 plan records equal `campaign.build_fold_plan_v2` at the tip. | Any v1 or v2 plan drift. |
 | C11 | **Dry runs.** Five dry-run-v2 receipts are bound privately, are read from the verification repository's working tree (never from git), are not tracked at the link's commit, exist, hash, passed, and ran on a clean tree at the recorded source commit on the fold view whose manifest SHA-256 Freeze 1 records; the Freeze-1 in-view receipts are byte-unchanged; `r_cmd_v2_check` passes from that commit to the tip. The result's `dry_run_evidence` carries each fold's receipt binding with that view manifest SHA-256 (a digest, never a count); the per-unit view binding (`phase3._bind_view`) requires the fold's amendment-2 dry-run evidence, compares the view's manifest SHA-256 with it and hashes the in-view receipt it reads, and never reads the private receipt. | A missing, altered, publicly bound or committed receipt; a receipt of a dirty tree or of another view; a rewritten in-view receipt; a protected-file change after the dry runs. |
@@ -196,16 +196,30 @@ campaign does not publish before Stage 7. `amendment_rules.PRIVATE_ROLES` (fixtu
   data root `amendment_rules.PRIVATE_BINDING_ROOT` = `DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/`; the
   files live in its `amendment2/` folder. Every other binding is public `{path, sha256}`, never carries `private`,
   never lies below that root and is committed with the link.
-- **Builder.** A private file is a regular file inside the repository (lexically and by its real path), reached
-  without a symbolic link in any component below the repository root, below the private root, not tracked by git
-  (index or HEAD) and ignored by a pattern of a `.gitignore` that is tracked at HEAD, unmodified and in a folder
-  that contains the file (`git check-ignore -v`, with system, global and repository `core.excludesFile` off; a match
-  in `.git/info/exclude` or a negated pattern is refused, since a local exclude holds in one clone only). A dry-run
+- **Data-root links.** The campaign data may live on another disk, so a symbolic link is allowed only on a
+  component of the data root itself, `amendment_rules.PRIVATE_ROOT_LINK_COMPONENTS` = `DeepMzyme_Data`,
+  `DeepMzyme_Data/campaigns` and `DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10` (derived from
+  `PRIVATE_BINDING_ROOT`). Such a link points to an existing directory outside the repository (by its real path), so
+  a private file is never a repository file reached by another name; without a link the file resolves to itself
+  inside the repository. Every folder below the campaign folder (`amendment2/` and its subfolders) and the file
+  itself are real, never links. One shared helper, `amendment_rules.private_link_problem`, holds the rule for the
+  builder and the verifier, with one message each for a link below the campaign folder, a data-root link into the
+  repository and a dangling or non-directory data-root link.
+- **Builder.** A private file is a regular file below the private root inside the repository (lexically), reached
+  by the data-root link rule, not tracked by git (index or HEAD) and ignored by a pattern of a `.gitignore` that is
+  tracked at HEAD, unmodified and in a folder that contains the file (`git check-ignore -v`, with system, global and
+  repository `core.excludesFile` off; a match in `.git/info/exclude` or a negated pattern is refused, since a local
+  exclude holds in one clone only; a path through a data-root link is asked at that link, since git does not look
+  past a symbolic link). The full path must also be ignored as a clone of HEAD with real folders sees it: in a
+  throwaway repository without `.git/info/exclude` that holds the HEAD `.gitignore` of every folder containing the
+  file, and the file as real folders and an empty file, git must ignore it by a non-negated pattern of one of those
+  files (a folder-only negation such as `!DeepMzyme_Data/campaigns/` never matches a link, yet re-includes the real
+  folder of another clone, so it is refused). A dry-run
   receipt must also name the fold view whose manifest SHA-256 Freeze 1 records. Only its path and SHA-256 are
   recorded; the rendering
   `amendment.md` lists them in a table of private bindings and nothing else of them.
 - **Verifier.** C8 and C11 read private files from the verification repository's working tree, never from git, and
-  refuse one that is absent, does not hash, has a symbolic link in its path, lies outside the private root or is
+  refuse one that is absent, does not hash, breaks the data-root link rule, lies outside the private root or is
   tracked at the link's commit; a private role bound publicly and a public binding flagged private are refused. The
   C11 content checks run on the private receipt bytes unchanged.
 - **Execution side.** It matches these files by digest only: `phase3._bound_pretrain_file` and `phase4` compare a
@@ -250,7 +264,7 @@ same decision, binding, the same fit chain), as repository files committed with 
   list that differs from the live tree, or a pinned file changed outside it; a derived execution set with a
   scientific or post-fit analysis role, or other than the declared closed list; pinned-function names that differ
   from the registries; build inputs that do not check (a private file outside the private root or the repository,
-  behind a symbolic link, tracked or not ignored by git, or a dry-run receipt of a dirty tree included); a rule-text
+  behind a link that the data-root link rule refuses, tracked or not ignored by git, or a dry-run receipt of a dirty tree included); a rule-text
   document other than `amendment_draft.md`; a required binding that is absent or does not have the privacy of its
   role; file bindings that do not hash. Nothing is written on a refusal, and an existing record is never rewritten.
 
@@ -340,12 +354,20 @@ post-fit analysis module.
   a later HEAD and through its receipt in a partial clone.
 - `tests/test_ec_clean30_amendment_chain_private.py` (science side, staged): private bindings; the shared shape
   rules; the builder's refusals (a public or committed copy, a path outside the root or the repository, a symbolic
-  link, a tracked or unignored file, a dirty dry-run receipt, a private binding in the draft) and its rendering of
-  paths and digests only; the verifier's refusals at link 2's commit and from a later HEAD (a private role bound
+  link below the campaign folder, a tracked or unignored file, a dirty dry-run receipt, a private binding in the
+  draft) and its rendering of paths and digests only; the verifier's refusals at link 2's commit and from a later HEAD (a private role bound
   publicly, a public role flagged private, a path outside the root, with `..` or absolute, a private file tracked at
-  the link's commit or later, altered, absent or behind a link, an altered or dirty dry-run receipt); a top-level
+  the link's commit or later, altered, absent or behind a link below the campaign folder, an altered or dirty
+  dry-run receipt); the data-root link rule on the workstation layout (a real, gitignored `DeepMzyme_Data/` whose
+  `campaigns` entry links to a folder outside the repository), built and verified end to end in place, from a later
+  HEAD and through the chain receipt on a pod, and in builder and verifier alike: data-root links outside the
+  repository accepted (the whole `DeepMzyme_Data` folder included), a data-root link into the repository, a
+  dangling or non-directory one, and a link at or below the `amendment2/` folder or on the file itself refused with
+  their exact messages; a top-level
   call that exports a nesting depth and a private root naming another working tree; a root ignored only by a local
-  exclude or by an uncommitted `.gitignore` change; the chain receipt checked in a pod without the private files; the
+  exclude or by an uncommitted `.gitignore` change; on the workstation layout a committed `.gitignore` under which
+  a clone with real folders does not ignore the private file (a folder-only negation of `DeepMzyme_Data/` or
+  `DeepMzyme_Data/campaigns/`) refused by the builder, an unrelated negation accepted; the chain receipt checked in a pod without the private files; the
   digest match of the execution side and the view binding on a pod clone without the dry-run-v2 receipts.
 - `tests/test_ec_clean30_amendment2_build_chain.py` (science side, staged): link 2 built by the real
   `build_amendment2` on the same synthetic published repository, rendered, published and accepted by `verify_chain`;
