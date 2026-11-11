@@ -1,6 +1,6 @@
 # EC class versus CLEAN on the official CLEAN split30 benchmark
 
-Status: active (2026-11-04; launches paused, execution v5 CPU-checked draft)
+Status: active (2026-11-11; amendment 2 recorded, in force once published; launches paused, v5 CPU-checked draft)
 
 Goal: predict the first EC digit and outperform retrained CLEAN on the official `split30` five-fold metalloenzyme
 benchmark and its test proteins without a ≥30% identity hit to training. This is a secondary benchmark;
@@ -13,11 +13,12 @@ reference; that file stays unchanged.
 - [Log](log.md): dated decisions, preparation evidence and execution attempts.
 - [Recipe](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#ec-class-versus-clean30-campaign-recipe): commands.
 - [S1 amendment](s1_amendment/amendment.md): fixed policy, source pins and verification evidence.
+- [Amendment 2](amendment2/amendment.md): the 2026-11-04 decisions for real execution, with their evidence.
 - [Continuation](continuation.md) and [G2 readiness](g2_readiness.md): path to the first fold-0 decision.
 - Outputs (secondary drive, NVMe mirror): `DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/`.
 
-Official folds stay unchanged. The [design](design.md) records the published scientific policy; amendment 2
-is being prepared separately to implement the 2026-11-04 decisions. [Execution v5](execution_v5/README.md)
+Official folds stay unchanged. The [design](design.md) records the published scientific policy; [amendment 2](amendment2/amendment.md)
+implements the 2026-11-04 decisions ([evc-037](log.md#evc-037)). [Execution v5](execution_v5/README.md)
 owns the current launch hold, execution requirements and provisional cost scenarios.
 
 The recorded phases and historical estimates remain in the [continuation](continuation.md).
@@ -28,6 +29,7 @@ The [log](log.md) preserves capacity attempts and verified cache seeding.
 [evc-034](log.md#evc-034) records Pass I: main-runtime checks passed, but filesystem and path constraints
 blocked scientific admission. The pod is stopped and deleted; G2 remains 0/12.
 The POSIX correction is retained inside v5. [evc-036](log.md#evc-036) records the CPU-checked dispatch hooks.
-Next: finish the science interface handoff, publish amendment 2 and v5, approve the fold-0 ceiling and obtain
+[evc-037](log.md#evc-037) records amendment 2.
+Next: verify the published amendment chain, publish v5, approve the fold-0 ceiling and obtain
 separate explicit launch authorization. No launch loop is active.
 Root STATUS is stale (evc-009); [DATASETS](../../DATASETS.md#test-use-ledger) owns exposures and identity restrictions.

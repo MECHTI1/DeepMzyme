@@ -1734,3 +1734,36 @@ pin, and bind each F6 corpus-table receipt. Five dry-run-v2 receipts, amendment-
 manifest remain pending. The [v5 record](execution_v5/README.md) owns the interfaces and cost limitations.
 No campaign fit, G2 event, allocation or provider operation occurred. G2 remains 0/12, and Freeze 1c/G3 remain
 unmeasured. Publication, an approved fold-0 ceiling and separate explicit launch authorization are required.
+
+## evc-037
+
+2026-11-11 — **Amendment 2 recorded; in force once published.** The record
+[amendment.json](amendment2/amendment.json) and its rendering [amendment.md](amendment2/amendment.md) implement the
+maintainer's decisions A2-D1 to A2-D8 of 2026-11-04 for real execution. The amendment follows the S1 amendment
+(`d07dbb6a…a242ea`) in the chain; Freeze 1, Freeze 1b and the S1 amendment are unchanged and stay replayable.
+The builder read the rule text from the reviewed [document](amendment2/amendment_draft.md) and bound the
+maintainer's decisions file, the five plan-v2 records and the evidence by SHA-256. On 2026-11-09, before the build,
+the maintainer added a resume clause to A2-D6: if a session ends before fold 0 is complete, fold 0 continues
+in a later Runpod session from its preserved records, and finished units are never rerun.
+
+The five dry-run-v2 runs passed at source commit `7804b3e` on a clean tree. The earlier receipts of `f87b1f6`
+were set aside unchanged and are not bound, because `7804b3e` changed the record builder and the chain verifier:
+a component of the campaign data root may now be a link to a directory outside the repository, as on the
+workstation, where the campaign data live on the secondary drive. All 1,780 v1 unit commands keep their
+resolved-configuration hash between `c163995` and `7804b3e` ([v1 check](amendment2/v1_resolved_config.json)).
+The [verification record](amendment2/verification.json) holds the full CPU suite at `7804b3e`
+(**4,726 passes, 63 skips and 15 subtest passes**), the docs contract, two independent reviews and the plan-v2
+hashes; the [futility operating characteristics](amendment2/futility_oc.json) are synthetic.
+
+The repository is public, so the dry-run receipts, the CLEAN tie exposure and the F6 hold-out lists and corpus
+stay in the campaign folder and are bound privately, by path and SHA-256 only; the chain verifier checks them in
+the workstation's full checkout. The maintainer attests that no fold-0 data exist at the build
+([attestation](amendment2/data_state_attestation.json)): no G2 timing unit, no fold-0 DeepMzyme fit and no fold-0
+CLEAN inner fit, export or prediction has started.
+
+The record takes effect when this entry is published on `origin/main` (rule A2-GOV-1); `verify-amendment-chain`
+then runs in the workstation's full checkout. No campaign fit, G2 event, allocation or provider operation
+occurred. G2 remains 0/12. Next: the chain verification after publication, the v5 publication, an approved
+fold-0 ceiling and separate explicit launch authorization.
+
+Amendment chain link 2: `777130e4727768847e281a0aea593d44036c77107d2519ea8dddabe951ab682c`

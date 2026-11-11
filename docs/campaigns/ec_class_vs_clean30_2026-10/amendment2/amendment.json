@@ -1,0 +1,1227 @@
+{
+  "amendment_id": "amendment-2-pre-g2-v1",
+  "base_amendment": {
+    "amendment_id": "s1-fixed-anchor-holm-v1",
+    "commit": "3154a7f3b0ad44e8dffbc66072990cfb7d9c9030",
+    "path": "docs/campaigns/ec_class_vs_clean30_2026-10/s1_amendment/amendment.json",
+    "sequence": 1,
+    "sha256": "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea"
+  },
+  "base_freeze1": {
+    "path": "docs/campaigns/ec_class_vs_clean30_2026-10/freeze1.json",
+    "sha256": "28077f4c3701820c9aa20f53b570d12f8b70a46514211fc63e62976e393a3c0c"
+  },
+  "base_freeze1b_sha256": "fc6f032805f084d7aef4f704a42149e92fb7894af3699b2ad5c12e86c87bcbdb",
+  "bound_files": {
+    "decisions": {
+      "path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/maintainer_decisions.json",
+      "sha256": "2518a014cfbdfa3bc04707286abc611ba58d6b7f13c24483013d53658ca61498"
+    }
+  },
+  "campaign_id": "ec_class_vs_clean30_2026-10",
+  "canonical_record": {
+    "format": "deepmzyme_ec_clean30_amendment_v2",
+    "log_line": "Amendment chain link 2: followed by the SHA-256 of amendment.json in backticks, committed with the record and its rendering",
+    "path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/amendment.json",
+    "rendering": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/amendment.md",
+    "rule_text_source": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/amendment_draft.md",
+    "write_once": true,
+    "written_by": "ec_clean30.amendment2.build_amendment2"
+  },
+  "chain_after_publication": "the S1-amendment SHA-256 followed by the SHA-256 of amendment.json",
+  "chain_before": [
+    "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea"
+  ],
+  "change_class": "pre_data",
+  "confirmation_status": "confirmed",
+  "confirmations": {
+    "C1": {
+      "recommended_default": "k_F2(c) >= 1",
+      "topic": "harm-guard threshold"
+    },
+    "C2": {
+      "recommended_default": "primary metric; BA-scored tau descriptive",
+      "topic": "L9 tau metric"
+    },
+    "C3": {
+      "recommended_default": "Rao-Wu, k-1 of k",
+      "topic": "within-stratum resampling"
+    },
+    "C4": {
+      "recommended_default": "none toward continuing; a stop takes precedence",
+      "topic": "futility override"
+    },
+    "C5": {
+      "recommended_default": "narrowed class of A2-GOV-7",
+      "topic": "analysis completion class (a2)"
+    },
+    "C6": {
+      "recommended_default": "every comparison it enters reads No superiority inference",
+      "topic": "CLEAN fit recorded as proceed, disclosed"
+    },
+    "C6b": {
+      "implemented_by": "ec_clean30.clean_sanity:held_out_consequence",
+      "recommended_default": "one status and disposition per held-out arm; R1-inner removes both co-primaries and the R1 secondaries and FUT stops with 0 successes; R2-inner removes only hypotheses 3 and 4",
+      "topic": "held-out CLEAN arm recorded as proceed, disclosed"
+    },
+    "C7": {
+      "recommended_default": "S1 configuration with the S2 tau applied",
+      "topic": "futility DeepMzyme arm"
+    },
+    "C8": {
+      "recommended_default": "one hop plus exact sequence, case alias and shared selected donor",
+      "topic": "F6 inner exclusion"
+    }
+  },
+  "data_state": {
+    "attestation_at_build": {
+      "path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/data_state_attestation.json",
+      "sha256": "49f6cfd619346c5c3124d071c9f7045bb9a0576ecefd9a7a1ec4e49dbacd6817"
+    },
+    "attested_by_log": "evc-033",
+    "fold0_records_at_draft": [],
+    "g2_completed_units": 0
+  },
+  "decisions": {
+    "A2-D1": {
+      "decision": "Each outer fold selects, among F2, F3, F4, F5 and F6, the family with the highest pooled inner seed-mean score on the primary metric (2 screening seeds x 4 inner folds), the learning rate per family by the same score, with a zero-recall harm guard against F2, a pre-declared simplicity order within 0.5 points of the maximum and no significance test. Controls are reported and never selectable. Historical rules stay replayable.",
+      "owner": "science",
+      "rules": [
+        "A2-SEL-1",
+        "A2-SEL-2",
+        "A2-SEL-3",
+        "A2-SEL-4",
+        "A2-SEL-5",
+        "A2-SEL-6",
+        "A2-SEL-7"
+      ]
+    },
+    "A2-D2": {
+      "decision": "Primary metric: protein-level accuracy over the proteins of EC classes 1-6; class-7 proteins are excluded from the population and predictions into class 7 count wrong. Balanced accuracy over EC classes 1-6 is the first secondary metric. Co-primary populations, paired homology-cluster bootstrap, intersection-union against the R1 seed mean and ensemble, and Holm across the two populations are unchanged.",
+      "owner": "science",
+      "pre_data_rationale": "power_simulation.md",
+      "rules": [
+        "A2-MET-1",
+        "A2-MET-2",
+        "A2-MET-3",
+        "A2-STAT-1"
+      ]
+    },
+    "A2-D3": {
+      "decision": "Candidate family F6: F5 whose whole-protein branch is first trained on the fold's full official training file (EC class = first EC digit; proteins with more than one EC class excluded), inner-validation proteins and their identity neighbours held out for inner fits; ESMC-300m whole-protein means built on the GPU pod; reverses Freeze-1 U3 for this branch only.",
+      "owner": "science",
+      "rules": [
+        "A2-F6-1",
+        "A2-F6-2",
+        "A2-F6-3",
+        "A2-F6-4",
+        "A2-F6-5",
+        "A2-F6-6",
+        "A2-F6-7",
+        "A2-F6-8"
+      ]
+    },
+    "A2-D4": {
+      "decision": "S2 keeps only the no-fit L9 adjustment; S3 is dropped; raw-distance RBF is the GVP default; 30 epochs fixed (cosine, terminal checkpoint); F1 runs in fold 0 only.",
+      "owner": "science",
+      "rules": [
+        "A2-TRN-1",
+        "A2-TRN-2",
+        "A2-TRN-3",
+        "A2-TRN-4",
+        "A2-SEL-8",
+        "A2-BUD"
+      ]
+    },
+    "A2-D5": {
+      "decision": "Futility stop after fold 0: continue to folds 1-4 only if the pre-declared projected probability that the final claim succeeds is at least 0.20; otherwise stop and close out as not shown to outperform. The -3-point gap record is descriptive.",
+      "owner": "science",
+      "rules": [
+        "A2-FUT-1",
+        "A2-FUT-2",
+        "A2-FUT-3",
+        "A2-FUT-4",
+        "A2-FUT-5",
+        "A2-FUT-6",
+        "A2-FUT-7",
+        "A2-FUT-8",
+        "A2-FUT-9",
+        "A2-GOV-7"
+      ]
+    },
+    "A2-D6": {
+      "decision": "Runpod only; G2 and fold 0 in one pod session; if a session ends before fold 0 is complete, fold 0 resumes in a later Runpod session on the same GPU type and pinned environment from its preserved records (finished units kept; a unit without a preserved result rerun once as the identical planned unit).",
+      "owner": "execution v5",
+      "rules": []
+    },
+    "A2-D7": {
+      "decision": "CLEAN fits and the ESM-1b and ESMC embeddings on the pod GPU with TF32 off.",
+      "owner": "execution v5",
+      "rules": [
+        "A2-GOV-3",
+        "A2-F6-4"
+      ]
+    },
+    "A2-D8": {
+      "decision": "A pre-approved fold-0 spending ceiling and a time-box of at most two further failed capacity windows; the amount is recorded in the execution v5 record before G2.",
+      "owner": "execution v5",
+      "rules": [
+        "A2-GOV-8"
+      ]
+    }
+  },
+  "decisions_file": {
+    "answers": {
+      "C1": {
+        "accepted_default": true,
+        "choice": "k_F2(c) >= 1",
+        "topic": "harm-guard threshold"
+      },
+      "C2": {
+        "accepted_default": true,
+        "choice": "primary metric; BA-scored tau descriptive",
+        "topic": "L9 tau metric"
+      },
+      "C3": {
+        "accepted_default": true,
+        "choice": "Rao-Wu, k-1 of k",
+        "topic": "within-stratum resampling"
+      },
+      "C4": {
+        "accepted_default": true,
+        "choice": "none toward continuing; a stop takes precedence",
+        "topic": "futility override"
+      },
+      "C5": {
+        "accepted_default": true,
+        "choice": "narrowed class of A2-GOV-7",
+        "topic": "analysis completion class (a2)"
+      },
+      "C6": {
+        "accepted_default": true,
+        "choice": "every comparison it enters reads No superiority inference",
+        "topic": "CLEAN fit recorded as proceed, disclosed"
+      },
+      "C6b": {
+        "accepted_default": true,
+        "choice": "one status and disposition per held-out arm; R1-inner removes both co-primaries and the R1 secondaries and FUT stops with 0 successes; R2-inner removes only hypotheses 3 and 4",
+        "topic": "held-out CLEAN arm recorded as proceed, disclosed"
+      },
+      "C7": {
+        "accepted_default": true,
+        "choice": "S1 configuration with the S2 tau applied",
+        "topic": "futility DeepMzyme arm"
+      },
+      "C8": {
+        "accepted_default": true,
+        "choice": "one hop plus exact sequence, case alias and shared selected donor",
+        "topic": "F6 inner exclusion"
+      }
+    },
+    "maintainer": "mechti",
+    "sha256": "2518a014cfbdfa3bc04707286abc611ba58d6b7f13c24483013d53658ca61498"
+  },
+  "deferred_bindings": {
+    "f6_inputs": {
+      "bound_by": "freeze1c_v2",
+      "spec": "A2-F6-4"
+    }
+  },
+  "deviations": [
+    {
+      "deviates_from": [
+        "U8",
+        "design primary-metric bullet",
+        "EC playbook selection metric"
+      ],
+      "id": 1,
+      "still_met": "Plan.md final-reporting metrics (BA, macro-F1, recall)",
+      "topic": "primary metric"
+    },
+    {
+      "deviates_from": [
+        "Freeze-1 D1",
+        "S1 amendment",
+        "Plan.md:1116-1122 (Stage 6B promotion after fold-level paired confidence intervals, rare-class recall protection and predeclared tie-breakers)",
+        "Plan.md:347-356 (raw validation deltas are not sufficient promotion evidence)"
+      ],
+      "id": 2,
+      "requested_by": "the maintainer, explicitly (decision A2-D1)",
+      "topic": "S1 without a significance test"
+    },
+    {
+      "deviates_from": [
+        "U3",
+        "U5",
+        "U10",
+        "design disclosure: trains only on metalloenzymes"
+      ],
+      "id": 3,
+      "topic": "non-metalloenzyme pretraining data in F6"
+    },
+    {
+      "deviates_from": [
+        "structure chain means"
+      ],
+      "id": 4,
+      "topic": "F6 vectors are sequence means"
+    },
+    {
+      "deviates_from": [
+        "transitive exclusion (interpretation C8)"
+      ],
+      "id": 5,
+      "topic": "one-hop F6 inner hold-out"
+    },
+    {
+      "deviates_from": [
+        "design training rule (batch 4)"
+      ],
+      "id": 6,
+      "topic": "F6 pretraining rule"
+    },
+    {
+      "deviates_from": [
+        "U9",
+        "U10",
+        "C-1 to C-4",
+        "design epoch choice"
+      ],
+      "id": 7,
+      "topic": "epochs and levers"
+    },
+    {
+      "deviates_from": [
+        "v1 F1, F3 and F4 definitions"
+      ],
+      "id": 8,
+      "topic": "raw-distance RBF default"
+    },
+    {
+      "deviates_from": [
+        "Plan section 7 baseline-first order",
+        "EC playbook model order"
+      ],
+      "id": 9,
+      "topic": "F1 in fold 0 only"
+    },
+    {
+      "deviates_from": [
+        "C-8",
+        "C-5",
+        "gap-gate maintainer branch"
+      ],
+      "id": 10,
+      "topic": "binding futility stop"
+    },
+    {
+      "deviates_from": [
+        "SA1",
+        "SA1-c",
+        "Freeze-1 skip convention",
+        "co-primary abort stops the run"
+      ],
+      "id": 11,
+      "topic": "stratum gate and engine v2"
+    },
+    {
+      "deviates_from": [
+        "E1 composition"
+      ],
+      "id": 12,
+      "topic": "secondary family composition"
+    },
+    {
+      "deviates_from": [
+        "F5 (scoped exemption)"
+      ],
+      "id": 13,
+      "topic": "in-sample CLEAN sanity export"
+    },
+    {
+      "deviates_from": [
+        "STEP_FIT_CAPS",
+        "MAX_FITS_PER_FOLD = 181"
+      ],
+      "id": 14,
+      "topic": "fit caps"
+    },
+    {
+      "deviates_from": [
+        "single-link verifier",
+        "literal R-CMD allowlist",
+        "per-unit Freeze-1 pin equality"
+      ],
+      "id": 15,
+      "topic": "governance"
+    },
+    {
+      "deviates_from": [
+        "M3",
+        "M4",
+        "F8"
+      ],
+      "id": 16,
+      "topic": "CLEAN on GPU (A2-D7, execution v5)"
+    },
+    {
+      "deviates_from": [
+        "SDK bf16 CUDA path"
+      ],
+      "id": 17,
+      "implements": [
+        "C9",
+        "F4"
+      ],
+      "topic": "ESMC on GPU in float32"
+    },
+    {
+      "id": 18,
+      "implements": [
+        "C2"
+      ],
+      "topic": "per-view F6 manifests"
+    },
+    {
+      "deviates_from": [
+        "design claim rule (can only remove claims)"
+      ],
+      "id": 19,
+      "topic": "CLEAN sanity consequence (C6 and the per-arm held-out rule C6b)"
+    },
+    {
+      "deviates_from": [
+        "Plan.md primary GCP L4 route and Colab fallback",
+        "project operating policy"
+      ],
+      "id": 20,
+      "topic": "execution route (A2-D6, execution v5)"
+    }
+  ],
+  "dry_runs": {
+    "freeze1_dry_run_head": "451c190c4049f721b21e433c82679617174165aa",
+    "in_view_receipts_unchanged": {
+      "0": "f71214bd98cfd5b042549d4a0bd0e2922aa5a573c65288e8548219488dff495a",
+      "1": "e19350c09c7cc01f251ab46428c7ecaa08abeb4b1495c4dbde7e0c29c1ce0b5d",
+      "2": "422128fd0e3c3872b9c011fa02528ee740f1cf1e044df456851de255727ff5a0",
+      "3": "657ee6a60ef268df8d3ce9416085b1bc86b667fb964c3cf8931e8e5cbb658283",
+      "4": "e27ce825fd1c313d5f624282d01b5ddb1c7b02bed6c5c2dd678fce4c21c3d805"
+    },
+    "receipts": {
+      "0": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/dry_runs/fold0.json",
+        "private": true,
+        "sha256": "f9ab4fbdbfec412b79b409a11be0059f8e8bf0ec0a0c6c98b2e6929b70556259"
+      },
+      "1": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/dry_runs/fold1.json",
+        "private": true,
+        "sha256": "24ae5861472eb590a507771b6d7413affb599fc70863d3943fa7c742dff7d384"
+      },
+      "2": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/dry_runs/fold2.json",
+        "private": true,
+        "sha256": "e8157b98b4b40d345a4e88e96f4e415acc081fc5269224738f6bee26a80cff69"
+      },
+      "3": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/dry_runs/fold3.json",
+        "private": true,
+        "sha256": "95b0de0b05cdb652e4b56bd0487ca6a1eadb491b7894539ec41256ee2f5ce87a"
+      },
+      "4": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/dry_runs/fold4.json",
+        "private": true,
+        "sha256": "d6b6c5b857bf6fa09e8b7dae3dd009f06b73a9ecdc152b69b0b0d4eb31b49c8c"
+      }
+    },
+    "rule": "r_cmd_v2",
+    "source_commit": "7804b3eb54eab5bb8ed79819f1a91064668300c6",
+    "v1_resolved_config": {
+      "path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/v1_resolved_config.json",
+      "sha256": "d2cfa93c135b9bd7cc9960ddcd13b547e29c179fa249895baf8ae7000292d87d"
+    }
+  },
+  "evidence": {
+    "futility_oc": {
+      "path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/futility_oc.json",
+      "sha256": "8ff839614773ce24fde8433911d2f5f04e5bfe7d1ca74c2178de2ec417ac196b"
+    },
+    "futility_spec": "bound through rules.futility_predictive_cluster_bootstrap_v1 (futility.policy_record); no separate file",
+    "interface_contract": {
+      "path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/interface_contract.md",
+      "sha256": "912843b34df297737519d335dc0f58694832fd0c1c5004cf45c2e3b32612a461"
+    },
+    "power_simulation": {
+      "path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/power_simulation.md",
+      "private_files_sha256": {
+        "results.json": "64279d7a0d5f69c4cc311f5086f708c0bb5231a5669dec44993be79700e8f053",
+        "sim.py": "ac956cf942d90db711e1df0d0233beecda8eff6113a3ebdf8ae8f159f7d67a83",
+        "tables.md": "15e71823a48b76201db5c80dda8d25d2d4cb8539c3fcf37b58d2e11ef0bc1ae2",
+        "validation.json": "643855257d50b155c5fb3bb3c62a4ddc9345a79aeffdd731212218cae5952dd5"
+      },
+      "sha256": "73b5a68aaa5de51f4a30db1182e9a3527f1bf44bf6755f07e3dbed59dfaaf288",
+      "synthetic": true
+    },
+    "verification": {
+      "path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/verification.json",
+      "sha256": "a28c91f3cfa34f9b995cc367cf585b3904c50114cd3723c852f768a8b98511d6"
+    }
+  },
+  "execution_file_set": {
+    "files": [
+      "scripts/run_ec_clean30_phase3.py",
+      "scripts/run_ec_clean30_phase4.py",
+      "scripts/run_ec_clean30_workstation.py",
+      "src/ec_clean30/container_caps.py",
+      "src/ec_clean30/execution_v5.py",
+      "src/ec_clean30/hot_storage.py",
+      "src/ec_clean30/phase3.py",
+      "src/ec_clean30/phase4.py",
+      "src/ec_clean30/runpod_bootstrap.py",
+      "src/ec_clean30/runpod_controller.py",
+      "src/ec_clean30/workstation.py"
+    ],
+    "names_sha256": "a816928c9d869740816820aad79b5ac948b6b4b528fd7845c8379f48227a00e8"
+  },
+  "fixtures": {
+    "contract": {
+      "path": "tests/fixtures/ec_clean30_amendment2_contract.json",
+      "sha256": "c3a00eea87c47bb31f3f4eb12b04c069a66cba8c2fa97b287c2098dced18f911"
+    },
+    "decisions": {
+      "path": "tests/fixtures/ec_clean30_amendment2_decisions.json",
+      "sha256": "0dd081a47e045fe67236c17a6165ea813b7ec05278105e4e6cec090c66a4eb6c"
+    },
+    "golden": {
+      "path": "tests/fixtures/ec_clean30_amendment2_golden.json",
+      "sha256": "82bd01978fbfaf8508b8238cef15c4db97a3cbbe282973650910cfec41268a56"
+    },
+    "refusals": {
+      "path": "tests/fixtures/ec_clean30_amendment2_refusals.json",
+      "sha256": "cb95ae2a56e8de7e3f89cae4b0e211a06f219c8dcdede2aaaf3eea31529035b6"
+    }
+  },
+  "format": "deepmzyme_ec_clean30_amendment_v2",
+  "inputs": {
+    "clean_tie_exposure": {
+      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/clean_tie_exposure.json",
+      "private": true,
+      "sha256": "cac27c0d84f15ffa2d52e8821d9e4c82c5d6c4b5a78f52ee97b38e150bb92e6f"
+    },
+    "f6_corpus": {
+      "tables": {
+        "0": {
+          "receipt": {
+            "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/f6_corpus/fold0/corpus_table_receipt.json",
+            "private": true,
+            "sha256": "e4254c0fcce60807bba62b61cf05afd25da2e44e77036e05df8b18f06a52c361"
+          },
+          "table": {
+            "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/f6_corpus/fold0/corpus.tsv",
+            "private": true,
+            "sha256": "5fcc8a99b650b7ee464223e914f7442033a99beb5495949252692fe50ccd4e0f"
+          }
+        },
+        "1": {
+          "receipt": {
+            "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/f6_corpus/fold1/corpus_table_receipt.json",
+            "private": true,
+            "sha256": "527a80e3acb4319cebb6ac00884db523622b8216cb74b364283a07fff2c3d235"
+          },
+          "table": {
+            "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/f6_corpus/fold1/corpus.tsv",
+            "private": true,
+            "sha256": "f55187f99f84a651280c63e092f13fe008d0531e0c5a137cd368d9924f46d980"
+          }
+        },
+        "2": {
+          "receipt": {
+            "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/f6_corpus/fold2/corpus_table_receipt.json",
+            "private": true,
+            "sha256": "22100a41982598ad7ce95967ff2aa518512a0f9cb37b961688db29bb207d0650"
+          },
+          "table": {
+            "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/f6_corpus/fold2/corpus.tsv",
+            "private": true,
+            "sha256": "7032b20ea7306799a51fda647e7b01ccaba7059adbd6f0b5b289f60a4ec6acec"
+          }
+        },
+        "3": {
+          "receipt": {
+            "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/f6_corpus/fold3/corpus_table_receipt.json",
+            "private": true,
+            "sha256": "96819cd715bb763ac82d0186740e7f8f09c60c7e5f48aba8223705eb4a661355"
+          },
+          "table": {
+            "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/f6_corpus/fold3/corpus.tsv",
+            "private": true,
+            "sha256": "3a73399c60adfbe9a19585cc6b8cccc1b5d80dd45a99136f9ee454feb57f4344"
+          }
+        },
+        "4": {
+          "receipt": {
+            "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/f6_corpus/fold4/corpus_table_receipt.json",
+            "private": true,
+            "sha256": "9d2a12d2d57aec0f82f0b4f6b284d5399dad811a9c3ee644feeca1d19e6c0386"
+          },
+          "table": {
+            "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/f6_corpus/fold4/corpus.tsv",
+            "private": true,
+            "sha256": "f8841030969d1b7306182aeab38a15f8db0a739fa7f09fa7e31d4470cebc9489"
+          }
+        }
+      },
+      "union_fasta": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/f6_corpus/union_training.fasta",
+        "private": true,
+        "sha256": "90be0663474ad0ac11dc15c60324bd6d482851f6f66d056e0d2a1c91f177c6d2"
+      }
+    },
+    "f6_holdout": {
+      "0": {
+        "receipt": {
+          "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/f6_holdout/fold0/holdout_lists_receipt.json",
+          "private": true,
+          "sha256": "73dd7db80a6564262e9c6cc615ac786c32856d315a4fdad89d87509322f0decf"
+        }
+      },
+      "1": {
+        "receipt": {
+          "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/f6_holdout/fold1/holdout_lists_receipt.json",
+          "private": true,
+          "sha256": "61d4fcd5f07dd5b63d2d7fbe38071c6f65c25c5183db2070ea8ab053502cdec0"
+        }
+      },
+      "2": {
+        "receipt": {
+          "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/f6_holdout/fold2/holdout_lists_receipt.json",
+          "private": true,
+          "sha256": "aa1d6ab20338076a154e1ec305210614dc42d40a0bd24db89a612b1a7a620350"
+        }
+      },
+      "3": {
+        "receipt": {
+          "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/f6_holdout/fold3/holdout_lists_receipt.json",
+          "private": true,
+          "sha256": "8a5bc7ac0c837b8d9bc0bbfaee4968f2d20552b8651dd6626817b4c1871f1af1"
+        }
+      },
+      "4": {
+        "receipt": {
+          "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/f6_holdout/fold4/holdout_lists_receipt.json",
+          "private": true,
+          "sha256": "ca8e9a4dd93aceb1b12f621e93308e0d95c0096362fecc22f55b1d88aea1a7ec"
+        }
+      }
+    }
+  },
+  "live_constants": "freeze.live_constants() output pinned at its c163995 value; SHA-256 bound at build",
+  "live_constants_sha256": "b39487c878553b35d306173be4cc9013e7e7482126fde5356f09c9aa3bc19807",
+  "pinned_analysis_functions": {
+    "src/ec_clean30/baseline.py::read_official_ec_numbers": "3a2fc1ff31c5d06d2cdf954878f0797da0bf42c001f0f730e30a3ce83cd13927",
+    "src/ec_clean30/scoring.py::_load_comparator": "86e8a13bbe974d0ab330d742506255bb7c09c4214aff435673eed0dbb16e92f9",
+    "src/ec_clean30/scoring.py::parse_label_table": "52e82e3e25773acc7568488c66d01157a29d07dfde3db4cfe82384c210daab66",
+    "src/ec_clean30/scoring.py::parse_transfer_list": "04aefb1a29013c8306189440fa2721f421046d8f6accca7a5e0bc04dd9d7bf37"
+  },
+  "pinned_execution_functions": {
+    "src/ec_clean30/phase3.py::lane_gate": "77d13394ad188a51a5d8258023bf5542132f4c9df53447995a1ed2e9fc4930d4",
+    "src/ec_clean30/phase4.py::replay_cpu_logits": "e7d1d3a497d484a59c04544e0808ad699f720ce55511dbaa7b18099b2254f537"
+  },
+  "pinned_execution_functions_note": "replay_cpu_logits is the CPU replay comparison of execution v5 (the contract-fixture name), pinned with lane_gate",
+  "plans": {
+    "fit_caps_v2": {
+      "S1": {
+        "fold_0": 112,
+        "folds_1_4": 96
+      },
+      "S2": 0,
+      "S3": 0,
+      "S4": 5,
+      "after_futility_stop": 112,
+      "campaign": 521,
+      "per_fold": {
+        "fold_0": 117,
+        "folds_1_4": 101
+      }
+    },
+    "format_v1": "deepmzyme_ec_clean30_fold_plan_v1",
+    "format_v2": "deepmzyme_ec_clean30_fold_plan_v2",
+    "v1_plan_sha256": {
+      "0": "45c43b6529d538b3caaef3ce3b1f1382e1ab1e79195b27c77cbba9c34cba1718",
+      "1": "5d974909feb83224aa8af35549760254faa40e247babe28e060750c650b19b7f",
+      "2": "18cc61ab328436fe440174f9dc4c83a4f063e004650fc4e70d25cfd4241ed24f",
+      "3": "3f935ffe1e7860ad4e76115c957aeb647d004a9b77f8e5176a14aed73c6a263b",
+      "4": "388bc4d88696cf2156cd7d800f4f7548f48fd92545cbff8cc96a29285839e993"
+    },
+    "v2_plan_sha256": {
+      "0": "deea9d5d75238d70d1f41a59a57809cd48a26c57a13fc71521a022efff363720",
+      "1": "537371542b9a34a23916dd83de3d3efab58d8d4d504ed26f433613bf4403c95e",
+      "2": "74eab09a58197e565a80866fcc70497fa5e652afec0497ffc88c7cf16431d1a6",
+      "3": "514be14f141dd252c2beaa56dc103998139b7c82092c6ef62e757b168182fc35",
+      "4": "a1190541806dcb87f75c50532131d019f892914bcc3dadf4aca55203b5c4c8df"
+    },
+    "v2_records": "written by plan-v2 for folds 0-4 before the record build and bound there"
+  },
+  "post_fit_analysis_files": [
+    "scripts/run_ec_clean30_baseline.py",
+    "scripts/score_ec_clean30_comparison.py",
+    "src/ec_clean30/baseline.py",
+    "src/ec_clean30/scoring.py"
+  ],
+  "previous_sha256": "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea",
+  "provisional_markers_settled": true,
+  "publication": "required_before_execution",
+  "rule_policy_sha256": {
+    "amendment2_accuracy_v1": "065a893d93144a466a58273d0826344ad6c6f782648c9f45db581e87510ab026",
+    "amendment2_selection_v1": "bf227f4add00168d96399975ebb836f20e6147ffd465c6a4864776976180294c",
+    "clean_sanity_v1": "743e347742fa34937031c059a3fdb9b99db341a4c006c96b2757333090b9dff5",
+    "controls_v2": "cde6c8439518685a05f57e44b46ccc4be899a6eda7c9f93f912b78dd82252135",
+    "futility_predictive_cluster_bootstrap_v1": "e4ea55128c0b1fc025f9de76c9b3b0ece0550b4bc9be2895fc5e018e9160429f",
+    "l9_only_no_s3_v1": "35c95dd1abe59e2ceea448e3eae316780197313dfc08ba4ec6e1263d3cbd2527",
+    "stratified_rao_wu_v2": "8d59bd988bc487c7da1c89ebcd237de1a02180c88b74ea34af7c61dab7e27761"
+  },
+  "rule_text": {
+    "sha256": "c041688e37bcce56d595c55b2e9ab80b71bf261d464c58ad8147cfc7d82daea1",
+    "source": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/amendment_draft.md",
+    "text": "## Rule text\n\n### A2-GOV: governance\n\n**A2-GOV-1 Chain.**\n1. **Links.** Amendment 2 is link 2 of the Freeze-1 amendment chain. Link 1 is the S1 amendment\n   `s1-fixed-anchor-holm-v1` (SHA-256 `d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea`, commit\n   `3154a7f3b0ad44e8dffbc66072990cfb7d9c9030`).\n2. **Authenticated chain.** That SHA-256 followed by the SHA-256 of `amendment2/amendment.json`.\n3. **Form and publication.** Every link is canonical JSON, written once, rendered by its own code and committed with\n   its SHA-256 in the campaign log. It is published on `origin/main` before any execution depends on it.\n4. **Authentication.** Each link is authenticated by the verifier code published with it, run in a checkout of that\n   link's published source commit. Only the tip is compared with the live tree; there, execution files and post-fit\n   analysis files may differ under A2-GOV-7.\n5. **Shorter prefixes.** Real selection, futility, scoring and execution use the full published chain. A record\n   bound to a shorter prefix is accepted only for replay under that prefix's rule and is never combined with records\n   of the full chain.\n\n**A2-GOV-2 Files and identities.** Every tracked `src/` and `scripts/` file belongs to exactly one of three closed\nsets.\n\n- **Execution files.** A closed, sorted list, recorded in amendment 2 by the SHA-256 of the sorted name list;\n  execution manifest v5 pins their contents. It holds only orchestration, transport, provider, persistence and\n  dispatch code. It never holds campaign, command, view, provenance, identity, cohort, transfer-list, selection,\n  selector, freeze, amendment-chain, amendment-rule, runtime-precision, futility, statistics, scoring, CLEAN-sanity,\n  trainer, model, embedding or comparator code. Two functions inside execution files implement frozen gates:\n  `phase3.lane_gate` (G3) and the CPU replay comparison named in the contract fixture. Their source, including the\n  module-level helpers they reference, is pinned in amendment 2, and an execution change never alters it.\n- **Post-fit analysis files.** Exactly `src/ec_clean30/scoring.py`, `src/ec_clean30/baseline.py`,\n  `scripts/run_ec_clean30_baseline.py` and `scripts/score_ec_clean30_comparison.py`. No other file joins this set\n  without a scientific amendment.\n- **Scientific files.** Every other tracked `src/` and `scripts/` file.\n\n**Channels into analysis code.** Scientific code reaches post-fit analysis code only through `scoring.parse_label_table`\n(the CLEAN comparator runner and `cohort.py`), `baseline.read_official_ec_numbers` (the comparator runner),\n`scoring.parse_transfer_list` (`transfers.py`) and the scoring and baseline constants read by `freeze.live_constants`.\nThe source of `scoring._load_comparator`, `scoring.parse_label_table`, `scoring.parse_transfer_list` and\n`baseline.read_official_ec_numbers`, with the module-level names each references transitively within its module, is\npinned, and so is the output of `freeze.live_constants()`. The selector's gap path loads the comparator through\n`clean_sanity.load_comparator` instead of the scorer.\n\n**Scientific identity.** The SHA-256 of canonical JSON holding: the campaign, Freeze-1 and Freeze-1b hashes; the\n**fit chain** (the chain up to its last link that changed a scientific file); the composite pins of the scientific\nfiles; the pinned execution functions; the v1 and v2 plan hashes; the Freeze-1 view records; the amendment-2\ndry-run receipts; the precision policy (A2-GOV-3); and the specifications of deferred inputs. It holds no\nexecution-file pin, execution-manifest hash, commit, provider, hardware or session identifier.\n\n**Analysis pins.** The composite pins of the post-fit analysis files. Freeze 2 and the scoring claim bind them,\ntogether with the full chain.\n\n**What the identities bind.** G2 measurements, Freeze 1c v2, the numerical G3 authority, every unit result, every\nstep record and the futility record bind the scientific identity and the fit chain. A later execution manifest is\naccepted for these records only if it is published, verifies and has the same scientific identity. No scientific\nmodule loads an execution file. No fit, selection, futility or CLEAN-sanity module loads a post-fit analysis file\nexcept through the channels above.\n\n**A2-GOV-3 Precision and replay.**\n- **TF32.** TF32 is off for every GPU DeepMzyme fit, embedding, CLEAN fit, export and farm child. Each records the\n  policy through `runtime_precision.configure_and_record`. Scientific verifiers (`commands.verify_unit`, the CLEAN\n  sanity verifier and `pretrain-corpus attach`) refuse any receipt whose recorded policy differs.\n- **ESMC whole-protein embeddings.** Float32 parameters, set after loading. The forward runs directly rather than\n  through the SDK's logits wrapper, with no autocast and no flash attention. The emitted dtypes are verified as\n  float32.\n- **Replay.** A CUDA-trained model's logits are replayed on CPU at an absolute tolerance of 1e-5 (the Freeze-1\n  cross-device value, G1). Near ties are checked at 2e-5, and argmax agreement is required.\n- **Lane gate.** G3 keeps its frozen balanced-accuracy limits. The primary-metric difference is recorded\n  descriptively.\n- **Changes.** A change to this policy is a scientific change.\n\n**A2-GOV-4 Dry runs.**\n- **Why they repeat.** Amendment 2 changes protected command, view and trainer code, so the five dry runs are\n  repeated once, on a clean tree at the source commit named in the record.\n- **Receipts.** The repeat writes separate receipts, bound by SHA-256. It does not rewrite the in-view receipts that\n  Freeze 1 binds.\n- **Scope of each run.** Each repeated run statically builds every v2 plan command and every v1 command. F6 commands\n  are built against the declared pretraining-input stub. Each run probes as before and has no static failure.\n- **Rule `r_cmd_v2` from that commit on.** The Freeze-1 R-CMD allowlist files and the execution files may change\n  without a new dry run. Added modules must not be loaded by the protected importers. The pinned runner functions\n  stay unchanged. The v1 and v2 plans stay equal to their records.\n- **What still needs a link.** A change to a scientific file still needs an amendment link, even when `r_cmd_v2`\n  needs no new dry run. Any other change needs a new amendment and new dry runs.\n\n**A2-GOV-5 Replay.**\n- The five v1 fold plans keep their Freeze-1 SHA-256 values.\n- Every v1 unit keeps its resolved-configuration hash: new trainer options leave the configuration payload while\n  they are at their defaults.\n- `freeze.live_constants()` and `campaign.campaign_constants()` keep their values at `c163995`.\n- The historical escalation (empty chain) and the fixed-anchor rule (S1-amendment chain, authenticated at its own\n  commit) stay executable on their original records.\n- No pinned scientific file is deleted.\n\n**A2-GOV-6 Precedence.** When amendment 2 was built, its list of fold-0 records was empty. Every record accepted\nunder the amendment-2 chain carries that chain and was created after the commit that published amendment 2.\n\n**A2-GOV-7 Changes after fold-0 data exist** (the post-fold-0 change rule, audit item P12).\n\n1. **When fold-0 data exist.** Under any chain, manifest or host, fold-0 data exist from the first moment any of\n   these exists: a started G2 timing unit; a started fold-0 DeepMzyme fit; a fold-0 CLEAN inner fit, export or inner\n   prediction. These carry predictions for curated test proteins of folds 1-4, so fold-0 development exposes folds\n   1-4. Label-free embeddings are not fold-0 data.\n2. **Classes.** From that moment the scientific identity is fixed. Every later change states its class.\n   - **(a) Execution change.** Only execution files change, and the pinned execution functions stay identical. A\n     new execution manifest records it. There is no rerun and no exposure label.\n   - **(a2) Analysis completion.** A link of sequence 3 or higher, published after the fold-0 FUT record and before\n     Freeze 2. It may change only the four post-fit analysis files and may only add refusals and descriptive\n     outputs; it never removes or relaxes a check. The pinned functions and `freeze.live_constants()` stay\n     identical. Every amendment-2 refusal fixture is still refused, and every amendment-2 decision fixture gives\n     identical decision fields. It changes no decision rule, metric, population, threshold, seed, draw count, family\n     composition or decision sentence. A test-input builder qualifies only if every byte it gives a checkpoint is\n     verified by an unchanged scientific verifier against a Freeze-1 or amendment-2 recipe pin. The scientific\n     identity and the fit chain do not move.\n   - **(b) Defect amendment** (sequence 3 or higher). It corrects a demonstrated defect: the code does not implement\n     the published rule, or a crash or refusal blocks a pre-registered step. This includes defects in the CLEAN\n     comparator.\n     - A synthetic or training-only test fails before the fix and passes after it.\n     - It adds, removes or retunes no family, lever, grid value, threshold, metric, population, seed, epoch count,\n       futility parameter or claim rule.\n     - Its record gives the UTC time, the SHA-256 of every fold-0 record existing then, the record through which\n       the defect was found, and whether any fold-0 inner score had been viewed before the defect was identified.\n     - Every affected fold-0 step is rerun in full under the corrected code before folds 1-4 start or continue.\n       Superseded records are kept and reported.\n     - If the correction changes the behaviour of any fold 1-4 unit, step or CLEAN arm relative to amendment 2, the\n       results of folds 1-4 and every pooled result are labelled \"development-exposed (amendment N)\" in the\n       decision-sentence note, report headings and summaries. The claim rule is otherwise unchanged.\n   - **(c) Any other change** is outside this campaign: stop and close out, or start a successor campaign under a\n     new Freeze 1, in which every outer fold decides from its own training data and folds 1-4 are labelled\n     development-contaminated.\n   - **(d) Futility precedence.** A futility decision is never overridden toward continuing. Once a `stop_futility`\n     record exists in this campaign, under any chain, no class-(b) amendment may rerun S1, S2 or FUT; a defect found\n     after a stop goes only into the close-out record or a successor campaign. After a `continue`, a class-(b)\n     rerun writes a new fold-0 chain under its new fit chain; if that rerun says `stop_futility`, the stop is\n     binding.\n3. **Required fields.** A record of sequence 3 or higher is refused without its class, timestamps and fold-0 record\n   list.\n\n**A2-GOV-8 Stops and budgets.** Budget ceilings follow the project's two-choice escalation (stop and close out, or\nrecord a larger ceiling) and never change a scientific rule. The maintainer may stop at any time. Only a stop under\nA2-FUT yields \"not shown to outperform\"; any other stop before the scoring pass yields no comparative result.\n\n### A2-SEL: selection (A2-D1, A2-D4)\n\n**A2-SEL-1 Pipeline.** The selection pipeline is `amendment2_selection_v1`: S1 `best_inner_harm_guarded_v1`; S2\n`l9_tau_promote_primary_v1` (L9 only); no S3; FUT in fold 0 only (A2-FUT); S4 `refit_spec_v2`. The plan format is\n`deepmzyme_ec_clean30_fold_plan_v2`; step records use `deepmzyme_ec_clean30_step_record_v2` and the FUT record\n`deepmzyme_ec_clean30_futility_record_v1`. The step order is S1, S2, FUT, S4 in fold 0 and S1, S2, S4 in folds 1-4.\nThe canonical `selection_policy_record_v2()` is hashed into amendment 2, and every step record carries that SHA-256\nand the fit chain.\n\n**A2-SEL-2 Primary inner score.** For one configuration (family and learning-rate setting) of an outer fold, each\nscreening seed (42, 43) pools the out-of-fold predictions of its four inner fits; every certified inner-validation\nprotein appears once.\n- **Seed score.** Protein accuracy over the pooled proteins of EC classes 1-6, in points.\n- **Class 7.** Class-7 proteins are outside the population. A class-7 prediction for a protein of EC classes 1-6 is\n  wrong.\n- **Prediction.** The arg-max of seven logits; exact ties go to the lowest class index.\n- **Configuration score.** The mean of the two seed scores.\n- **Descriptive metrics.** Balanced accuracy over EC classes 1-6, seven-class balanced accuracy, macro-F1 over EC\n  classes 1-6 and per-class recall are recorded and do not decide. Per-class rows stay in private step records; the\n  public log prints totals only.\n\n**A2-SEL-3 Learning rate.** Each family's setting is chosen by the A2-SEL-2 score over its unchanged two-setting\ngrid: the first-listed setting within 0.5 points of the family maximum (inclusive, tolerance 1e-9). F6 uses F5's\ngrid (1e-4, 3e-4).\n\n**A2-SEL-4 Harm guard.** Compare a candidate X with the anchor F2, each at its chosen setting. For each EC class c of\n1-6 with at least one pooled inner protein, let k_X(c) and k_F2(c) be the correct predictions for proteins of class c,\nsummed over both screening seeds. X is ineligible if, for some such c, k_X(c) = 0 and k_F2(c) \u2265 1. Class 7 is exempt,\nand F2 is always eligible. The historical recall-guard rows (a drop of at least 5 points and at least 3 net proteins,\nfor classes with at least 30 training proteins) are recorded against F2 and do not decide.\n\n**A2-SEL-5 Family choice.** The candidates in every outer fold are F2, F3, F4, F5 and F6. Let M be the highest\nA2-SEL-2 score among eligible candidates. The selected family is the first in the order F2, F5, F3, F4, F6 that is\neligible and scores at least M \u2212 0.5 points (tolerance 1e-9). No significance test, Holm family or minimum gain\napplies. The rule selects a model; it does not establish that any family is better than another. The S1 record\nstates that F6 and C-GF pretraining may use non-metalloenzyme training proteins two or more homology hops from an\ninner-validation protein, which F2-F5 never see (A2-F6-3).\n\n**A2-SEL-6 Controls.** Scored and recorded, never selected or refit: F1 (fold 0 only); C-G (every fold); C-GF (every\nfold), the F6 pretraining classifier scored on the sequence-mean vectors of the inner-validation proteins it did not\nsee (A2-F6-7).\n\n**A2-SEL-7 Failure handling.** S1 runs no bootstrap. The step is refused, no record is written and no family is\ndropped if a required fit is missing, duplicated, foreign or unverifiable, a configuration does not pool, a candidate\nfamily is missing or a score is not finite. A failed fit is rerun only as the identical planned unit. If a family\ncannot be produced, the fold stops for a maintainer decision under A2-GOV-7.\n\n**A2-SEL-8 L9.**\n- **Candidates.** On the selected configuration's pooled predictions, every row is adjusted with the add-one smoothed\n  training priors of its own inner fit, for \u03c4 in {\u22121, \u22120.5, 0.5, 1}.\n- **Challenger.** The \u03c4 with the highest A2-SEL-2 score; equal scores go to the smaller |\u03c4|, then to the negative\n  value.\n- **Adoption.** Against \u03c4 = 0, all of: a gain of at least 1.0 point; a one-sided paired inner-component bootstrap\n  lower bound above 0 at \u03b1 = 0.01 (10,000 draws, seed 20261023, unstratified, engine `stratified_rao_wu_v2`, at most\n  1% skipped draws); the historical recall guard passes; and no EC class 1-6 seed-mean recall falls to zero.\n- **Abort.** A bootstrap abort means not adopted (\u03c4 = 0), and the abort is recorded.\n- **Descriptive.** The balanced-accuracy-scored \u03c4 choice is reported.\n\n**A2-SEL-9 S4 refit specification.** For each outer fold an S4 record is appended; in fold 0 only after a verified\nFUT = `continue`. It binds the S1, S2 and, in fold 0, FUT record hashes, and fixes: the family and learning-rate\nsetting; 30 epochs; raw-distance RBFs for GVP families; \u03c4 from S2 (0 if not adopted); seeds 42-46; and normalisation,\nclass weights and priors recomputed on the fold's full metallo training view. If F6 is selected, each refit\npretrains on the whole corpus (A2-F6-6). Mechanism: `refit-recipe` writes each fold's verified refit recipe (with\nthe fold-0 binding `continue`) and `verify-amendment-chain` the chain receipt; the scoring manifest declares both by\nSHA-256 and the scoring pass reads them as data. Freeze 2 and the scoring pass require every refit identity and the\nscoring \u03c4 to equal this record. The final system is the mean of the five refit logits, then L9 with the refit priors.\n\n### A2-TRN: fixed training settings (A2-D4)\n\n**A2-TRN-1 Schedule.** 30 epochs, a per-epoch cosine schedule and the terminal checkpoint. Batch 4, AdamW with weight\ndecay 1e-4, gradient clipping 1.0, 6-\u00c5 edges, metal nodes disabled. The final epoch's learning rate is still\npositive, which stays disclosed.\n\n**A2-TRN-2 Raw-distance RBFs.** Under amendment 2, F1, F3 and F4 expand node and edge distances in raw \u00e5ngstr\u00f6m with\nthe existing 16 Gaussian RBFs (centres 0-12 \u00c5, \u03c3 0.75 \u00c5).\n- **Distances.** Node distances: CA, functional-group centroid and nearest donor atom to the nearest selected metal.\n  Edge distances: contact and CA-CA.\n- **Sentinel.** The 999-\u00c5 \"no donor atom\" sentinel is kept. Every distance of 20 \u00c5 or more gives an exactly zero RBF\n  row in float32, and that row is the mask.\n- **Refusal.** The trainer refuses a raw-distance unit whose batches lack the raw distance tensors.\n- **Unchanged.** No graph is rebuilt. F2, F5, F6 and C-G are unchanged.\n- **Unit IDs.** Raw-distance units carry `_rbfraw` in their configuration name.\n\n**A2-TRN-3 Levers and steps.** L1-L8 are not screened, and no S2 or S3 fit is run. L9 is the only screened lever.\nEvery lever stays defined, unchanged, for replay.\n\n**A2-TRN-4 Families per fold.** Fold 0: F1, F2, F3, F4, F5, F6 and C-G, plus C-GF. Folds 1-4: F2, F3, F4, F5, F6 and\nC-G, plus C-GF.\n\n### A2-F6: candidate family F6 (A2-D3, A2-D7)\n\n**A2-F6-1 Family.** F6 has the F5 architecture: the pocket ESMC encoder, the four site statistics, the whole-protein\nESMC branch (LayerNorm(960) \u2192 Linear(960\u2192128) \u2192 GELU \u2192 Dropout 0.2) and the seven-way EC-class head. The branch is\npretrained (A2-F6-5) and then frozen; branch dropout stays active in training mode. All other parameters train\nexactly as F5, under A2-TRN-1 and A2-SEL-3.\n\n**A2-F6-2 Pretraining data.** For outer fold K the corpus is every accession of the official training file\n`split30_train_split_K.csv`, each labelled with its EC class (first EC digit) by the campaign's EC-class rule.\nProteins whose EC numbers span more than one EC class are excluded, and any untrusted annotation stops the build.\nClass-7 proteins are kept. No protein outside fold K's training file is used. Identical sequences under different\naccessions stay separate rows.\n\n**A2-F6-3 Inner exclusion** (declared interpretation of A2-D3, choice C8). For inner fold j of outer fold K, these\nproteins are removed from the corpus: (a) the inner-validation proteins of j; (b) every protein with a D3 hit to or\nfrom an inner-validation protein in the pinned metallo-training search of fold K (the CLEAN R1-inner exclusion list\nof K and j); (c) every protein whose sequence equals an inner-validation protein's sequence, or whose accession\ndiffers from one only in letter case; (d) every corpus protein that shares a selected AlphaFill donor with an\ninner-validation protein. Rule (b) is one homology hop, deliberately: it is the CLEAN R1-inner rule and the one-hop\nrule that defines B1-NH30. Metallo proteins further away are already in the same inner fold through the transitive\nmetallo components. Non-metalloenzyme proteins two or more hops away may remain in F6 pretraining, and the S1 record\nstates this asymmetry (A2-SEL-5). The lists of folds 1-4 are built before publication in a scratch copy of the\noverlay's training-side identity files and bound in the record; the overlay is never written. Counts are reported\nfor fold 0 only; the other folds' counts stay in private receipts. S4 refits use the whole corpus.\n\n**A2-F6-4 Embeddings.**\n- **Recipe.** ESMC-300m (the Freeze-1 pinned weights), final normalised layer, mean over all residue tokens\n  excluding BOS and EOS, accumulated in float64 and stored in float32, from the frozen sequence map without\n  truncation.\n- **Precision.** As A2-GOV-3. TF32 is off and the emitted dtypes must be float32.\n- **One cache.** One sequence-keyed union cache serves F6. It serves CLEAN's ESMC-input base embeddings only if that\n  recipe is byte-identical.\n- **Order.** The union cache, check (i), attach and check (ii) are completed for fold 0 before G2 v2, and Freeze 1c\n  v2 binds their receipt.\n- **Checks before any F6 unit.** (i) A GPU build matches a CPU build made on the same pod on a label-free sample:\n  the 64 lexicographically first sequence SHA-256 keys of the sequence map plus its 8 longest sequences, with cosine\n  at least 0.9999 and maximum absolute difference at most 1e-4. (ii) For every fold training structure whose chain\n  sequence equals its official sequence, the sequence mean matches the view's final-layer chain mean within the same\n  limits; proteins whose sequences differ are counted.\n- **Failures.** A failed check is a defect to repair. Tolerances never change.\n- **Per-view copy.** Each view receives a fresh manifest holding only its corpus keys, with the SHA-256 of the sorted\n  corpus keys as its allowlist record, no labels field and no parent allowlist.\n\n**A2-F6-5 Pretraining procedure** (fixed, not tuned). Pretraining runs inside each F6 fit, before the F6 model is\nbuilt.\n- **Model.** The C-G whole-protein branch of A2-F6-1 plus a 128\u2192128\u21927 head with dropout 0.2.\n- **Loss.** Cross-entropy with inverse-frequency class weights over the split's accessions, normalised to mean 1 over\n  the classes present.\n- **Optimiser.** AdamW at learning rate 1e-3, weight decay 1e-4, clip 1.0; batch 64, 30 epochs, a cosine schedule\n  stepped per epoch, terminal weights.\n- **Execution.** CPU, float32, one thread, on an isolated random-number stream seeded from the fit seed plus a fixed\n  offset. All other F6 initial tensors, the batch order and the dropout draws equal F5's for the same seed.\n- **What carries over.** Only the branch weights are transferred and frozen. The head serves only C-GF.\n- **Same-host check.** The two learning-rate settings of one (inner fold, seed) must give equal branch digests when\n  the recorded CPU identity and thread count match; otherwise the difference is recorded.\n\n**A2-F6-6 Refit and test.** Each S4 refit pretrains on the whole corpus with its own refit seed (42-46). The frozen\nbranch in every checkpoint equals, bit for bit, the branch recorded at pretraining. The label-blind test pass uses\nonly checkpoints and test chain means; it never pretrains or reopens pretraining paths.\n\n**A2-F6-7 Control C-GF.** The pretraining classifier of every F6 inner fit predicts that fit's inner-validation\nproteins from their sequence-mean vectors in the attached corpus cache. Pooled inner scores come from the first F6\nlearning-rate setting of each (inner fold, seed). C-GF is reported beside C-G, F6 and CLEAN R1-inner on the same\nclosure-eligible inner proteins. It has no refit and no test pass.\n\n**A2-F6-8 Disclosure.** Whenever F6 is evaluated or selected, reports state that F6's whole-protein branch was\ntrained on all single-EC-class enzymes of the fold's official training file, including non-metalloenzymes, which\nreverses Freeze-1 decision U3 for that branch only, and that the branch therefore does not share the fold 1-4 metallo\nscreening gap. \"DeepMzyme trains only on metalloenzymes\" then applies to the pocket components and the other\nfamilies.\n\n### A2-MET: metrics, claims and wording (A2-D2, P15)\n\n**A2-MET-1 Primary metric.** Protein-level accuracy over the proteins of EC classes 1-6, from seven-way predictions.\nClass-7 proteins are excluded from the population. A class-7 prediction, an explicit failure, a CLEAN distance tie,\nand a baseline no-hit or tie all count as errors. A protein listed in several folds keeps a total weight of one.\nBalanced accuracy over the EC classes 1-6 present becomes the first secondary metric. Seven-class balanced\naccuracy, accuracy over all proteins and macro-F1 over EC classes 1-6 are reported.\n\n**A2-MET-2 Co-primary claims.** Unchanged except for the metric. P1 is B1-all and P2 is B1-NH30, both pooled over the\nfive folds and restricted to proteins of EC classes 1-6. Each population is tested by intersection-union of two\ncontrasts: DeepMzyme-final minus the CLEAN-R1 seed mean, and DeepMzyme-final minus the CLEAN-R1 ensemble. Each\ncontrast takes a one-sided lower bound from one paired homology-cluster bootstrap (10,000 draws, seed 20261023,\nengine A2-STAT). Holm runs across P1 and P2: the smaller p is tested at 0.025, and the other at 0.05 only if the first\npasses. The EC class 5 and EC class 6 removal reruns stay at each claim's Holm level and only qualify the wording.\n**CLEAN sanity consequence.** If the R1 seed mean or ensemble includes a fit recorded as \"proceed, disclosed\"\n(A2-CLN-3), both co-primaries are unavailable with the reason \"a CLEAN sanity check failed without an identified\ndefect\". The same holds for any secondary hypothesis whose CLEAN arm includes such a fit. For the fold-0 held-out\ncheck (A2-CLN-2), which has one status per arm (choice C6b): an R1-inner arm recorded as \"proceed, disclosed\" makes\nboth co-primaries and every secondary hypothesis against R1 unavailable with the same reason, because R1-inner\nstands for the R1 recipe in fold 0; an R2-inner arm so recorded makes only the hypotheses against the R2 seed mean\n(secondary hypotheses 3 and 4) unavailable. The scoring pass and A2-FUT apply this one rule\n(`clean_sanity.held_out_consequence`).\n\n**A2-MET-3 Secondary family.** Seven hypotheses under Holm at family \u03b1 0.05, in this fixed order, which also breaks\nties between equal p-values: (1) P1, balanced accuracy over EC classes 1-6, against R1 (intersection-union over the\nseed mean and ensemble); (2) P2, the same; (3) P1, primary metric, against the R2 seed mean; (4) P2, the same; (5) P1,\nmacro-F1 over EC classes 1-6, against R1 (intersection-union); (6) P2, the same; (7) the similarity difference in\ndifferences on the primary metric: (R1 seed mean on the [30,50] and >50 bins minus on B1-NH30) minus (DeepMzyme-final,\nsame strata).\n\n**A2-MET-4 Descriptive results** (no claim). The primary metric and balanced accuracy on B1-NH30-seq (also the P2\ntemplate check), B1-D2, the identity bins, per fold and without listed EC-class transfers; accuracy over all proteins\nand seven-class balanced accuracy; class-7 outcomes; C-ESMC, the MMseqs2 nearest-hit baseline and B3; the DeepMzyme\nseed mean against the R1 seed mean; DeepMzyme-final at \u03c4 = 0 whenever a fold adopted \u03c4 \u2260 0; per-class recall; CLEAN\ntie counts and the tie rescore; the CLEAN sanity records; and the effect of the small-stratum correction on balanced\naccuracy (A2-STAT-7).\n\n**A2-MET-5 Wording and scope.** The scope phrase SCOPE is: \"a conservative metalloenzyme subset of the official CLEAN\nsplit30 benchmark (AlphaFold models with AlphaFill-transplanted, MAHOMES-catalytic metal sites; EC class = first EC\ndigit; accuracy over the proteins of EC classes 1-6)\", with any qualifiers added inside the parentheses.\n- **P1 passing:** \"Outperforms retrained CLEAN in EC class prediction on SCOPE.\"\n- **P2 passing:** \"Outperforms retrained CLEAN in EC class prediction on the proteins of SCOPE that have no \u226530%\n  identity hit to their fold's training file and no shared selected AlphaFill donor.\"\n- **Not passing:** \"Not shown to outperform retrained CLEAN in EC class prediction on\" SCOPE.\n- **Unavailable:** \"No superiority inference on\" SCOPE, followed by the reason and \"results are descriptive\".\n- **A fold subset:** \"No decision\". **Never:** \"equivalent\".\n- **Qualifiers:** the classes evaluated; dependence on EC class 5 or 6; template dependence; and \"CLEAN distance ties\n  counted as errors\", added when either R1 contrast's point estimate under the 1/m tie rescore (A2-CLN-5) is \u2264 0.\n- **Estimand statement.** Every report states that the primary metric weights the large EC classes, so a gain\n  confined to EC classes 5-6 would not be detected by it, and that balanced accuracy over EC classes 1-6 is the\n  first secondary metric.\n- **Scope statement.** Every report states the cohort (the conservative metalloenzyme cohort of the official folds:\n  AlphaFold models whose metals AlphaFill transplanted from one selected donor entry, keeping only the sites MAHOMES\n  predicts as catalytic; 118 of the 1,648 curated fold-0 test proteins), one EC class (first EC digit) per protein,\n  and the comparator (CLEAN retrained on each fold's full official training file with its published recipe,\n  compared as the five-seed mean and the five-seed ensemble). The decisions concern this benchmark and procedure;\n  they do not attribute a difference to the language model, the structure input or the training data.\n\n### A2-STAT: bootstrap engine v2 (P9)\n\n**A2-STAT-1 Engine.** Engine `stratified_rao_wu_v2` serves every amendment-2 bootstrap, including balanced accuracy\nand macro-F1. The Freeze-1 engine `stratified_k_of_k_v1` stays for replay, with its metric list unchanged. Clusters\nare cohort components restricted to the population. Each cluster joins the stratum of the rarest EC class 1-6 it\ncontains (rarity is the total protein weight in the population; ties go to the lower class number). Clusters with\nonly class-7 proteins form their own stratum.\n\n**A2-STAT-2 Small strata.** For a stratum of k \u2265 2 clusters, each draw picks k \u2212 1 clusters uniformly with\nreplacement and multiplies each pick's count by k/(k \u2212 1). A one-cluster stratum keeps multiplicity 1 and uses no\nrandom numbers. Strata are drawn in fixed order, in batches of 1,000.\n\n**A2-STAT-3 Single-cluster merge** (primary metric only). Strata of EC classes 1-6 are visited from rarest to most\ncommon. A one-cluster stratum gives its cluster to the next more common non-empty stratum; the most common gives it\nto the next rarer non-empty stratum instead. Merges are recorded. EC classes are never merged for balanced accuracy\nor macro-F1.\n\n**A2-STAT-4 Valid draws.** For the primary metric every draw is valid. For balanced accuracy and macro-F1, a draw is\nvalid only if it contains every EC class 1-6 present in the population.\n\n**A2-STAT-5 Support gate.** Inference is unavailable for the primary metric when fewer than two homology clusters\nhold a protein of EC classes 1-6. For balanced accuracy and macro-F1 it is unavailable when (a) a stratum of an EC\nclass 1-6 holds a single cluster; (b) for macro-F1 only, a single-cluster class-7-only stratum is predicted by a\ncompared system as an EC class 1-6 present in the population; or (c) an EC class 1-6 present in the population is\nnot guaranteed in every draw. The exact absence probability is recorded: the product over strata of k \u2265 2 clusters\nof ((k \u2212 m)/k)^(k\u22121), where m of the k clusters contain the class; a one-cluster stratum without the class contributes\na factor of 1. No class or cluster is removed to restore eligibility. Support, stratum sizes, merges and absence\nprobabilities are reported.\n\n**A2-STAT-6 Unavailable.** A gated hypothesis, or one whose bootstrap exceeds 1% skipped draws, is unavailable: it\nkeeps its point estimates, takes p = 1, stays in its Holm family and never passes. For a co-primary, the other\npopulation is still tested at 0.025. The scoring pass continues.\n\n**A2-STAT-7 Effect of the correction on balanced accuracy** (descriptive). The power simulation found the Freeze-1\nbalanced-accuracy bootstrap under-dispersed when rare-class clusters are sparse. For every balanced-accuracy\nhypothesis the report gives, beside the engine-v2 bound, the bound under the Freeze-1 k-of-k resampling with the\nsame seed and draws. This comparison never changes a decision.\n\n### A2-CLN: CLEAN checks (P8, P17, P18)\n\n**A2-CLN-1 In-sample check.** For every CLEAN fit (inner, R1, R2, C-ESMC, all folds), after its training receipt and\nthe TF32-off policy record are verified and before the fit enters any record.\n- **Sample.** The fit's own training proteins that have a single EC class among EC classes 1-6 and whose every full\n  EC number has at least two training proteins, ordered by the SHA-256 of fold, regime, inner fold (or \"-\") and\n  accession joined by colons; the first 256 are taken.\n- **Export.** A validation-mode distance export with in-sample queries allowed, for this check only.\n- **Anchor.** A raw-embedding anchor on the same queries: centres are the per-EC-number means of the fit's own base\n  input embeddings, distances are Euclidean, with CLEAN's projection and tie rule.\n- **Pass.** All of: (IS1) primary metric \u2265 0.80; (IS2) primary metric \u2265 the anchor's \u2212 0.05; (IS3) ties \u2264 5% of\n  queries; (IS4) the export records exactly the sample as its in-sample queries.\n\n**A2-CLN-2 Held-out check (fold 0).** For the four R1-inner and four R2-inner fits, computed as soon as their eight\nvalidation exports exist; it and any disposition must exist before the fold-0 S1 record is built. Queries are\ninner-validation proteins with one EC class among EC classes 1-6 whose full EC numbers all occur among the R1-inner\ntraining centres of their inner fold. Pooled per arm, all of: (HO1) primary metric \u2265 the anchor's \u2212 0.10; (HO2,\nR1-inner only) primary metric \u2265 the accuracy of predicting the training table's most frequent EC class + 0.10; (HO3)\neach fit's ties \u2264 5%; (HO4) each fit's primary metric \u2265 its own anchor's \u2212 0.20. The S1 and FUT records bind this\nrecord's SHA-256.\n\n**A2-CLN-3 Failure response.** A failure gives the status `comparator_diagnosis_required`, and the fit enters no\nrecord. The maintainer looks for defects in the inputs, embedding farms, EC column order, checkpoint identity,\ndistance map, projection and receipts. An input or receipt defect is fixed and recorded, and the same pinned recipe\nand seeds are refit and rechecked. A defect in a scientific file found after fold-0 data exist is a class-(b)\namendment (A2-GOV-7), with the \"development-exposed\" label when fold 1-4 arms change. Recipe, epochs, loss, widths,\nlearning rate and seeds never change; refits are never chosen by score, and no fit is dropped for scoring low. If\nno defect is found, the maintainer records \"proceed, disclosed\" or \"stop\"; \"proceed, disclosed\" has the fixed\nconsequence of A2-MET-2. A disposition of the held-out record names its failed arm; each failed arm takes exactly one\ndisposition and a passed arm none (choice C6b).\n\n**A2-CLN-4 Thresholds and reporting.** Thresholds are fixed here. Loss trends are not used, because the recipe resets\nthe optimiser every 100 epochs. Published CLEAN values are context only. Records print totals only. The scoring pass\nrefuses a CLEAN checkpoint without a passed record or a recorded disposition.\n\n**A2-CLN-5 Ties.** The rule is unchanged: a query whose nearest EC centres within 1e-6 belong to different EC classes\nis a tie and counts as an error. Per CLEAN arm and co-primary population, reports give the tie counts, the number of\nties whose true EC class is among the tied classes, and a descriptive 1/m rescore over the m distinct tied EC\nclasses (points only). Exact DeepMzyme arg-max ties go to the lowest class index, while CLEAN distance ties always\ncount as errors; this asymmetry is disclosed. Before G2, the structural tie exposure is counted from the official\ntraining files and the R2 lists only (EC-number groups with identical training-member sets that span more than one\nEC class); only fold 0's count may be stated.\n\n**A2-CLN-6 SupCon-Hard.** CLEAN is trained with its published triplet-margin recipe. The upstream repository also\nprovides a SupCon-Hard objective, which its documentation reports as better on small training sets. It is not run,\nbecause the comparison uses the published recipe without local tuning (U12), and the metallo-only R2 arm uses the\nsame recipe.\n\n### A2-FUT: fold-0 futility rule (A2-D5)\n\n**A2-FUT-1 When and where.** Once per fit chain, on the pod CPU in the fold-0 session; after the fold-0 S1 and S2\nrecords and after a passed A2-CLN-2 record or a recorded disposition; before any fold-0 S4 refit, any fit of folds\n1-4 and any final-arm CLEAN fit. Only a binding record decides: a real run that could not bind (without the\nA2-FUT-2 exclusion inputs, or with any test setting) is refused before anything is written, a smoke run writes\nneither a pointer file nor a FUT step record, and a second run of the same fit chain is refused. The R1-inner and\nR2-inner exports must be the fits the held-out record checked (equal checkpoint SHA-256 per arm and inner fold),\nand the S1 record must bind that held-out record. If the held-out consequence (A2-MET-2, C6b) leaves no co-primary\navailable, the decision is `stop_futility` with 0 successes.\n\n**A2-FUT-2 Population U.** Fold-0 inner-validation proteins of EC classes 1-6 whose full EC numbers all occur among\nthe R1-inner training centres of their inner fold, excluding proteins whose sequence equals a protein kept in their\ninner fold's R1-inner training set. The fold-0 count of excluded proteins is reported.\n\n**A2-FUT-3 Arms.** DeepMzyme: the mean of the two screening-seed logits of the selected S1 configuration, adjusted\nwith the S2 \u03c4 and that inner fit's training priors, then arg-max (choice C7). CLEAN: R1-inner of the protein's inner\nfold (one seed), nearest-centre EC class; a distance tie counts as wrong. This arm stands for both the R1 seed mean\nand the R1 ensemble.\n\n**A2-FUT-4 Units.** The inner identity components of the fold-0 overlay copy, restricted to U. Each component's\nstratum is its rarest EC class 1-6, by protein count in U.\n\n**A2-FUT-5 Projection.** Targets N1 = 526 and N2 = 226 proteins of EC classes 1-6: design-time constants (about 530\nevaluable B1-all proteins and about 230 B1-NH30 proteins, each minus the at most 4 class-7 test proteins stated in\nthe design). For r = 0, \u2026, 1,999, with a generator seeded by (20261104, r):\n- (a) resample U's components with replacement within each stratum, to that stratum's component count k_s;\n- (b) synthetic B1-all: from each stratum of the step-(a) sample, draw n1_s = max(1, \u230ak_s\u00b7N1/n_U + 0.5\u230b) components\n  with replacement, in draw order (n_U is the number of proteins in U); each drawn copy becomes its own cluster;\n- (c) synthetic B1-NH30 (nested): in each stratum take the first n2_s = max(1, \u230an1_s\u00b7N2/N1 + 0.5\u230b) copies of step\n  (b), so that every B1-NH30 cluster is also a B1-all cluster;\n- (d) score both synthetic populations as the scoring pass scores a co-primary: primary metric; engine\n  `stratified_rao_wu_v2`, 10,000 draws, seed 20261023, at most 1% skipped draws; the A2-STAT gate (a gated or\n  aborted population is unavailable with p = 1); intersection-union over the two R1 components; Holm at 0.025 then\n  0.05;\n- (e) replicate r succeeds if at least one co-primary reads \"Outperforms\".\n\n**A2-FUT-6 Decision.** `continue` if at least 400 of the 2,000 replicates succeed (projected probability \u2265 0.20);\notherwise `stop_futility`. The comparison is between integers.\n\n**A2-FUT-7 Binding stop.** After `stop_futility` no further campaign fit is run and no test protein is scored. The\nresult reads: \"On a conservative metalloenzyme subset of the official CLEAN split30 benchmark (AlphaFold models with\nAlphaFill-transplanted, MAHOMES-catalytic metal sites; EC class = first EC digit), DeepMzyme was not shown to\noutperform retrained CLEAN in EC class prediction. The campaign stopped for futility after fold 0 under its\npre-declared rule; no test protein was scored.\" A2-GOV-7(d) applies. Stopping for futility cannot create a false\n\"Outperforms\" result.\n\n**A2-FUT-8 Descriptive content** (does not decide; totals only, no protein identifier). Projected probabilities per\npopulation, for both and for either, with Wilson 95% intervals; the same projection with independent (non-nested)\ndraws, 500 replicates; the observed inner primary difference and its component-bootstrap bound; conditional power\nat the observed difference (step (a) omitted), 500 replicates; targets divided by 1.25 and by 1.5, 500 replicates\neach; `historical_rule_outcome`, the Freeze-1 gap computation (EC classes 1-6 balanced-accuracy gap against \u22123.0,\nseven-class and R2-inner gaps, denominators); and C-GF beside CLEAN R1-inner and the selected configuration on U.\nThe synthetic operating-characteristic table `futility_oc.json` (action `futility-oc`: a declared synthetic U of 460\nproteins of EC classes 1-6 at true margins of 0, 2, 4, 6 and 8 points, 200 replicates each; projected success\nprobability and the decision the rule would take) is computed before publication, bound by SHA-256 and cited.\n\n**A2-FUT-9 Limitations disclosed with the record.** Inner-validation proteins have no D3 edge to their inner training\nproteins, so B1-all is projected from an NH30-like population. Inner components are finer than the claim clusters.\nInner fits use three quarters of the training proteins and two seeds, against five full refits. One R1-inner seed\nstands for the R1 ensemble. The selected configuration's inner score carries selection optimism. The projection is a\nstop rule, not an estimate of test performance.\n\n### A2-DIS: disclosures added or changed\n\n- The primary-metric change, its date and its motivation (power; accuracy weights EC classes 5 and 6 less than\n  balanced accuracy does), with the estimand statement of A2-MET-5.\n- The anti-conservative Freeze-1 balanced-accuracy bootstrap found by the power simulation, and the correction\n  applied to balanced accuracy (A2-STAT-2, A2-STAT-7).\n- Design-time label exposure, and that fold-0 development exposes the curated test proteins of folds 1-4.\n- The claim scope (A2-MET-5).\n- The CLEAN tie rule, the tie asymmetry and the rescore (A2-CLN-5).\n- The CLEAN sanity anchors, any disposition and its consequence (A2-CLN-1 to A2-CLN-3).\n- SupCon-Hard not used (A2-CLN-6).\n- The F6 training-data statement and screening-gap exception, per fold (A2-F6-8).\n- The F6 and C-GF inner hold-out asymmetry (A2-F6-3).\n- The uncharacterized operating characteristics of the S1 rule.\n- The positive final-epoch learning rate.\n- The futility limitations (A2-FUT-9).\n\n### A2-SUP: superseded and unchanged\n\n**Superseded for real execution under the amendment-2 chain** (each stays replayable on its original records):\n- U8, which becomes A2-MET-1;\n- U9 epoch selection and the U10 lever screen;\n- Freeze-1 D1 and the S1 amendment rule, as the decision rule for S1;\n- U3, for the F6 branch only;\n- SA1 and SA1-c, which A2-STAT extends;\n- the composition of E1 (its size and \u03b1 are kept);\n- C-8, the continue-at-\u22123 gap gate, which becomes descriptive;\n- C-5, and C-1 to C-4 together with the L3 sub-ceiling and cost machinery, which become inactive;\n- the presence-skip convention for the primary metric;\n- the S1 cap of 96 and the per-fold cap of 181.\n\n**Unchanged:**\n- the official folds, the co-primary populations B1-all and B1-NH30, intersection-union against both R1 components,\n  Holm across the two populations, the bootstrap seeds and draw counts;\n- the contrast zero tolerance;\n- E3, F1 and E5;\n- the identity rules, cohort, views and overlay;\n- the CLEAN recipe (upstream commit, ESM-1b, triplet loss, learning rate, epochs, seeds, ensemble rule);\n- the G3 limits;\n- the write-once claim and the single scoring pass after Freeze 2;\n- every root file (C-10).\n\n### A2-BUD: fit caps\n\n| Step | Fold 0 | Folds 1-4, each |\n|---|---|---|\n| S1 (16 fits per family: 2 learning rates \u00d7 4 inner folds \u00d7 2 seeds) | 112 (F1-F6, C-G) | 96 (F2-F6, C-G) |\n| S2, S3 | 0 | 0 |\n| S4 (seeds 42-46) | 5 | 5 |\n| Cap per fold | 117 | 101 |\n\nCampaign DeepMzyme fits: 521, against 745-905 under Freeze 1; a futility stop spends 112. F6 pretraining runs inside\neach F6 fit, and C-GF adds no fit. CLEAN keeps its 63 fits and adds 63 in-sample exports and one held-out record. The\nG2 replay anchor is unchanged: F2, learning rate 1e-4, inner fold 0, seed 42. Per-fit costs are unmeasured while G2\nis 0/12.\n\n"
+  },
+  "rule_text_without_policy_function": [
+    "A2-GOV-1",
+    "A2-GOV-2",
+    "A2-GOV-3",
+    "A2-GOV-5",
+    "A2-GOV-6",
+    "A2-GOV-7",
+    "A2-GOV-8",
+    "A2-F6-1",
+    "A2-F6-2",
+    "A2-F6-3",
+    "A2-F6-4",
+    "A2-F6-5",
+    "A2-F6-6",
+    "A2-F6-8",
+    "A2-DIS",
+    "A2-SUP",
+    "A2-BUD"
+  ],
+  "rules": {
+    "amendment2_accuracy_v1": {
+      "analysis": true,
+      "note": "the registry key differs from the record's rule_id amendment2_ec16_accuracy_v1 (open item)",
+      "policy_function": "ec_clean30.scoring:scoring_policy_record_v2",
+      "rule_text": [
+        "A2-MET-1",
+        "A2-MET-2",
+        "A2-MET-3",
+        "A2-MET-4",
+        "A2-MET-5",
+        "A2-STAT-7",
+        "A2-CLN-5",
+        "A2-CLN-6"
+      ]
+    },
+    "amendment2_selection_v1": {
+      "analysis": false,
+      "policy_function": "ec_clean30.selection:selection_policy_record_v2",
+      "rule_text": [
+        "A2-SEL-1",
+        "A2-SEL-2",
+        "A2-SEL-3",
+        "A2-SEL-4",
+        "A2-SEL-5",
+        "A2-SEL-6",
+        "A2-SEL-7",
+        "A2-SEL-8",
+        "A2-SEL-9"
+      ],
+      "step_rules": [
+        "best_inner_harm_guarded_v1",
+        "l9_tau_promote_primary_v1",
+        "refit_spec_v2"
+      ]
+    },
+    "clean_sanity_v1": {
+      "analysis": false,
+      "policy_function": "ec_clean30.clean_sanity:clean_sanity_policy_record",
+      "rule_text": [
+        "A2-CLN-1",
+        "A2-CLN-2",
+        "A2-CLN-3",
+        "A2-CLN-4"
+      ]
+    },
+    "controls_v2": {
+      "analysis": false,
+      "policy_function": "ec_clean30.campaign:controls_policy_record_v2",
+      "rule_text": [
+        "A2-SEL-6",
+        "A2-TRN-4",
+        "A2-F6-7"
+      ]
+    },
+    "futility_predictive_cluster_bootstrap_v1": {
+      "analysis": false,
+      "policy_function": "ec_clean30.futility:policy_record",
+      "rule_text": [
+        "A2-FUT-1",
+        "A2-FUT-2",
+        "A2-FUT-3",
+        "A2-FUT-4",
+        "A2-FUT-5",
+        "A2-FUT-6",
+        "A2-FUT-7",
+        "A2-FUT-8",
+        "A2-FUT-9"
+      ]
+    },
+    "l9_only_no_s3_v1": {
+      "analysis": false,
+      "policy_function": "ec_clean30.campaign:search_policy_record_v2",
+      "rule_text": [
+        "A2-TRN-1",
+        "A2-TRN-2",
+        "A2-TRN-3"
+      ]
+    },
+    "r_cmd_v2": {
+      "analysis": false,
+      "policy_function": "ec_clean30.amendment_rules:r_cmd_v2_check",
+      "rule_text": [
+        "A2-GOV-4"
+      ]
+    },
+    "stratified_rao_wu_v2": {
+      "analysis": false,
+      "policy_function": "ec_clean30.stats:engine_policy_record_v2",
+      "rule_text": [
+        "A2-STAT-1",
+        "A2-STAT-2",
+        "A2-STAT-3",
+        "A2-STAT-4",
+        "A2-STAT-5",
+        "A2-STAT-6"
+      ]
+    }
+  },
+  "schema_version": 1,
+  "selection_policy_sha256_v2": "bf227f4add00168d96399975ebb836f20e6147ffd465c6a4864776976180294c",
+  "sequence": 2,
+  "sha256_of_content": "05520f45c47d50274de27a0151e30ff5a420188806c8699ec39b5a820f52efdf",
+  "source_changes": {
+    "scripts/run_clean_split30_comparator.py": {
+      "after": "5530b2801b41de02b6b83e25fdbefb8881f51c419a4ae214c88b46fef8a96402",
+      "before": "a103160ecfca8c99d921d53a3d80f10737fa047a509f7d5daa7de50858eb0168",
+      "note": "CUDA path and runtime_precision import (A2-D7); the science side does not edit it",
+      "r_cmd_class": "allowlisted",
+      "rule_ids": [
+        "A2-GOV-3",
+        "A2-CLN-1"
+      ],
+      "set": "scientific",
+      "status": "modified",
+      "written_by": "execution v5"
+    },
+    "scripts/run_ec_clean30_campaign.py": {
+      "after": "190d968e2e3421e69e7f3472f01fdf9d82dd0ec58b679ced34bf6a0613010e46",
+      "before": "d501f311f30b856ff0efc961e2e1a08a872a31119c1373f2bb90e6f1f936c1b1",
+      "note": "new actions plan-v2, futility, futility-oc, pretrain-corpus, amend-2, verify-amendment-chain, dry-run-v2 and refit-recipe; the twelve pinned runner functions are byte-identical",
+      "r_cmd_class": "allowlisted",
+      "rule_ids": [
+        "A2-SEL-1",
+        "A2-GOV-4",
+        "A2-FUT-1",
+        "A2-F6-3",
+        "A2-F6-4"
+      ],
+      "set": "scientific",
+      "status": "modified",
+      "written_by": "science"
+    },
+    "scripts/run_ec_clean30_clean_sanity.py": {
+      "after": "01a68db20a237c90125603aa779b72ec66d40d9be3433e8fe2ac5b6d66829da5",
+      "before": null,
+      "note": "fit precision-policy logs, per-arm held-out dispositions and the verify-all receipt",
+      "r_cmd_class": "added",
+      "rule_ids": [
+        "A2-CLN-1",
+        "A2-CLN-2",
+        "A2-CLN-3",
+        "A2-CLN-5",
+        "A2-GOV-3"
+      ],
+      "set": "scientific",
+      "status": "new",
+      "written_by": "science"
+    },
+    "src/ec_clean30/amendment2.py": {
+      "after": "6a00cfe1293d4d1a13f6aa041d08e3a49360b149626f9826849b440fb08d79ae",
+      "before": null,
+      "note": "keyed chain receipt and refit-recipe receipt read by the scoring pass, dry-run-v2, decisions-file checks, record builder (declared execution list, required bindings, rule text from amendment_draft.md) and rendering",
+      "r_cmd_class": "added",
+      "rule_ids": [
+        "A2-GOV-1",
+        "A2-GOV-4",
+        "A2-GOV-6",
+        "A2-SEL-9"
+      ],
+      "set": "scientific",
+      "status": "new",
+      "written_by": "science"
+    },
+    "src/ec_clean30/amendment_chain.py": {
+      "after": "c37b26ca5ca6b635333d688d756077fa2d2e9ffacdefe401bbf2a8a2e5823002",
+      "before": null,
+      "note": "general chain verifier and its receipt check (interface_contract.md); pinned here, never an execution file",
+      "r_cmd_class": "added",
+      "rule_ids": [
+        "A2-GOV-1",
+        "A2-GOV-2",
+        "A2-GOV-4",
+        "A2-GOV-6",
+        "A2-GOV-7"
+      ],
+      "set": "scientific",
+      "status": "new",
+      "written_by": "science"
+    },
+    "src/ec_clean30/amendment_rules.py": {
+      "after": "eb7810a2865c1e1b2ab62b1446dc1ca4d8f8f0f0e0e6da5767450f69a45f2e11",
+      "before": null,
+      "note": "shared by the builder and the chain verifier: link paths and log lines, role table, private names, change classes with function pins; class (a2) compares every rule's policy SHA-256",
+      "r_cmd_class": "added",
+      "rule_ids": [
+        "A2-GOV-1",
+        "A2-GOV-2",
+        "A2-GOV-4",
+        "A2-GOV-6",
+        "A2-GOV-7"
+      ],
+      "set": "scientific",
+      "status": "new",
+      "written_by": "science"
+    },
+    "src/ec_clean30/campaign.py": {
+      "after": "fbff069d52c7f6a17131adc24df1fab62499e0f233c437ac3776d9793bf2a0c9",
+      "before": "f4cbf5afd374beeaf69dc932292acc2dd2c5c5577cd78e1993541565d0325726",
+      "note": "additive v2; v1 objects unchanged",
+      "r_cmd_class": "protected importer",
+      "rule_ids": [
+        "A2-SEL-1",
+        "A2-SEL-6",
+        "A2-TRN-2",
+        "A2-TRN-3",
+        "A2-TRN-4",
+        "A2-BUD"
+      ],
+      "set": "scientific",
+      "status": "modified",
+      "written_by": "science"
+    },
+    "src/ec_clean30/clean_sanity.py": {
+      "after": "a5d4b2296e5727456e2bbcc97e2ed3fe25b345c32bd7b6d36e012a8fe2a3bf4a",
+      "before": null,
+      "note": "comparator loader for the selector gap path; per-arm held-out status and the C6b consequence; fit precision policy; verify_all",
+      "r_cmd_class": "added",
+      "rule_ids": [
+        "A2-CLN-1",
+        "A2-CLN-2",
+        "A2-CLN-3",
+        "A2-CLN-4",
+        "A2-GOV-2",
+        "A2-GOV-3",
+        "A2-MET-2"
+      ],
+      "set": "scientific",
+      "status": "new",
+      "written_by": "science"
+    },
+    "src/ec_clean30/commands.py": {
+      "after": "84b63ce5ddf382483ebd4c707a012e11ee02db4a9dc9ffc514c4dea14b317775",
+      "before": "6163c9836b2f6a4abdba1b7e33afbf464ae8bb71b8b4078df44ed185bfc9301f",
+      "note": "raw-RBF and F6 argv, verify_unit checks, plan v2, the declared pretraining-input stub of the v2 dry runs",
+      "r_cmd_class": "protected importer",
+      "rule_ids": [
+        "A2-TRN-2",
+        "A2-F6-1",
+        "A2-F6-6",
+        "A2-GOV-3",
+        "A2-GOV-4"
+      ],
+      "set": "scientific",
+      "status": "modified",
+      "written_by": "science"
+    },
+    "src/ec_clean30/futility.py": {
+      "after": "1d964c5c7fdd673d5ba8fad63791d159849641b74d2c107de74b1245d18dd6e9",
+      "before": null,
+      "note": "binding gate, smoke isolation, bound CLEAN inputs, once per fit chain, C6b stop, C-GF descriptive, operating_characteristics, chain receipt",
+      "r_cmd_class": "added",
+      "rule_ids": [
+        "A2-FUT-1",
+        "A2-FUT-2",
+        "A2-FUT-3",
+        "A2-FUT-4",
+        "A2-FUT-5",
+        "A2-FUT-6",
+        "A2-FUT-7",
+        "A2-FUT-8",
+        "A2-GOV-7"
+      ],
+      "set": "scientific",
+      "status": "new",
+      "written_by": "science"
+    },
+    "src/ec_clean30/pretrain_corpus.py": {
+      "after": "1cc9fb93d975879e287388e4c4fbdc9fd374cb83728c538bad654d6789fea96c",
+      "before": null,
+      "note": "build (cache-free corpus table), fasta, attach with the precision rule and the bound corpus, empty attached folder, the dry-run stub",
+      "r_cmd_class": "added",
+      "rule_ids": [
+        "A2-F6-2",
+        "A2-F6-3",
+        "A2-F6-4",
+        "A2-GOV-3",
+        "A2-GOV-4"
+      ],
+      "set": "scientific",
+      "status": "new",
+      "written_by": "science"
+    },
+    "src/ec_clean30/runtime_precision.py": {
+      "after": "db5a886deaba7fa8cf230ffc1a24f9020221572f6367133824e4b0d8db5ef57e",
+      "before": null,
+      "note": "TF32 policy; standard library only, torch imported inside the function",
+      "r_cmd_class": "added; not loaded by protected importers",
+      "rule_ids": [
+        "A2-GOV-3"
+      ],
+      "set": "scientific",
+      "status": "new",
+      "written_by": "execution v5"
+    },
+    "src/ec_clean30/scoring.py": {
+      "after": "69e979b25486abc7ebc5266ddff719bdb9bae70493bef43f9e6b2f23292d373c",
+      "before": "938d5b48e2056f5275fd93f30a38e98b9a216de495918d096278a5140a16a5e1",
+      "note": "C6b held-out consequence and the A2-SEL-9 receipt bindings (a draft chain receipt is refused); one SCORER_CODE_PATHS line (runtime_precision.py) is delegated to execution v5",
+      "r_cmd_class": "allowlisted",
+      "rule_ids": [
+        "A2-MET-1",
+        "A2-MET-2",
+        "A2-MET-3",
+        "A2-MET-4",
+        "A2-MET-5",
+        "A2-STAT-6",
+        "A2-STAT-7",
+        "A2-CLN-4",
+        "A2-CLN-5",
+        "A2-SEL-9"
+      ],
+      "set": "post_fit_analysis",
+      "status": "modified",
+      "written_by": "science"
+    },
+    "src/ec_clean30/selection.py": {
+      "after": "47d760d51ed6dc5856bec05e8b95e437513d84723c46e803209dabf578d74d96",
+      "before": "3d6eb993a262b4df629e7a6efd2eed7e2ba079c4dbe22b4ee8548acb2ade7792",
+      "note": "additive v2; the L9 adoption bootstrap runs on engine v2 with the primary metric; historical and fixed-anchor rules unchanged",
+      "r_cmd_class": "allowlisted",
+      "rule_ids": [
+        "A2-SEL-1",
+        "A2-SEL-2",
+        "A2-SEL-3",
+        "A2-SEL-4",
+        "A2-SEL-5",
+        "A2-SEL-8",
+        "A2-SEL-9",
+        "A2-TRN-1"
+      ],
+      "set": "scientific",
+      "status": "modified",
+      "written_by": "science"
+    },
+    "src/ec_clean30/selector.py": {
+      "after": "116be2f57a3fb482930194799a367518eb2aa1a918077ce722e051ac382530f8",
+      "before": "e67b989376816f7193282d57caa609850547dd673a05783775ca527e478cf509",
+      "note": "dispatch on the fit chain with the chain receipt check; refit API; same-host branch-digest refusal",
+      "r_cmd_class": "added after the Freeze-1 dry-run commit",
+      "rule_ids": [
+        "A2-SEL-1",
+        "A2-SEL-7",
+        "A2-SEL-9",
+        "A2-GOV-1",
+        "A2-GOV-5",
+        "A2-CLN-2",
+        "A2-FUT-1"
+      ],
+      "set": "scientific",
+      "status": "modified",
+      "written_by": "science"
+    },
+    "src/ec_clean30/stats.py": {
+      "after": "38dca626c5223a7bd1329a483efa82be4d44332ba24656a48cd3efb1713317aa",
+      "before": "0c97cb4ba312b65010800d39ea22bcd10027d62870f24ca2731385fc0b018f09",
+      "note": "engine v2 added; contrast zero-snapping shared with the futility rule; BOOTSTRAP_METRICS unchanged",
+      "r_cmd_class": "allowlisted",
+      "rule_ids": [
+        "A2-STAT-1",
+        "A2-STAT-2",
+        "A2-STAT-3",
+        "A2-STAT-4",
+        "A2-STAT-5",
+        "A2-STAT-6",
+        "A2-MET-1"
+      ],
+      "set": "scientific",
+      "status": "modified",
+      "written_by": "science"
+    },
+    "src/ec_clean30/views.py": {
+      "after": "ca56b9c1b181c0ec09411e999483c7f9e6d14ca12ddf32f3c1993046ba4db6d4",
+      "before": "4acfe32fe834825bb1058ad3a5bef903d61561f1017b7cb349ef4975bcceb4b3",
+      "note": "ATTACHED_DIRS outside the view manifest",
+      "r_cmd_class": "protected importer",
+      "rule_ids": [
+        "A2-F6-4"
+      ],
+      "set": "scientific",
+      "status": "modified",
+      "written_by": "science"
+    },
+    "src/embed_helpers/esmc_chain_means.py": {
+      "after": "36b99ac4530e768d59403d418b4216dc47d3493485ede6a7e8d370600abd0276",
+      "before": "3ede7f5d26e4a09a9ad1ec6f60e3933f865826031b08804a3372b68f2d6e4d9d",
+      "note": "float32 forward option (CUDA refuses without runtime_precision) and sequence-mean comparison",
+      "r_cmd_class": "protected",
+      "rule_ids": [
+        "A2-GOV-3",
+        "A2-F6-4"
+      ],
+      "set": "scientific",
+      "status": "modified",
+      "written_by": "science"
+    },
+    "src/training/config.py": {
+      "after": "9fc7296a57ac7f05d334933c2925a85d0999dec06f408ae0c9e511b6837a7d8f",
+      "before": "17b8e4940875414489b7dd8aee4aee92011fda1c45a6cf4cf49c40cc4f5f6507",
+      "note": "F6 options dropped from the payload at their defaults",
+      "r_cmd_class": "protected",
+      "rule_ids": [
+        "A2-F6-1",
+        "A2-F6-5",
+        "A2-GOV-5"
+      ],
+      "set": "scientific",
+      "status": "modified",
+      "written_by": "science"
+    },
+    "src/training/ec_class_metrics.py": {
+      "after": "9f6c7f1646fbc9d22ffa3846ede1708d6dc2c35f53fbe0c51be13bba04f43275",
+      "before": "a107ba15bb898d428b18d6f368354336f4c783c683c665db3127a9b9cda9ca31",
+      "note": "listed because it changed; the final specification planned to leave it unchanged (open item)",
+      "r_cmd_class": "protected",
+      "rule_ids": [
+        "A2-MET-1"
+      ],
+      "set": "scientific",
+      "status": "modified",
+      "written_by": "science"
+    },
+    "src/training/ec_prediction_export.py": {
+      "after": "bf70b4a17025096d489f550babc95af90df0350cef223655b3f376601a620f8f",
+      "before": "32cb8cef3c0c389c7a80b1245751948b68fa40fe4caa453e384c8cb2b8da4c3b",
+      "note": "F6 mapping",
+      "r_cmd_class": "protected",
+      "rule_ids": [
+        "A2-F6-6"
+      ],
+      "set": "scientific",
+      "status": "modified",
+      "written_by": "science"
+    },
+    "src/training/global_esm_pretraining.py": {
+      "after": "88b4dc5db44b0a9e26c6aaa95340ef1c8d5ce1ee6021ca39bfd3d353cb64baed",
+      "before": null,
+      "note": "module SHA-256, one pretraining thread and the CPU identity recorded in each F6 receipt; C-GF scores the corpus sequence means",
+      "r_cmd_class": "protected (trainer closure)",
+      "rule_ids": [
+        "A2-F6-5",
+        "A2-F6-7"
+      ],
+      "set": "scientific",
+      "status": "new",
+      "written_by": "science"
+    },
+    "src/training/run.py": {
+      "after": "3eedb85701aa079207bfaa18db39638b9f598229d6f821bdd0eccadf026a2327",
+      "before": "a753cb5928b4a1489e4faf6228a0b88b848a64182420e32a37fdd3d0ddfe1d8d",
+      "note": "TF32 policy record, raw-tensor refusal, F6 hook",
+      "r_cmd_class": "protected",
+      "rule_ids": [
+        "A2-GOV-3",
+        "A2-TRN-2",
+        "A2-F6-5"
+      ],
+      "set": "scientific",
+      "status": "modified",
+      "written_by": "science"
+    }
+  },
+  "source_parent_commit": "c16399564608e70fcbc2aaab0bda7b9cabf02e74",
+  "status": "built",
+  "supersedes": [
+    "U8",
+    "U9 epoch selection",
+    "U10 lever screen",
+    "Freeze-1 D1 as the S1 decision rule",
+    "fixed_anchor_holm_v1 as the S1 decision rule",
+    "U3 for the F6 branch only",
+    "SA1",
+    "SA1-c",
+    "E1 composition",
+    "C-8",
+    "C-5",
+    "C-1 to C-4 with the L3 sub-ceiling and cost machinery",
+    "presence-skip convention for the primary metric",
+    "S1 cap 96",
+    "per-fold cap 181"
+  ],
+  "timestamps": {
+    "decisions_accepted": "2026-11-04",
+    "draft_written": "2026-11-04"
+  },
+  "unchanged": [
+    "official folds",
+    "co-primary populations B1-all and B1-NH30",
+    "intersection-union against the R1 seed mean and ensemble",
+    "Holm across the two populations",
+    "bootstrap seeds and draw counts",
+    "contrast zero tolerance",
+    "E3",
+    "F1",
+    "E5",
+    "identity rules, cohort, views and overlay",
+    "CLEAN recipe",
+    "G3 limits",
+    "write-once claim and single scoring pass",
+    "root files (C-10)"
+  ],
+  "unchanged_scientific_files": [
+    "src/model.py",
+    "src/model_variants/",
+    "src/training/graph_dataset.py",
+    "src/featurization.py",
+    "src/training/global_esm_features.py",
+    "src/training/loop.py",
+    "src/ec_clean30/freeze.py",
+    "src/ec_clean30/provenance.py",
+    "src/ec_clean30/identity.py",
+    "src/ec_clean30/overlay.py",
+    "src/ec_clean30/cohort.py",
+    "src/ec_clean30/transfers.py",
+    "src/ec_clean30/logit_adjustment.py",
+    "src/ec_clean30/baseline.py",
+    "src/ec_clean30/simulation.py",
+    "src/ec_clean30/s1_simulation.py",
+    "src/ec_clean30/r2_lists.py"
+  ]
+}
