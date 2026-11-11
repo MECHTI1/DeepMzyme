@@ -1,9 +1,9 @@
 {
-  "after_commit": "f87b1f6a9feac6971d4d8cef1e360c9b90eeea78",
+  "after_commit": "7804b3eb54eab5bb8ed79819f1a91064668300c6",
   "after_commit_role": "the dry-run-v2 source commit",
   "before_commit": "c16399564608e70fcbc2aaab0bda7b9cabf02e74",
   "claim": "Every v1 unit keeps its resolved-configuration hash.",
-  "date": "2026-11-07",
+  "date": "2026-11-11",
   "folds": {
     "0": {
       "after_sha256": "e4a542c9eddcc65c7576d2c98546afc10d12f1c6b8b1a9753b3e10b8e8b6b454",
@@ -50,16 +50,22 @@
       "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/v1_resolved_config.py",
       "sha256": "11976cca2b59f66321fb37b98251f168a1e90825c57ee7c95ad0ac5692909822"
     },
+    "v1_resolved_config_at_7804b3e.json": {
+      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/v1_resolved_config_at_7804b3e.json",
+      "sha256": "d6e5f881ccdd0a974b6ccbd5ca9612690e620483f637d6fc3f4ca8923216c3e2"
+    },
     "v1_resolved_config_at_c163995.json": {
       "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/v1_resolved_config_at_c163995.json",
       "sha256": "1258eb7c95a2e2e79489aabeeb60af5721b031138ebc48a8d01552c1d712fbd3"
-    },
-    "v1_resolved_config_at_f87b1f6.json": {
-      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/v1_resolved_config_at_f87b1f6.json",
-      "sha256": "6d2e883845276f09e3927c0183397ff1d3cac69bb07e6a730f0e598947a33965"
     }
   },
   "rule": "A2-GOV-5",
   "schema_version": 1,
-  "status": "passed"
+  "status": "passed",
+  "supersedes": {
+    "commit": "90ac7a4207243d5814db5fbbae9f7caa60a99034",
+    "path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/v1_resolved_config.json",
+    "reason": "source commit 7804b3e (data-root links in private bindings) changed amendment2.py, amendment_chain.py and amendment_rules.py, which r_cmd_v2 does not allow after the dry runs; the dry runs and the v1 check were repeated at it",
+    "sha256": "3bca610f051335ac8f1faa575a453257878c2b183749adb8c1341d8e43ddb90c"
+  }
 }

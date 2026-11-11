@@ -3,8 +3,8 @@
     "docs_contract": {
       "baseline_warnings": 11,
       "evidence": {
-        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/docs_contract_f87b1f6.log",
-        "sha256": "0613c89c3d4baf36f55da25b6c6eb60c1a2c5f06f411b5e922b6d25384c0974a"
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/docs_contract_7804b3e.log",
+        "sha256": "e49b7faecadae7708c0f8a60cd1b914ddd5974636048548cd8809f4c483696da"
       },
       "status": "passed",
       "strict_failures": 0,
@@ -16,31 +16,68 @@
       "receipts_private": {
         "0": {
           "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/dry_runs/fold0.json",
-          "sha256": "e1de82920b46874eb4691a7926dbf39515781fbc18661f78cf200aa179fcd71b"
+          "sha256": "f9ab4fbdbfec412b79b409a11be0059f8e8bf0ec0a0c6c98b2e6929b70556259"
         },
         "1": {
           "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/dry_runs/fold1.json",
-          "sha256": "36330ee35acfddaa2e37e702cacd53fbd26175b717944a59f26b0010e0229c8e"
+          "sha256": "24ae5861472eb590a507771b6d7413affb599fc70863d3943fa7c742dff7d384"
         },
         "2": {
           "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/dry_runs/fold2.json",
-          "sha256": "3d547fe22f5b5dbcbc5fd4c1bfafd614dedad6c9aa446c262ed4aec41decf36f"
+          "sha256": "e8157b98b4b40d345a4e88e96f4e415acc081fc5269224738f6bee26a80cff69"
         },
         "3": {
           "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/dry_runs/fold3.json",
-          "sha256": "311624c0f2a0cc3efef3871583c6259db74ae0a5de43e8a8e901ed15efe34b5e"
+          "sha256": "95b0de0b05cdb652e4b56bd0487ca6a1eadb491b7894539ec41256ee2f5ce87a"
         },
         "4": {
           "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/dry_runs/fold4.json",
-          "sha256": "b23d9abba0fc90803a6e44ae6e052d8e315ccb168683f51dc3edf5c6a28278d0"
+          "sha256": "d6b6c5b857bf6fa09e8b7dae3dd009f06b73a9ecdc152b69b0b0d4eb31b49c8c"
         }
       },
       "rule": "r_cmd_v2",
-      "source_commit": "f87b1f6a9feac6971d4d8cef1e360c9b90eeea78",
+      "source_commit": "7804b3eb54eab5bb8ed79819f1a91064668300c6",
       "static_failures": 0,
-      "status": "passed"
+      "status": "passed",
+      "superseded": {
+        "receipts_private": {
+          "0": {
+            "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/superseded/dry_runs_f87b1f6/fold0.json",
+            "sha256": "e1de82920b46874eb4691a7926dbf39515781fbc18661f78cf200aa179fcd71b"
+          },
+          "1": {
+            "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/superseded/dry_runs_f87b1f6/fold1.json",
+            "sha256": "36330ee35acfddaa2e37e702cacd53fbd26175b717944a59f26b0010e0229c8e"
+          },
+          "2": {
+            "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/superseded/dry_runs_f87b1f6/fold2.json",
+            "sha256": "3d547fe22f5b5dbcbc5fd4c1bfafd614dedad6c9aa446c262ed4aec41decf36f"
+          },
+          "3": {
+            "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/superseded/dry_runs_f87b1f6/fold3.json",
+            "sha256": "311624c0f2a0cc3efef3871583c6259db74ae0a5de43e8a8e901ed15efe34b5e"
+          },
+          "4": {
+            "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/superseded/dry_runs_f87b1f6/fold4.json",
+            "sha256": "b23d9abba0fc90803a6e44ae6e052d8e315ccb168683f51dc3edf5c6a28278d0"
+          }
+        },
+        "source_commit": "f87b1f6a9feac6971d4d8cef1e360c9b90eeea78",
+        "status": "passed at their commit; moved aside unchanged, not bound"
+      }
     },
     "full_suite": {
+      "commit": "7804b3eb54eab5bb8ed79819f1a91064668300c6",
+      "evidence": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/full_suite_7804b3e.log",
+        "sha256": "2227952519bafcd98f3a6fa230e626eb7d15063ef37579b1455236081ff0da17"
+      },
+      "failed": 0,
+      "note": "run at the source commit in a second worktree of the repository",
+      "status": "passed",
+      "summary": "4726 passed, 63 skipped, 15 subtests passed in 897.52s (0:14:57)"
+    },
+    "full_suite_private_bindings": {
       "commit": "f87b1f6a9feac6971d4d8cef1e360c9b90eeea78",
       "evidence": {
         "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/full_suite_f87b1f6.log",
@@ -61,6 +98,7 @@
       "summary": "4669 passed, 63 skipped, 15 subtests passed in 1203.37s (0:20:03)"
     },
     "futility_oc": {
+      "commit": "90ac7a4207243d5814db5fbbae9f7caa60a99034",
       "evidence": {
         "futility_oc_public.log": {
           "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/futility_oc_public.log",
@@ -79,6 +117,7 @@
           "sha256": "3d486d17c33d16003968a498ac635ca02e9281d474ccc16840a565418ecdba31"
         }
       },
+      "note": "futility.py is unchanged between f87b1f6 and the source commit",
       "provenance_redacted_for_publication": [
         "git.repository_root",
         "environment.hostname",
@@ -103,7 +142,20 @@
       },
       "status": "passed"
     },
+    "independent_review_data_root_links": {
+      "commit": "7804b3eb54eab5bb8ed79819f1a91064668300c6",
+      "findings_confirmed": 2,
+      "findings_fixed": 2,
+      "findings_rejected": 1,
+      "lenses": [
+        "forgery",
+        "workstation layout"
+      ],
+      "note": "the two confirmed findings share one cause, fixed in the source commit: asked only at a data-root link, git skips a folder-only negation that re-includes the private file in a clone with real folders, so the builder also asks a throwaway repository holding the .gitignore files of HEAD; rejected: a data-root link into another worktree of the same repository lies outside the repository by the rule's definition, and no path rule can stop a deliberate copy",
+      "status": "passed"
+    },
     "independent_review_private_bindings": {
+      "commit": "f87b1f6a9feac6971d4d8cef1e360c9b90eeea78",
       "findings_confirmed": 5,
       "findings_fixed": 5,
       "findings_rejected": 3,
@@ -112,7 +164,7 @@
         "privacy leakage",
         "integration"
       ],
-      "note": "each finding was reproduced or refuted separately before the fix; the fixes are in the source commit",
+      "note": "each finding was reproduced or refuted separately before the fix; the fixes are in f87b1f6",
       "status": "passed"
     },
     "plans_v2": {
@@ -127,31 +179,32 @@
       "status": "passed"
     },
     "private_inputs": {
-      "note": "bound privately by path and SHA-256 in the record; no content here",
+      "note": "bound privately by path and SHA-256 in the record; no content here; between f87b1f6 and the source commit only amendment2.py, amendment_chain.py and amendment_rules.py changed, none of which writes these inputs; the dry-run receipts are those of the source commit",
       "roles": [
         "inputs.clean_tie_exposure",
         "inputs.f6_holdout",
         "inputs.f6_corpus",
         "dry_runs.receipts"
       ],
-      "status": "written once at the source commit on a clean tree"
+      "status": "written once at f87b1f6 on a clean tree"
     },
     "v1_resolved_config": {
       "n_commands": 1780,
       "n_differing": 0,
       "record": {
         "path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/v1_resolved_config.json",
-        "sha256": "3bca610f051335ac8f1faa575a453257878c2b183749adb8c1341d8e43ddb90c"
+        "sha256": "d2cfa93c135b9bd7cc9960ddcd13b547e29c179fa249895baf8ae7000292d87d"
       },
       "status": "passed"
     }
   },
   "commits": {
+    "data_root_links": "7804b3eb54eab5bb8ed79819f1a91064668300c6",
     "execution_v5": "cbab50b45a240bb36dcadf75427ae38c375f8717",
     "private_bindings": "f87b1f6a9feac6971d4d8cef1e360c9b90eeea78",
     "science": "e31e5bb1eb98a66e364a9522840052cfca5daee6"
   },
-  "date": "2026-11-07",
+  "date": "2026-11-11",
   "environment": {
     "numpy": "2.4.4",
     "platform_machine": "x86_64",
@@ -169,6 +222,10 @@
     "write_amend2_evidence.py": {
       "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/write_amend2_evidence.py",
       "sha256": "93d77c1a1eeed2b43dc1d3ef0a6858b2843f41b17f618403eb53975f9bfc20a1"
+    },
+    "write_amend2_evidence_v2.py": {
+      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/write_amend2_evidence_v2.py",
+      "sha256": "cb9b3184d240cdfddbbc96ba610f4dfd27cfc9f6e1130e67337de5a1065f9ca8"
     }
   },
   "resource_caps": {
@@ -178,6 +235,12 @@
   },
   "schema_version": 1,
   "scope": "CPU implementation and verification of amendment 2 before its record build. No fit, G2 event, GPU allocation or held-out evaluation. The chain verification of link 2 itself is not included (the record binds this file); it runs after publication with verify-amendment-chain.",
-  "source_commit": "f87b1f6a9feac6971d4d8cef1e360c9b90eeea78",
-  "status": "passed"
+  "source_commit": "7804b3eb54eab5bb8ed79819f1a91064668300c6",
+  "status": "passed",
+  "supersedes": {
+    "commit": "90ac7a4207243d5814db5fbbae9f7caa60a99034",
+    "path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/verification.json",
+    "reason": "source commit 7804b3e (data-root links in private bindings) changed amendment2.py, amendment_chain.py and amendment_rules.py, which r_cmd_v2 does not allow after the dry runs; the dry runs and the v1 check were repeated at it",
+    "sha256": "abec311ef8920d68a4d359ba6d621d9735e28e8a61a048f44867319ad5f9c720"
+  }
 }
