@@ -130,7 +130,8 @@ stay replayable on their original records.
   execution changes, narrowly bounded analysis completions and demonstrated-defect amendments are admissible; a
   defect fix that changes fold 1–4 behaviour labels those results "development-exposed". A futility stop is never
   reversed.
-- **Execution (A2-D6 to A2-D8).** Runpod only, G2 and fold 0 in one pod session, CLEAN fits and embeddings on the pod
+- **Execution (A2-D6 to A2-D8).** Runpod only, G2 and fold 0 in one pod session (resumable in a later
+  session from preserved records), CLEAN fits and embeddings on the pod
   GPU with TF32 off, a pre-approved fold-0 ceiling and a time-box; declared with execution v5.
 - **Fits.** 117 DeepMzyme fits in fold 0 and 101 in each of folds 1–4 (521 in all, against 745–905); a futility stop
   spends 112. CLEAN keeps its 63 fits.

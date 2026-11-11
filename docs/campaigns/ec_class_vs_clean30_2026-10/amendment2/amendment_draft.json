@@ -141,7 +141,7 @@
       ]
     },
     "A2-D6": {
-      "decision": "Runpod only; G2 and fold 0 in one pod session.",
+      "decision": "Runpod only; G2 and fold 0 in one pod session; if a session ends before fold 0 is complete, fold 0 resumes in a later Runpod session on the same GPU type and pinned environment from its preserved records (finished units kept; a unit without a preserved result rerun once as the identical planned unit).",
       "owner": "execution v5",
       "rules": []
     },
