@@ -296,9 +296,36 @@ def _guard(path: Path, view):
     clean.refuse_forbidden_root(path, [Path(root) for root in view.forbidden_read_roots], "Phase-4 input/output")
 
 
+def embedding_units(request):
+    if request.get("clean_scope") != "final":
+        return tuple({"unit_id": f"ecc30_clean_embed_{kind}", "kind": kind,
+                      "embedding": "esm1b", "seed": 42 if kind == "masked" else None}
+                     for kind in ("base", "masked"))
+    units = clean_final_units(request["fold"])
+    result = []
+    for embedding in ("esm1b", "esmc"):
+        seeds = sorted({unit["seed"] for unit in units
+                        if (unit["arm"] == "c_esmc") == (embedding == "esmc")})
+        stem = f"ecc30_clean_embed_fold{request['fold']}_{embedding}"
+        result.append({"unit_id": f"{stem}_base", "kind": "base", "embedding": embedding, "seed": None})
+        result.extend({"unit_id": f"{stem}_masked_seed{seed}", "kind": "masked",
+                       "embedding": embedding, "seed": seed} for seed in seeds)
+    return tuple(result)
+
+
+def final_farms_by_unit(request):
+    root = PurePosixPath(request["remote_request_template"]["execution_root"])
+    attempts = request.get("attempts", {})
+    farms = {(unit["embedding"], unit["kind"], unit["seed"]): str(root / "runs" / unit["unit_id"] /
+             f"attempt{attempts.get(unit['unit_id'], 1)}" / "farm") for unit in embedding_units(request)}
+    return {unit["unit_id"]: {"base_farm": farms[("esmc" if unit["arm"] == "c_esmc" else "esm1b", "base", None)],
+            "masked_farm": farms[("esmc" if unit["arm"] == "c_esmc" else "esm1b", "masked", unit["seed"])]}
+            for unit in clean_final_units(request["fold"])}
+
+
 def _unit(request, kind):
     if kind == "embedding":
-        units = {f"ecc30_clean_embed_{name}": {"kind": name} for name in ("base", "masked")}
+        units = {unit["unit_id"]: unit for unit in embedding_units(request)}
     else:
         if kind in ("s1", "refit"):
             plan = _json(Path(request["plan"]))
@@ -484,6 +511,18 @@ def refit_worker(request):
     return _fit_worker(request, kind="refit")
 
 
+def _dispositions_for(records, dispositions):
+    """Route dispositions by their record bytes; the scientific consumer validates them."""
+    digests = {_sha(Path(path)) for path in records}
+    return [Path(path) for path in dispositions
+            if _json(Path(path)).get("record_sha256") in digests]
+
+
+def _unit_dispositions(request, record):
+    paths = request.get("clean_sanity_dispositions_by_unit", {}).get(request["unit_id"], [])
+    return _dispositions_for([record], paths)
+
+
 def _verify_result(request, result, kind, source, view, *, relocated=False):
     phase3.require_same_scientific_identity(result.get("source", {}), source)
     if source.get("scientific_identity_sha256"):
@@ -523,7 +562,7 @@ def _verify_result(request, result, kind, source, view, *, relocated=False):
             sanity_path = attempt / "clean_sanity.json"
             _require(_sha(sanity_path) == result.get("clean_sanity_sha256"), "CLEAN sanity evidence changed.")
             summary = clean_sanity.require_passed_or_disposed(sanity_path,
-                        [Path(path) for path in request.get("clean_sanity_dispositions", [])])
+                        _unit_dispositions(request, sanity_path))
             fit_manifest = _json(attempt / "work" / clean.FIT_MANIFEST)
             _require(summary["checkpoint_sha256"] == fit_manifest["training_receipt"]["final_weights_sha256"],
                      "CLEAN sanity record belongs to another checkpoint.")
@@ -536,7 +575,8 @@ def _verify_result(request, result, kind, source, view, *, relocated=False):
         farm = Path(result["farm"])
         _require(_sha(farm / "farm_receipt.json") == result["producer_receipt_sha256"]
                  and _sha(farm / clean.FARM_MANIFEST) == result["farm_manifest_sha256"], "Embedding farm receipts changed.")
-        observed = phase3._esm1b_gpu_evidence(farm)
+        observed = (_esmc_farm_evidence(farm) if _unit(request, "embedding")["embedding"] == "esmc"
+                    else phase3._esm1b_gpu_evidence(farm))
         _require(all(result.get("device_evidence", {}).get(key) == value for key, value in observed.items()),
                  "Saved embedding device or precision evidence changed.")
         for entry in clean.read_farm_manifest(farm / clean.FARM_MANIFEST).values():
@@ -548,6 +588,11 @@ def run_unit(request, *, kind):
     source, view, policy, authority, _ = _runtime(request, resource=resource, kind=kind)
     _unit(request, kind)
     root, attempt = Path(request["execution_root"]), _attempt(request)
+    if source.get("scientific_identity_sha256"):
+        _require(request.get("attempt", 1) in (1, 2), "A lost planned unit permits only one identical retry.")
+        terminal = list(attempt.parent.glob("attempt*/unit_result.json"))
+        _require(len(terminal) <= 1 and (not terminal or terminal[0].parent == attempt),
+                 "A preserved result must be reused, never rerun or replaced.")
     remote_clean = kind == "clean" and request.get("provider") == "runpod"
     # Recovery must not acknowledge a canonical marker while its hot files remain uncopied.
     hot_storage.require_restored_attempts(root.resolve())
@@ -1004,13 +1049,85 @@ def run_clean_queue(request):
     return {"status": "passed", "completed": completed, "next_gate": "S1_selection_and_G4"}
 
 
+def _embedding_mask_names(record, unit):
+    return sorted({row["masked_manifest"] for row in record["units"]
+                   if row["seed"] == unit["seed"]
+                   and (row.get("arm") == "c_esmc") == (unit["embedding"] == "esmc")})
+
+
+def _esmc_farm_evidence(farm):
+    from ec_clean30 import runtime_precision
+    from training.global_esm_features import MANIFEST_FILENAME, read_manifest
+
+    receipt = _json(farm / clean.FARM_RECEIPT)
+    cache = farm.parent / "sequence_cache"
+    _require(receipt.get("action") == "esmc-farm" and receipt.get("dim") == clean.ESMC_DIM
+             and receipt.get("layer") == "final"
+             and receipt.get("embedding") == clean.esmc_embedding_tag("final")
+             and receipt.get("farm_manifest_sha256") == _sha(farm / clean.FARM_MANIFEST)
+             and receipt.get("source_cache", {}).get("dir") == str(cache), "Invalid ESMC farm identity.")
+    manifest = read_manifest(cache, receipt["source_cache"]["manifest_sha256"])
+    runtime = manifest.get("build", {}).get("runtime", {})
+    _require(str(runtime.get("device", "")).startswith("cuda")
+             and runtime.get("forward_precision") == "fp32" and runtime.get("parameter_dtype") == "float32"
+             and runtime.get("autocast_dtype") is None and runtime.get("use_flash_attn") is False,
+             "ESMC farm lacks CUDA fp32 runtime evidence.")
+    log = farm.parent / "embedding.log"
+    policy = runtime_precision.read_policy_log(log, device="cuda")
+    return {"extraction_log_sha256": _sha(log), "precision_policy": policy,
+            "cache_manifest_sha256": _sha(cache / MANIFEST_FILENAME)}
+
+
+def _esmc_farm_worker(request, source, view, inputs, record, unit, directory, roots):
+    # Use the pinned fp32 producer with its input guard and offline weight checks.
+    sequences, _ = clean.read_sequence_map_file(inputs / "sequence_map.tsv", roots, record["files"]["sequence_map.tsv"])
+    masks = _embedding_mask_names(record, unit) if unit["kind"] == "masked" else []
+    labels, _ = clean.farm_labels(sequences, kind=unit["kind"], seed=unit["seed"],
+                                 masked_manifests=[inputs / name for name in masks], forbidden_roots=roots)
+    fasta = directory / "sequences.fasta"
+    fasta.write_text("".join(f">{label}\n{sequence}\n" for label, (_, sequence) in sorted(labels.items())))
+    cache, farm = directory / "sequence_cache", directory / "farm"
+    argv, env = phase3.pretrain_embedding_command(request, source, view, fasta=fasta,
+        sequence_map=inputs / "sequence_map.tsv", sequence_map_sha256=record["files"]["sequence_map.tsv"],
+        output=cache, device="cuda")
+    started = time.monotonic()
+    with (directory / "embedding.log").open("x") as log:
+        subprocess.run([*request["cap_prefix"], *argv], cwd=REPO_ROOT, env=env,
+                       stdout=log, stderr=subprocess.STDOUT, check=True)
+    from training.global_esm_features import MANIFEST_FILENAME
+    argv = [request["python"], str(REPO_ROOT / "scripts/run_clean_split30_comparator.py"), "esmc-farm",
+            "--cache-dir", str(cache), "--cache-manifest-sha256", _sha(cache / MANIFEST_FILENAME),
+            "--layer", "final", "--sequence-map", str(inputs / "sequence_map.tsv"),
+            "--sequence-map-sha256", record["files"]["sequence_map.tsv"], "--kind", unit["kind"], "--out-dir", str(farm)]
+    if unit["seed"] is not None:
+        argv += ["--seed", str(unit["seed"])]
+    for name in masks:
+        argv += ["--masked-manifest", str(inputs / name)]
+    for root in roots:
+        argv += ["--forbidden-root", str(root)]
+    with (directory / "farm.log").open("x") as log:
+        subprocess.run([*request["cap_prefix"], *argv], cwd=REPO_ROOT, env=env,
+                       stdout=log, stderr=subprocess.STDOUT, check=True)
+    result = {"status": "passed", "kind": "embedding", "unit_id": unit["unit_id"], "source": source,
+              "g3_sha256": request["g3_sha256"], "farm": str(farm.resolve()),
+              "device_evidence": _esmc_farm_evidence(farm),
+              "producer_receipt_sha256": _sha(farm / clean.FARM_RECEIPT),
+              "farm_manifest_sha256": _sha(farm / clean.FARM_MANIFEST), "wall_seconds": time.monotonic()-started,
+              **phase3.source_identity(source), "git_head": source["git_head"], "created_utc": provenance.utc_now()}
+    _write(directory / "unit_result.json", result)
+    return result
+
+
 def embedding_worker(request):
     source, view, _, authority, _ = _runtime(request, resource="gpu", kind="embedding")
     inputs, record = _clean_inputs(request, source, view, authority)
-    kind = _unit(request, "embedding")["kind"]
+    unit = _unit(request, "embedding")
+    kind = unit["kind"]
     directory = _attempt(request)
     directory.mkdir(parents=True)
     roots = _clean_roots(view, request)
+    if unit["embedding"] == "esmc":
+        return _esmc_farm_worker(request, source, view, inputs, record, unit, directory, roots)
     helpers = {"harness": "73c25c5396f89a603a2ca97cf2adf82bb6b220bccf4d9f45801d1bdcf60bede4",
                "extract_script": "902a69cffa0b35ab16798ba655d7b0e357d0e8efd5a268558cc4b064d2e7719d"}
     for key, digest in helpers.items():
@@ -1028,8 +1145,8 @@ def embedding_worker(request):
             "--sequence-map-sha256", record["files"]["sequence_map.tsv"], "--kind", kind,
             "--out-dir", str(out), "--device", "cuda", "--threads", str(request["threads"])]
     if kind == "masked":
-        argv += ["--seed", "42"]
-        for name in record["masked_manifests"]:
+        argv += ["--seed", str(unit["seed"])]
+        for name in _embedding_mask_names(record, unit):
             argv += ["--masked-manifest", str(inputs / name)]
     for root in roots:
         argv += ["--forbidden-root", str(root)]
@@ -1179,6 +1296,69 @@ def _run_remote_queue(request, units, *, action, next_gate, transport=None, chec
     return {"status": "passed", "completed": completed, "next_gate": next_gate}
 
 
+def run_fold_attachment(request, **transport_options):
+    unit = {"unit_id": f"ecc30_pretrain_fold{request['fold']}_attempt1",
+            "forecast_seconds": request["attachment_forecast_seconds"],
+            "unit_timeout_seconds": request["attachment_timeout_seconds"]}
+    return _run_remote_queue(request, [unit], action="attach-fold", next_gate="s1", **transport_options)
+
+
+def attach_fold(request):
+    """Attach the preserved union cache under the same persistence protocol as F6 preparation."""
+    source, view, policy, _, _ = _runtime(request, resource="gpu", kind="s1")
+    _require(view.fold > 0 and request["unit_id"] == phase3._pretrain_name(request), "Invalid later-fold attachment.")
+    root = Path(request["execution_root"])
+    out = root / "runs" / request["unit_id"]
+    complete, terminal = out / "complete.json", out / "attachment_result.json"
+    with _execution(request, policy) as execution:
+        if complete.exists():
+            result = _json(complete)
+            phase3.require_record_precedence(result, source)
+            phase3.attach_pretrain(request)
+            return result
+        if terminal.exists():
+            result = _json(terminal)
+            phase3.require_record_precedence(result, source)
+            phase3.verify_preserved_pretrain_attachment(out / phase3.PRETRAIN_ATTACHMENT_MARKER, original_attempt=out)
+            pending = execution.state.get("pending_unit", {})
+            _require(pending.get("run_name") == request["unit_id"] and pending.get("persisted"),
+                     "Fold attachment awaits independent persistence.")
+            _write(complete, result)
+            execution.persist([complete])
+            return result
+        _require(not out.exists(), "Partial fold attachment requires explicit recovery.")
+        command = root / "commands" / f"{request['unit_id']}.json"
+        _write(command, request)
+        execution.admit(request["unit_id"], request["forecast_seconds"])
+        marker = phase3.prepare_pretrain_attachment(out, request=request, source=source, view=view, request_path=command)
+        started = time.monotonic()
+        passed = False
+        try:
+            with command.with_suffix(".log").open("x") as log:
+                result = execution.run_subprocess([request["python"], str(REPO_ROOT / "scripts/run_ec_clean30_phase4.py"),
+                    "_attach-fold-worker", "--request", str(command)], cwd=REPO_ROOT,
+                    env=phase3.clean_repository_environment(), stdout=log, stderr=subprocess.STDOUT,
+                    timeout=request["unit_timeout_seconds"])
+            passed = result.returncode == 0 and terminal.is_file()
+        finally:
+            phase3.restore_pretrain_attachment(marker, worker_terminated=True, termination_proof={
+                "kind": "owned_process_group_reaped", "parent_pid": os.getpid(), "session_id": request["session_id"],
+                "request_sha256": _sha(command)}, execution=execution)
+            execution.record_result(request["unit_id"], "completed" if passed else "failed_preparation", time.monotonic()-started)
+            persistence = execution.persist([command, command.with_suffix(".log"), out])
+        _require(passed, "Fold attachment failed; its bytes are preserved.")
+        return {"status": "awaiting_host_ack", "unit_id": request["unit_id"], "persistence": persistence}
+
+
+def attachment_worker(request):
+    source, view, _, _, _ = _runtime(request, resource="gpu", kind="s1")
+    out = Path(request["execution_root"]) / "runs" / request["unit_id"]
+    phase3._require_pretrain_worker_marker(out, request, source, view)
+    result = {**phase3.attach_pretrain(request), "unit_id": request["unit_id"]}
+    _write(out / "attachment_result.json", result)
+    return result
+
+
 def run_s1_queue(request, **transport_options):
     units = [{"unit_id": unit.unit_id, "forecast_seconds": request["family_forecasts"][unit.family],
               "unit_timeout_seconds": request["family_timeouts"][unit.family]}
@@ -1194,8 +1374,10 @@ def run_refit_queue(request, **transport_options):
 
 
 def run_embedding_queue(request, **transport_options):
-    units = [{"unit_id": f"ecc30_clean_embed_{kind}", "forecast_seconds": request["embedding_forecasts"][kind],
-              "unit_timeout_seconds": request["embedding_timeouts"][kind]} for kind in ("base", "masked")]
+    units = [{"unit_id": unit["unit_id"],
+              "forecast_seconds": request["embedding_forecasts"][unit["unit_id"] if request.get("clean_scope") == "final" else unit["kind"]],
+              "unit_timeout_seconds": request["embedding_timeouts"][unit["unit_id"] if request.get("clean_scope") == "final" else unit["kind"]]}
+             for unit in embedding_units(request)]
     return _run_remote_queue(request, units, action="clean-embeddings", next_gate="eight_serial_CLEAN_inner_fits", **transport_options)
 
 
@@ -1399,8 +1581,9 @@ def _science_command(request, source, view, attempt):
             argv = [*runner, "verify-all", "--out", out]
             for path in [*records, inputs["clean_sanity_record"]]:
                 argv += ["--record", path]
-            for path in inputs.get("clean_sanity_dispositions", []):
-                argv += ["--disposition", path]
+            for path in _dispositions_for([*records, inputs["clean_sanity_record"]],
+                                          inputs.get("clean_sanity_dispositions", [])):
+                argv += ["--disposition", str(path)]
         outputs.append(Path(out))
     else:
         common = ["--fold", str(view.fold), "--plan", request["plan"], "--components", inputs["components"],
@@ -1408,10 +1591,11 @@ def _science_command(request, source, view, attempt):
             "--amendment-chain-receipt", source["amendment_chain_receipt"], "--campaign-root", request["campaign_root"]]
         for path in _completed_fit_inputs(request, source, view):
             common += ["--runs", path]
-        if view.fold == 0:
+        if view.fold == 0 and step in ("select_s1", "futility"):
             common += ["--clean-sanity-record", inputs["clean_sanity_record"]]
-            for path in inputs.get("clean_sanity_dispositions", []):
-                common += ["--clean-sanity-disposition", path]
+            for path in _dispositions_for([inputs["clean_sanity_record"]],
+                                          inputs.get("clean_sanity_dispositions", [])):
+                common += ["--clean-sanity-disposition", str(path)]
         outputs.append(Path(request["step_chain"]))
         if step == "futility":
             _require(view.fold == 0, "The binding futility decision is written in fold 0 only.")
@@ -1452,7 +1636,8 @@ def _verify_scientific_result(request, result, source):
     if step in ("held_out_sanity", "verify_sanity"):
         from ec_clean30 import clean_sanity
         inputs = request["scientific_inputs"]
-        clean_sanity.held_out_binding(inputs["clean_sanity_record"], inputs.get("clean_sanity_dispositions", []))
+        clean_sanity.held_out_binding(inputs["clean_sanity_record"],
+            _dispositions_for([inputs["clean_sanity_record"]], inputs.get("clean_sanity_dispositions", [])))
         if step == "verify_sanity":
             _require(not _json(Path(inputs["clean_sanity_verify_all"])).get("stopped"),
                      "CLEAN sanity has a binding stop disposition.")
@@ -1627,7 +1812,7 @@ def select_gap(request):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=("plan", "plan-v2", "clean-inputs", "clean-final-inputs", "s1-unit", "s1-queue", "refit-unit", "refit-queue",
-                                           "clean-unit", "clean-queue", "scientific-unit", "clean-embeddings", "embedding-queue",
+                                           "clean-unit", "clean-queue", "attach-fold", "_attach-fold-worker", "scientific-unit", "clean-embeddings", "embedding-queue",
                                            "select-gap", "_s1-worker", "_refit-worker", "_clean-worker", "_embedding-worker", "_scientific-worker"))
     parser.add_argument("--request", required=True, type=Path)
     args = parser.parse_args(argv)
@@ -1651,6 +1836,8 @@ def main(argv=None):
             result = run_s1_queue(request)
         elif args.action == "refit-queue":
             result = run_refit_queue(request)
+        elif args.action == "attach-fold":
+            result = attach_fold(request)
         elif args.action == "scientific-unit":
             result = run_scientific_unit(request)
         elif args.action == "clean-embeddings":
@@ -1660,7 +1847,7 @@ def main(argv=None):
         elif args.action == "select-gap":
             result = select_gap(request)
         else:
-            result = {"_s1-worker": s1_worker, "_refit-worker": refit_worker, "_clean-worker": clean_worker,
+            result = {"_attach-fold-worker": attachment_worker, "_s1-worker": s1_worker, "_refit-worker": refit_worker, "_clean-worker": clean_worker,
                       "_embedding-worker": embedding_worker, "_scientific-worker": scientific_worker}[args.action](request)
         print(json.dumps({key: result[key] for key in ("status", "unit_id", "persistence", "n_units", "n_sequences", "next_gate", "decision")
                           if key in result} if args.action not in ("plan", "plan-v2") else result, sort_keys=True))

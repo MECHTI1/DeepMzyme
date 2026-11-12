@@ -171,8 +171,8 @@ def prepare_session_chain_receipt(config: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _execution_source(config: Mapping[str, Any], *, published: bool) -> dict[str, Any]:
-    document = _chain_manifest(config) if config.get("execution_scope") == "g2_then_fold0_v5" else None
-    _require(config.get("execution_scope") != "g2_then_fold0_v5" or document is not None,
+    document = _chain_manifest(config) if config.get("execution_scope") in {"g2_then_fold0_v5", "fold_execution_v5"} else None
+    _require(config.get("execution_scope") not in {"g2_then_fold0_v5", "fold_execution_v5"} or document is not None,
              "The v5 session requires an execution-v5 manifest.")
     options = {} if document is None else {"chain_receipt_path": session_chain_receipt_path(config),
                                           "expected_chain": document["amendment_chain"]}
@@ -668,7 +668,7 @@ def _cost(config: Mapping[str, Any]) -> dict[str, float]:
             "recovery_transfer_reserve_usd": transfer, "gross_ceiling_usd": maximum, "conservative_max_usd": ceiling}
 
 
-def _view_archive_bytes(path: Path) -> int:
+def _view_archive_bytes(path: Path, fold: int = 0) -> int:
     """The separately extracted view also occupies disk alongside its staged tar."""
     try:
         with tarfile.open(path) as archive:
@@ -680,8 +680,8 @@ def _view_archive_bytes(path: Path) -> int:
             descriptor = archive.getmember(phase3.TRANSFER_MANIFEST)
             _require(descriptor.size <= 16 * 1024 * 1024, "Fold-0 transfer manifest is oversized.")
             manifest = json.load(archive.extractfile(descriptor))
-            _require(manifest.get("format") == phase3.TRANSFER_FORMAT and manifest.get("campaign_id") == phase3.CAMPAIGN_ID
-                     and manifest.get("fold") == 0 and manifest.get("smoke") is False, "Invalid Fold-0 transfer header.")
+            _require(manifest.get("format") == (phase3.TRANSFER_FORMAT if fold == 0 else phase3.FOLD_TRANSFER_FORMAT)
+                     and manifest.get("campaign_id") == phase3.CAMPAIGN_ID and manifest.get("fold") == fold and manifest.get("smoke") is False, "Invalid Fold-0 transfer header.")
             records = manifest.get("files", [])
             expected = {row["path"]: row for row in records}
             _require(len(expected) == len(records) and set(names) == {phase3.TRANSFER_MANIFEST, *expected}
@@ -777,7 +777,7 @@ def _validate_published_runtime_locks(config: Mapping[str, Any], source: Mapping
 
 def _local_storage(config: Mapping[str, Any]) -> None:
     payload_limit = (_g2_download_limit(config, {"format": phase3.EXECUTION_V5_FORMAT})
-                     if config.get("execution_scope") == "g2_then_fold0_v5" else PAYLOAD_CEILING_BYTES)
+                     if config.get("execution_scope") in {"g2_then_fold0_v5", "fold_execution_v5"} else PAYLOAD_CEILING_BYTES)
     secondary = Path(config["secondary_drive"]).resolve()
     _require(secondary.is_mount(), "The independent secondary drive is not mounted.")
     for key in ("durable_root", "state_root"):
@@ -935,7 +935,7 @@ def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool =
     _require(config["view_archive"] in staged and any(item["remote"] == config["view_archive"]
              and item["sha256"] == config["view_archive_sha256"] for item in config["stage"]), "Fold-0 archive lacks a staging pin.")
     view_item = next(item for item in config["stage"] if item["remote"] == config["view_archive"])
-    view_bytes = _view_archive_bytes(Path(view_item["local"]))
+    view_bytes = _view_archive_bytes(Path(view_item["local"]), config.get("execution_fold", 0))
     if view_item["kind"] == "file":
         staging_bytes += view_bytes
     _require(set(config["bounds"]) == {name for _, name in queue}, "G2 must retain its exact versioned measurement queue.")
@@ -1296,15 +1296,16 @@ def _runtime_preflight(config: Mapping[str, Any], transport: ControllerTransport
         local = Path(config["state_root"]) / "esm1b_model_probe.json"
         _write(local, measured)
         transport.upload(local, f"{campaign}/g2_requests/esm1b_model_probe.json")
-    view = f"{campaign}/views/fold0"
+    fold = config.get("execution_fold", 0)
+    view = f"{campaign}/views/fold{fold}"
     if transport.read_json(f"{view}/view_manifest.json", optional=True) is None:
         transport.remote([config["remote_python"], runner, "unpack-view", "--archive", config["view_archive"],
-                          "--sha256", config["view_archive_sha256"], "--destination", view], cwd=repo, timeout=300)
+                          "--sha256", config["view_archive_sha256"], "--destination", view, "--fold", str(fold)], cwd=repo, timeout=300)
     cap = f"{campaign}/g2_requests/cap.json"
     local_cap = Path(config["state_root"]) / "cap.json"
     _write(local_cap, config["profiles"]["fit"]["cap_prefix"])
     transport.upload(local_cap, cap)
-    probe = f"{campaign}/g2_requests/probe_{source['execution_manifest_sha256']}.json"
+    probe = f"{campaign}/g2_requests/probe_fold{fold}_{source['execution_manifest_sha256']}.json"
     if transport.read_json(probe, optional=True) is None:
         arguments = [config["remote_python"], runner, "vm-probe", "--view", view,
                           "--execution-manifest", manifest, "--out", probe, "--cap-json", cap,
@@ -1469,7 +1470,8 @@ def _prepare_g2_v5(config, transport, state, state_path, session, ready, manifes
     _require(isinstance(options, dict) and set(options) == allowed,
              "G2 preparation accepts only its bound F6 inputs and explicit resource/time bounds.")
     common = _g2_common_request(config, transport, session, source, manifest, probe)
-    request = {**common, **config["profiles"]["fit"], **options}
+    request = {**common, **config["profiles"]["fit"], **options,
+               "attempt": state.get("resume_g2_attempts", {}).get("pretrain", 1)}
     binding = hashlib.sha256(json.dumps(request, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
     _require(state.get("pretrain_request_sha256", binding) == binding,
              "The session's F6 preparation request changed during recovery.")
@@ -1482,7 +1484,7 @@ def _prepare_g2_v5(config, transport, state, state_path, session, ready, manifes
     check_session()
     _require(session["deadline_unix"] - time.time() >= forecast * 1.25 + RESERVE_SECONDS,
              "F6 preparation does not fit the owned session and closeout reserve.")
-    relative = "runs/ecc30_pretrain_fold0_attempt1/pretrain_complete.json"
+    relative = f"runs/ecc30_pretrain_fold0_attempt{request['attempt']}/pretrain_complete.json"
     host = _g2_host(config, transport, session, source)
     completed = complete_remote_unit(transport, host, request,
         runner=f"{config['remote_repo']}/scripts/run_ec_clean30_phase3.py", action="pretrain-prepare",
@@ -1513,20 +1515,21 @@ def _execute_queue(config, transport, state, state_path, session, ready, manifes
         if name in state["completed"]:
             continue
         check_session()
-        request = {**common, **config["profiles"]["esm1b" if name == "esm1b" else "fit"], **config["bounds"][name]}
+        attempt = state.get("resume_g2_attempts", {}).get(name, 1)
+        request = {**common, **config["profiles"]["esm1b" if name == "esm1b" else "fit"], **config["bounds"][name], "attempt": attempt}
         if action == "timing-unit":
             request["recipe"] = name
-            complete = f"runs/ecc30timing_{name}_attempt1/g2_complete.json"
+            complete = f"runs/ecc30timing_{name}_attempt{attempt}/g2_complete.json"
         elif action == "lane-gate":
-            request.update(serial_receipts=[f"{root}/runs/ecc30timing_lane_serial_{i}_attempt1/g2_complete.json" for i in (1, 2)],
+            request.update(serial_receipts=[f"{root}/runs/ecc30timing_lane_serial_{i}_attempt{state.get('resume_g2_attempts', {}).get(f'lane_serial_{i}', 1)}/g2_complete.json" for i in (1, 2)],
                            limits=config["lane_limits"])
-            complete = "runs/ecc30timing_lane_batch_attempt1/lane_gate.json"
+            complete = f"runs/ecc30timing_lane_batch_attempt{attempt}/lane_gate.json"
             measured = [transport.read_json(path)["wall_seconds"] for path in request["serial_receipts"]]
             request["forecast_seconds"] = max(request["forecast_seconds"], 3 * max(measured))
         else:
             request.update(kind=name, timing_inputs=config["timing_inputs"], **config["embedding"][name])
-            complete = f"runs/ecc30timing_embed_{name}_attempt1/embedding_complete.json"
-        _require(not v5 or all(request.get(key) == value for key, value in common.items()),
+            complete = f"runs/ecc30timing_embed_{name}_attempt{attempt}/embedding_complete.json"
+        _require(not v5 or all(request.get(key) == value for key, value in common.items() if key != "attempt"),
                  "A v5 timing request cannot override session, source or preparation identity.")
         remaining = session["deadline_unix"] - time.time()
         _require(remaining >= request["forecast_seconds"] * 1.25 + RESERVE_SECONDS,
@@ -1644,6 +1647,7 @@ def _preserve_runpod_outputs(config, transport, controller, session, *, output=N
         if name.startswith("persistence_receipts/") and name.endswith(".json"):
             document = _json(host.root / name)
             if (isinstance(document, dict) and document.get("schema_version") == 1
+                    and (not config.get("resume") or document.get("destination_root") == str(host.root))
                     and document.get("persistence_mode") == "host_pull"
                     and isinstance(document.get("ack_path"), str) and isinstance(document.get("files"), list)):
                 manifests.append(name)
@@ -1686,8 +1690,9 @@ def validate_phase4_plan(config: Mapping[str, Any], source: Mapping[str, Any],
     """Read-only transport validation before allocation; measured G2 fields are added later."""
     from ec_clean30 import campaign, container_caps, phase4
 
-    _require(source.get("format") == phase3.EXECUTION_V5_FORMAT and request.get("fold") == 0
-             and type(request.get("fold")) is int, "The reviewed v5 continuation must be the complete fold-0 plan.")
+    _require(source.get("format") == phase3.EXECUTION_V5_FORMAT and request.get("fold") in range(5)
+             and type(request.get("fold")) is int, "The reviewed v5 continuation must be a complete canonical fold plan.")
+    fold = request["fold"]
     required = {"local_plan", "execution_manifest", "remote_runner", "durable_root", "mirror_root",
                 "host_state_root", "max_download_bytes", "remote_request_template", "queue_actions",
                 "family_forecasts", "family_timeouts", "clean_forecasts", "clean_timeouts",
@@ -1705,16 +1710,16 @@ def validate_phase4_plan(config: Mapping[str, Any], source: Mapping[str, Any],
     local_plan = Path(request["local_plan"])
     _require(local_plan.is_absolute() and local_plan.resolve() == local_plan and local_plan.is_file(),
              "The reviewed local fold plan must be an existing canonical file.")
-    plan = campaign.build_fold_plan_v2(0)
+    plan = campaign.build_fold_plan_v2(fold)
     _require(_json(local_plan) == plan, "The reviewed fold plan differs from the canonical amendment-2 plan.")
-    clean_ids = {unit["unit_id"] for unit in phase4.clean_units()}
+    clean_ids = {unit["unit_id"] for unit in phase4.clean_units()} if fold == 0 else set()
     authorized_clean = set(clean_ids)
     if request.get("run_final_clean", False):
-        authorized_clean.update(unit["unit_id"] for unit in phase4.clean_final_units(0))
+        authorized_clean.update(unit["unit_id"] for unit in phase4.clean_final_units(fold))
     _require(preapproval.get("campaign_id") == campaign.CAMPAIGN_ID
-             and preapproval.get("scope") == phase4.V5_SCOPE and preapproval.get("allowed_folds") == [0]
-             and preapproval.get("plan_sha256_by_fold") == {"0": plan["plan_sha256"]}
-             and preapproval.get("allowed_steps") == {"0": ["S1", "S4"]}
+             and preapproval.get("scope") == phase4.V5_SCOPE and preapproval.get("allowed_folds") == [fold]
+             and preapproval.get("plan_sha256_by_fold") == {str(fold): plan["plan_sha256"]}
+             and preapproval.get("allowed_steps") == {str(fold): ["S1", "S4"]}
              and preapproval.get("clean_unit_ids") == sorted(authorized_clean),
              "G3 preapproval must cover exactly the reviewed fold-0 fitted and CLEAN units.")
     _require(not {"allocations", "freeze1c_sha256", "git_head", "created_utc"}.intersection(preapproval),
@@ -1728,9 +1733,14 @@ def validate_phase4_plan(config: Mapping[str, Any], source: Mapping[str, Any],
                  "A Phase-4 unit cannot fit the reviewed allocation and shutdown reserve.")
         forecasts.append(seconds)
 
+    if fold > 0:
+        _require(config.get("resume") is not None, "Later folds require preserved fold-0 evidence.")
+        bounds(request.get("attachment_forecast_seconds"), request.get("attachment_timeout_seconds"), "F6 attachment")
+        _require({"corpus_table", "holdout_receipt", "identity_work", "official_split_dir"}
+                 <= set(request["remote_request_template"]), "Later folds need their bound F6 attachment inputs.")
     families = {unit.family for unit in phase4.s1_units(plan)}
-    groups = {"family": families, "clean": clean_ids, "embedding": {"base", "masked"},
-              "scientific": set(phase4.SCIENTIFIC_STEPS)}
+    groups = {"family": families, "clean": clean_ids, "embedding": {"base", "masked"} if fold == 0 else set(),
+              "scientific": set(phase4.SCIENTIFIC_STEPS) if fold == 0 else {"select_s1", "select_s2", "select_s4"}}
     for group, names in groups.items():
         for suffix in ("forecasts", "timeouts"):
             values = request[f"{group}_{suffix}"]
@@ -1756,9 +1766,9 @@ def validate_phase4_plan(config: Mapping[str, Any], source: Mapping[str, Any],
         return path
 
     campaign_root, repo = remote_path(config["remote_campaign"]), remote_path(config["remote_repo"])
-    execution_root = campaign_root / "runs/fold0/phase4"
+    execution_root = campaign_root / f"runs/fold{fold}/phase4"
     _require(request["remote_runner"] == str(repo / "scripts/run_ec_clean30_phase4.py")
-             and template["view"] == str(campaign_root / "views/fold0")
+             and template["view"] == str(campaign_root / f"views/fold{fold}")
              and template["campaign_root"] == str(campaign_root)
              and template["execution_root"] == str(execution_root)
              and template["durable_root"] == request["durable_root"]
@@ -1775,7 +1785,8 @@ def validate_phase4_plan(config: Mapping[str, Any], source: Mapping[str, Any],
         unit_id = f"ecc30_clean_embed_{kind}"
         expected = execution_root / "runs" / unit_id / f"attempt{attempts.get(unit_id, 1)}" / "farm"
         _require(paths[key] == expected, "CLEAN farms must name the reviewed embedding attempts' generated outputs.")
-    _require(execution_root in paths["step_chain"].parents and paths["fold0_step_chain"] == paths["step_chain"],
+    _require(execution_root in paths["step_chain"].parents and (paths["fold0_step_chain"] == paths["step_chain"] if fold == 0 else
+                 campaign_root / "runs/fold0/phase4" in paths["fold0_step_chain"].parents),
              "Fold-0 step chains must share the owned execution root.")
     scientific = template["scientific_inputs"]
     scientific_names = {"components", "clean_sanity_record", "clean_sanity_dispositions", "clean_sanity_verify_all",
@@ -1814,7 +1825,7 @@ def validate_phase4_plan(config: Mapping[str, Any], source: Mapping[str, Any],
              and type(template["distance_map_bytes"]) is int and 0 < template["distance_map_bytes"] <= phase4.MAX_DISTANCE_BYTES
              and template["hot_work_root"] == preapproval.get("hot_work_root"),
              "CLEAN needs its explicit approved working-space forecasts and hot root.")
-    protected = [repo, campaign_root / "views/fold0", execution_root,
+    protected = [repo, campaign_root / f"views/fold{fold}", execution_root,
                  paths["python"].parent.parent, paths["clean_python"].parent.parent,
                  *(paths[key] for key in ("clean_clone", "clean_inputs", "base_farm", "masked_farm"))]
     hot = paths["hot_work_root"]
@@ -1824,7 +1835,8 @@ def validate_phase4_plan(config: Mapping[str, Any], source: Mapping[str, Any],
     if input_pins is None:
         input_pins = {"fold0_inner": preapproval.get("clean_inputs_sha256")}
     _require(isinstance(input_pins, dict) and set(input_pins) ==
-             ({"fold0_inner", "fold0_final"} if request.get("run_final_clean", False) else {"fold0_inner"})
+             (({"fold0_inner"} if fold == 0 else set()) |
+              ({f"fold{fold}_final"} if request.get("run_final_clean", False) else set()))
              and all(isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) for value in input_pins.values())
              and all(isinstance(template[key], str) and re.fullmatch(r"[0-9a-f]{64}", template[key])
                      for key in ("weights_sha256", "contact_weights_sha256")),
@@ -1832,9 +1844,10 @@ def validate_phase4_plan(config: Mapping[str, Any], source: Mapping[str, Any],
     if request.get("run_final_clean", False):
         final = request.get("final_clean_request")
         _require(isinstance(final, dict) and {"clean_scope", "clean_inputs", "clean_forecasts", "clean_timeouts"} <= set(final)
-                 and set(final) <= {"clean_scope", "clean_inputs", "clean_forecasts", "clean_timeouts", "farms_by_unit", "farms_by_arm"}
+                 and set(final) <= {"clean_scope", "clean_inputs", "clean_forecasts", "clean_timeouts", "farms_by_unit",
+                                   "embedding_forecasts", "embedding_timeouts"}
                  and final["clean_scope"] == "final", "Final CLEAN needs its separately reviewed input closure and forecasts.")
-        final_ids = {unit["unit_id"] for unit in phase4.clean_final_units(0)}
+        final_ids = {unit["unit_id"] for unit in phase4.clean_final_units(fold)}
         for suffix in ("forecasts", "timeouts"):
             _require(isinstance(final[f"clean_{suffix}"], dict) and set(final[f"clean_{suffix}"]) == final_ids,
                      "Final CLEAN forecasts must cover its exact frozen unit set.")
@@ -1844,17 +1857,18 @@ def validate_phase4_plan(config: Mapping[str, Any], source: Mapping[str, Any],
         _require(final_input != paths["clean_inputs"] and final_input != hot
                  and final_input not in hot.parents and hot not in final_input.parents,
                  "Final CLEAN needs a separate closure outside hot working storage.")
-        maps = [name for name in ("farms_by_unit", "farms_by_arm") if name in final]
-        _require(len(maps) == 1, "Final CLEAN requires exactly one complete farm mapping.")
-        farms = final[maps[0]]
-        expected_farms = final_ids if maps[0] == "farms_by_unit" else {"r1", "r2", "c_esmc"}
-        _require(isinstance(farms, dict) and set(farms) == expected_farms, "Final CLEAN farm mapping is incomplete.")
-        for entry in farms.values():
-            _require(isinstance(entry, dict) and set(entry) == {"base_farm", "masked_farm"}, "Invalid final CLEAN farm mapping.")
-            for value in entry.values():
-                path = remote_path(value)
-                _require(hot != path and hot not in path.parents and path not in hot.parents,
-                         "Final CLEAN farms overlap hot working storage.")
+        final_request = {**request, **final}
+        _require(final.get("farms_by_unit") == phase4.final_farms_by_unit(final_request),
+                 "Final CLEAN farms must name their exact per-seed producer outputs.")
+        embedding_ids = {unit["unit_id"] for unit in phase4.embedding_units(final_request)}
+        for suffix in ("forecasts", "timeouts"):
+            _require(set(final.get(f"embedding_{suffix}", {})) == embedding_ids,
+                     "Final farm forecasts must cover every base and seed-specific masked producer.")
+        for name in embedding_ids:
+            bounds(final["embedding_forecasts"][name], final["embedding_timeouts"][name], name)
+        for key in ("hf_home", "esmc_weights"):
+            remote_path(template.get(key))
+
     else:
         _require("final_clean_request" not in request, "An unused final CLEAN override is outside the reviewed pipeline.")
 
@@ -1933,7 +1947,7 @@ def _continue_runpod_phase4(config, transport, state, state_path, session, ready
              and all(isinstance(values, dict) and set(values) <= allowed_overrides[action]
                      for action, values in overrides.items()),
              "Queue overrides may contain only declared forecasts, timeouts and attempts; runtime and authority are fixed.")
-    _require(config.get("execution_scope") != "g2_then_fold0_v5"
+    _require(config.get("execution_scope") not in {"g2_then_fold0_v5", "fold_execution_v5"}
              or source.get("format") == phase3.EXECUTION_V5_FORMAT,
              "Phase 4 v5 requires the authenticated execution-v5 source.")
     chain_fields = _remote_chain_request(config, source)
@@ -1950,7 +1964,7 @@ def _continue_runpod_phase4(config, transport, state, state_path, session, ready
     _require(all(key not in template or template[key] == value for key, value in chain_fields.items()),
              "The remote Phase 4 request changes the authenticated amendment chain.")
     template.update(chain_fields)
-    _require(template["execution_root"] == f"{config['remote_campaign']}/runs/fold0/phase4"
+    _require(template["execution_root"] == f"{config['remote_campaign']}/runs/fold{request.get('fold', 0)}/phase4"
              and template["durable_root"] == request["durable_root"], "Phase 4 execution or durable root differs.")
     request["remote_request_template"] = template
     outputs = [{"execution_root": f"{config['remote_campaign']}/runs/fold0/g2",
@@ -1958,6 +1972,9 @@ def _continue_runpod_phase4(config, transport, state, state_path, session, ready
                 "mirror_root": str(Path(config["mirror_root"]).resolve())},
                {"execution_root": template["execution_root"], "primary_root": request["durable_root"],
                 "mirror_root": request["mirror_root"]}]
+    for inherited in state.get("resume_output_roots", []):
+        if inherited["execution_root"] not in {item["execution_root"] for item in outputs}:
+            outputs.append(inherited)
     for output in outputs:
         devices = []
         for key in ("primary_root", "mirror_root"):
@@ -1972,7 +1989,7 @@ def _continue_runpod_phase4(config, transport, state, state_path, session, ready
                                                           allow_nan=False).encode()).hexdigest(),
                "preservation_roots": outputs, "max_download_bytes": request["max_download_bytes"],
                "host_state_root": request["host_state_root"]}
-    _require(not state.get("phase4") or all(state["phase4"].get(key) == value for key, value in binding.items()),
+    _require(not state.get("phase4", {}).get("request_sha256") or all(state["phase4"].get(key) == value for key, value in binding.items()),
              "A prepared Phase 4 continuation cannot change during recovery.")
     state.setdefault("phase4", {}).update(binding)
     _write(state_path, state)
@@ -2165,7 +2182,7 @@ def _operator_hold(config, config_path, state, state_path, session, source, chec
 def _run_runpod_g2(config, config_path, *, transport=None, controller=None, pre_allocation=None,
                    prepare_phase4=None, prepare_g2=None, complete_g2=None):
     from ec_clean30 import runpod_controller
-    continuation = config.get("execution_scope") == "g2_then_fold0_v5"
+    continuation = config.get("execution_scope") in {"g2_then_fold0_v5", "fold_execution_v5"}
     _require(not continuation or (config.get("provider") == "runpod"
                                  and callable(pre_allocation) and callable(prepare_phase4)
                                  and callable(prepare_g2) and callable(complete_g2)),
@@ -2271,7 +2288,10 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None, pre_
                     controller.admit_workload()
                     state['workload_admitted'] = True
                     _write(state_path, state)
-                    if continuation:
+                    if continuation and config.get("resume"):
+                        from ec_clean30 import execution_v5
+                        execution_v5.restore_session(config, transport, state, state_path, ready["source"], check_session)
+                    if continuation and not state.get("pretrain_preparation"):
                         _prepare_g2_v5(config, transport, state, state_path, session, ready, manifest, probe,
                                        check_session, prepare_g2)
                     _execute_queue(config, transport, state, state_path, session, ready, manifest, probe,
@@ -2329,7 +2349,7 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None, pre_
 
 
 def run_g2(config: Mapping[str, Any], config_path: Path, *, transport: ControllerTransport | None = None) -> dict[str, Any]:
-    _require(config.get("execution_scope") != "g2_then_fold0_v5",
+    _require(config.get("execution_scope") not in {"g2_then_fold0_v5", "fold_execution_v5"},
              "Execution v5 must enter its published-source launch dispatcher with explicit authorization.")
     if config.get("provider") == "runpod":
         return _run_runpod_g2(config, config_path, transport=transport)

@@ -1,12 +1,13 @@
 # Execution v5 — Runpod G2 through Fold 0
 
-Status: draft, 2026-11-04; CPU implementation only. All launch attempts are paused.
+Status: draft, 2026-11-12; CPU implementation only. All launch attempts are paused.
 Amendment 2 and this execution package must be published before a separate explicit launch authorization.
 There is no current fold-0 cost approval. The previous G2-only limits and launch requests do not authorize v5.
 
 ## Execution contract
 
-One Runpod pod and one allocation clock cover G2 and the subsequent approved fold-0 work. Session limits
+The initial Runpod pod covers G2 and the subsequent approved fold-0 work. An interrupted fold can continue
+in a separately authorized session under A2-D6, with the same GPU type and pinned environment. Session limits
 come from the approved configuration. The same owner maintains the heartbeat, stop deadline and independent
 preservation throughout both phases. Two further failed launch windows exhaust the permitted retry count;
 changing a pass directory or configuration must not reset it. GCP launches and fallback routes are excluded.
@@ -17,15 +18,15 @@ retains `1e-6`. The fold-0 view keeps its lexical campaign path while its storag
 POSIX placement. Runtime and hot-work capacity must be checked before admission.
 
 G2 timing fits write inner-fold-0 predictions for proteins that appear in other official folds' test sets.
-Every scientific design change therefore must be recorded before the first G2 run. The pending amendment
+Every scientific design change therefore must be recorded before the first G2 run. The published amendment
 owns scientific choices, unit lists and selection rules; execution code must not infer them from timing results.
 
 ## Publication dependencies
 
-The amendment-2 interface contract is available in the separate science worktree. Its chain verifier and
-scientific rules remain owned there. Manifest v5 is constructed from a published chain receipt; a draft link
-or a chain below sequence 2 cannot authorize real work. The published amendment, its five dry-run-v2 receipts
-and the execution manifest are still required before launch. A complete cost forecast also remains pending.
+The published [amendment-2 interface contract](../amendment2/interface_contract.md) owns the chain verifier
+and scientific rules. Manifest v5 is constructed from a published chain receipt; a draft link
+or a chain below sequence 2 cannot authorize real work. Link 2 is published. Its five private dry-run-v2 receipts stay on the workstation; the pod uses the
+chain receipt and the bound view-manifest digests. The execution manifest is still required before launch. A complete cost forecast also remains pending.
 
 The staged POSIX correction is included here, with its original bytes preserved as
 [component manifest](posix_component_manifest.json) and [component verification](posix_component_verification.json).
@@ -60,8 +61,8 @@ amendment2.write_chain_receipt(tip, freeze1_sha256, out,
 Pod and unit checks call `amendment_chain.check_chain_receipt(receipt_path, repo=repo,
 expected_chain=expected_chain)`. Full chain verification stays on the workstation's full clone.
 The returned `fit_chain` and `scientific_identity_sha256` bind G2, Freeze 1c v2, G3 and unit records;
-execution-manifest hashes remain operational provenance. Each real view binding also checks its fold's
-amendment-2 dry-run receipt and the unchanged Freeze-1 in-view receipt. The pinned replay function is
+execution-manifest hashes remain operational provenance. Each real view binding compares its manifest SHA-256 with the authenticated fold evidence and checks
+the unchanged Freeze-1 in-view receipt; it does not open a private dry-run-v2 receipt on the pod. The pinned replay function is
 `phase4.replay_cpu_logits`: CPU, absolute tolerance `1e-5`, near-tie threshold `2e-5`, mandatory argmax agreement.
 The existing `freeze.verify_s1_amendment` remains unchanged for historical authentication.
 
@@ -78,12 +79,46 @@ only after the owned child is reaped; unresolved markers block automatic acknowl
 independent copies are verified before closeout. Scientific snapshots include every applicable futility pointer,
 including partial records, so an interrupted decision cannot disappear during cleanup.
 
-The science publication still must register `phase4.replay_cpu_logits` in `PINNED_EXECUTION_FUNCTIONS` and
-expose public replacements for `views._set_permissions`, `views._remove_tree`, and
-`ec_prediction_export._graph_options`, `_prediction_loader`, `_predict`. The existing private reads remain a
-C7 publication blocker until that handoff; they are not an approved exception. The F6 input role
-`inputs.f6_corpus.tables.<fold>` must bind both `corpus.tsv` and `corpus_table_receipt.json` for authenticated
-final-arm CLEAN input preparation. None of these draft changes grants launch or spending authority.
+C7 passes on the execution source tree: scientific interfaces are public, and the pinned CPU replay function
+is registered by amendment 2. The F6 corpus-table roles bind each table and its receipt. Final CLEAN input
+preparation checks the complete official training file against that receipt's SHA-256 before creating the
+G3-bound closure; accepting a synthetic file's basename in the comparator does not authorize real-fit inputs.
+
+Final CLEAN preparation dispatches one ESM-1b base farm and one masked farm for each frozen seed, and equivalent
+C-ESMC farms through the fp32 sequence producer followed by `esmc-farm`. The frozen per-arm seed lists determine
+the queue. `farms_by_unit` must name the generated base and matching seed's masked farm; shared arm mappings
+are refused by the v5 launch gate. Final preparation requires explicit `embedding_forecasts` and
+`embedding_timeouts`, keyed by producer unit ID, plus `hf_home` and `esmc_weights` in the worker template.
+
+Sanity dispositions for individual fits use `clean_sanity_dispositions_by_unit`. Scientific input dispositions
+are filtered by the SHA-256 of the consumed record: verify-all receives its whole record set, while S1 and FUT
+receive only the held-out record's dispositions. S2 and S4 receive no CLEAN sanity flags.
+
+## Resume and later-fold dispatch
+
+A reviewed configuration may bind a `resume` object containing `config_path`, `config_sha256`, `state_path`,
+`state_sha256`, `preservation_path` and `preservation_sha256` for the prior session. Admission verifies terminal
+provider evidence, the preserved inventories on both devices, the scientific identity, GPU type and runtime
+pins. New driver, controller and independent-copy destinations preserve the previous session's records unchanged.
+The same shared failed-launch ledger remains in force; a preserved session that admitted scientific work is not
+a failed launch window. Each new allocation still needs its own explicit authorization and numerical envelope.
+
+Restoration uses the original remote paths, including F6 attachment snapshots and futility pointers. Finished
+results are verified and reused. A unit with no preserved result gets at most one retry of the identical planned
+unit; another failure, conflicting results or partial scientific decision outputs stop for diagnosis. G2 receipts
+and preparation are reused as well. No lost attempt contributes a checkpoint or prediction to selection.
+
+Later folds use `execution_scope: fold_execution_v5` and `execution_fold: 1` through `4`, with a matching reviewed
+Phase-4 request and `fold_cost_ceiling_usd` in the launch authorization. They require preserved G2 and fold-0
+records, the corresponding frozen view archive, and a binding futility continue. Their F6 attachment uses the
+preserved union cache and the fold's bound `corpus_table`, `holdout_receipt`, `identity_work` and
+`official_split_dir`; `attachment_forecast_seconds` and `attachment_timeout_seconds` are explicit reviewed bounds.
+The route then runs the complete canonical S1, S2 and S4 sequence and optional authorized final CLEAN queue.
+
+Pending publication steps: commit the reviewed execution changes, obtain a published-chain receipt on the clean
+tree, build and publish the v5 manifest, complete the cost forecast and approve its numerical envelope and launch.
+The manifest builder requires a clean published receipt context; staged working changes are not publication.
+None of the CPU checks grants launch or spending authority.
 
 ## Provisional cost scenarios
 

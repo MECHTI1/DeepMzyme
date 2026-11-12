@@ -251,25 +251,28 @@ def validate_launch_authorization(config: Mapping[str, Any], config_path: Path,
 
     authorization = _record(authorization_path)
     _require(_record(config_path) == dict(config), "The in-memory configuration differs from its reviewed file.")
-    _require(config.get("provider") == "runpod" and config.get("execution_scope") == "g2_then_fold0_v5",
-             "Execution v5 authorizes only its Runpod G2-through-fold-0 session.")
+    _require(config.get("provider") == "runpod" and config.get("execution_scope") in {"g2_then_fold0_v5", "fold_execution_v5"},
+             "Execution v5 requires an explicit Runpod session scope.")
     _require(source.get("format") == phase3.EXECUTION_V5_FORMAT and source.get("published") is True,
              "Launch requires published execution v5 and amendment 2.")
     phase3.authenticated_chain(source)
     _require(authorization.get("format") == AUTHORIZATION_FORMAT
              and authorization.get("launch_authorized") is True
              and authorization.get("provider") == "runpod"
-             and authorization.get("scope") == "g2_then_fold0_v5"
+             and authorization.get("scope") == config["execution_scope"]
              and isinstance(authorization.get("approved_by"), str) and authorization["approved_by"].strip(),
              "A separate explicit maintainer launch authorization is required.")
     _require(authorization.get("config_sha256") == _file_sha(config_path)
              and authorization.get("execution_manifest_sha256") == source["execution_manifest_sha256"],
              "Launch authorization does not bind this exact reviewed execution configuration.")
     phase3.require_same_scientific_identity(authorization, source)
-    ceiling = authorization.get("fold0_cost_ceiling_usd")
+    fold = config.get("execution_fold", 0)
+    _require(type(fold) is int and fold in range(5)
+             and (fold == 0 or config["execution_scope"] == "fold_execution_v5"), "Later folds need explicit fold execution scope.")
+    ceiling = authorization.get("fold0_cost_ceiling_usd" if fold == 0 else "fold_cost_ceiling_usd")
     _require(type(ceiling) in (int, float) and math.isfinite(ceiling) and ceiling > 0
              and ceiling == config.get("runpod", {}).get("gross_ceiling_usd"),
-             "The fold-0 cost ceiling must be explicitly approved and equal the controller ceiling.")
+             "The fold cost ceiling must be explicitly approved and equal the controller ceiling.")
     _require(authorization.get("failed_window_limit") == FAILED_WINDOW_LIMIT,
              "Authorization must retain the two-failed-window stop.")
     _path(authorization.get("failure_ledger", ""), "failure_ledger")
@@ -290,6 +293,8 @@ def validate_launch_authorization(config: Mapping[str, Any], config_path: Path,
              and type(config["runpod"].get("max_runtime_seconds")) in (int, float)
              and 0 < config["runpod"]["max_runtime_seconds"] <= ceilings["gpu_seconds"],
              "The controller allocation must fit the positive G3 preapproved ceilings before launch.")
+    _require(request.get("fold", 0) == config.get("execution_fold", 0), "Reviewed configuration and requested fold differ.")
+    validate_resume(config, source)
     workstation.validate_phase4_plan(config, source, request, preapproval)
     return authorization
 
@@ -335,6 +340,283 @@ def materialize_g3(preapproval: Mapping[str, Any], *, preapproval_sha256: str, f
         handle.write("\n")
     return document
 
+
+def validate_resume(config, source):
+    """Authenticate a terminal session and both preserved copies before any allocation."""
+    from ec_clean30 import phase3
+
+    spec = config.get("resume")
+    if spec is None:
+        _require(config.get("execution_fold", 0) == 0, "Later folds require preserved fold-0 records.")
+        return None
+    _require(isinstance(spec, dict) and set(spec) == {"config_path", "config_sha256", "state_path", "state_sha256",
+                                                    "preservation_path", "preservation_sha256"},
+             "Resume needs exact prior configuration, driver state and preservation bindings.")
+    _, prior = _bound_record(spec, "config")
+    _, state = _bound_record(spec, "state")
+    _, proof = _bound_record(spec, "preservation")
+    _require(state.get("closed") is True and verified_terminal_state(state) in {"verified_absent", "verified_stopped"}
+             and state.get("config_sha256") == spec["config_sha256"]
+             and state.get("closeout", {}).get("preservation_sha256") == spec["preservation_sha256"]
+             and not state.get("preservation_error"), "Resume requires verified terminal closeout and complete preservation.")
+    _require(state.get("status") != "stopped_futility", "A binding futility stop cannot resume.")
+    for key in ("hardware_profile", "runtime_environments", "remote_repo", "remote_campaign", "remote_python", "embedding"):
+        _require(config.get(key) == prior.get(key) and key in config, f"Resume changes pinned {key}.")
+    for key in ("gpu_id", "image", "runtime_environment"):
+        _require(config["runpod"].get(key) == prior["runpod"].get(key) and key in config["runpod"],
+                 f"Resume changes the GPU type or pinned environment ({key}).")
+    _require(config["state_root"] != prior["state_root"]
+             and config["runpod"]["state_root"] != prior["runpod"]["state_root"],
+             "Resume needs new driver and controller state roots; prior records stay immutable.")
+    for current, previous in ((config, prior), (config["phase4"], prior["phase4"])):
+        if "request_path" in current:
+            _, current = _bound_record(current, "request")
+            _, previous = _bound_record(previous, "request")
+        for key in ("durable_root", "mirror_root"):
+            left, right = Path(current[key]), Path(previous[key])
+            _require(left != right and left not in right.parents and right not in left.parents,
+                     "Resume destinations must preserve the prior independent copies unchanged.")
+    previous_manifest = _record(prior["execution_manifest"])
+    phase3.require_same_scientific_identity(previous_manifest, source)
+    preparation = state.get("pretrain_preparation")
+    if preparation:
+        phase3.require_same_scientific_identity(preparation["record"], source)
+        _require(_file_sha(Path(preparation["local_path"])) == preparation["sha256"], "Preserved F6 preparation changed.")
+    if config.get("execution_fold", 0) > 0:
+        from ec_clean30 import workstation
+        _require(preparation and state.get("completed") == [name for _, name in workstation.measurement_queue(source)],
+                 "Later folds require all preserved G2 measurements.")
+    for item in state.get("g2_evidence", {}).values():
+        _require(_file_sha(Path(item["local_path"])) == item["sha256"], "Preserved G2 evidence changed.")
+        phase3.require_record_precedence(_record(item["local_path"]), source)
+    rows = proof.get("receipts") if proof.get("format") == "deepmzyme_ec_clean30_runpod_preservation_set_v1" else [
+        {"path": spec["preservation_path"], "sha256": spec["preservation_sha256"]}]
+    _require(isinstance(rows, list) and rows, "Resume preservation has no inventories.")
+    inventories = []
+    for row in rows:
+        path = Path(row["path"])
+        record = _record(path)
+        _require(_file_sha(path) == row["sha256"] and record.get("session_id") == state["session_id"]
+                 and record.get("pod_id") == state["pod_id"], "Resume inventory is changed or foreign.")
+        roots = [Path(record[key]) for key in ("primary_root", "mirror_root")]
+        _require(all(root.is_dir() and root.resolve() == root for root in roots)
+                 and roots[0].stat().st_dev != roots[1].stat().st_dev, "Resume requires independent preserved devices.")
+        seen = set()
+        for entry in record["files"]:
+            relative = PurePosixPath(entry["path"])
+            _require(not relative.is_absolute() and ".." not in relative.parts and str(relative) not in seen,
+                     "Unsafe or duplicate preserved member.")
+            seen.add(str(relative))
+            for root in roots:
+                file = root / str(relative)
+                _require(file.resolve() == file and file.is_file() and file.stat().st_size == entry["size_bytes"]
+                         and _file_sha(file) == entry["sha256"], "A preserved result is missing or changed; never replace it.")
+        inventory = _record(roots[0] / record["remote_inventory_path"])
+        members = {entry["path"]: entry for entry in record["files"]}
+        _require(all(entry == members.get(entry.get("path")) for entry in inventory.get("files", []))
+                 and inventory.get("session_id") == state["session_id"], "Preservation omits the remote inventory.")
+        _require(inventory.get("pending_transfer") is None
+                 and (not inventory.get("pending_unit") or inventory["pending_unit"].get("persisted") is True),
+                 "Resume refuses unacknowledged work.")
+        inventories.append(record)
+    return {"config": prior, "state": state, "inventories": inventories,
+            "preservation_sha256": spec["preservation_sha256"]}
+
+
+def g2_unit_paths(action, name):
+    if action == "timing-unit":
+        return f"ecc30timing_{name}", "g2_complete.json"
+    if action == "lane-gate":
+        return "ecc30timing_lane_batch", "lane_gate.json"
+    return f"ecc30timing_embed_{name}", "embedding_complete.json"
+
+
+def g2_resume_attempts(root, source):
+    from ec_clean30 import workstation
+    result = {}
+    queue = [("pretrain-prepare", "pretrain"), *workstation.measurement_queue(source)]
+    for action, name in queue:
+        prefix, complete = (("ecc30_pretrain_fold0", "pretrain_complete.json") if name == "pretrain"
+                            else g2_unit_paths(action, name))
+        partial = {"timing-unit": "g2_timing.json", "lane-gate": "batch_timing.json",
+                   "embed-timing": "embedding_timing.json", "pretrain-prepare": "pretrain_preparation.json"}[action]
+        numbers = set()
+        for base in (Path(root) / "runs", Path(root) / "commands"):
+            for path in base.glob(prefix + "_attempt*"):
+                match = re.fullmatch(re.escape(prefix) + r"_attempt([12])(?:\.json|\.log)?", path.name)
+                _require(match is not None, "G2 resume has an unsupported retry history.")
+                numbers.add(int(match[1]))
+        terminal = [n for n in sorted(numbers) if any((Path(root) / "runs" / f"{prefix}_attempt{n}" / file).is_file()
+                                                      for file in (complete, partial))]
+        _require(len(terminal) <= 1, "G2 has multiple results; no result selection is permitted.")
+        if terminal:
+            result[name] = terminal[0]
+        elif numbers:
+            _require(numbers == {1}, "The identical G2 retry has already been used.")
+            result[name] = 2
+    return result
+
+
+def inherited_artifacts(config):
+    """Read the authenticated prior inventory once per preservation verification."""
+    spec = config.get("resume")
+    if not spec:
+        return {}
+    _, proof = _bound_record(spec, "preservation")
+    rows = proof.get("receipts", [{"path": spec["preservation_path"], "sha256": spec["preservation_sha256"]}])
+    artifacts = {}
+    for row in rows:
+        path = Path(row["path"])
+        _require(_file_sha(path) == row["sha256"], "Prior preservation receipt changed.")
+        record = _record(path)
+        for entry in record["files"]:
+            name = str(PurePosixPath(record["execution_root"]) / entry["path"])
+            _require(name not in artifacts, "Duplicate inherited artifact.")
+            artifacts[name] = entry["sha256"]
+    return artifacts
+
+
+def resume_attempts(root):
+    """Keep every terminal result; allow exactly one identical retry of a lost unit."""
+    attempts = {}
+    for unit in (Path(root) / "runs").glob("*"):
+        directories = sorted(unit.glob("attempt[0-9]*"))
+        if not directories:
+            attachment = unit / "attachment_result.json"
+            _require(not (unit / "complete.json").exists() or attachment.is_file(),
+                     "A finished unit lost its preserved result; refuse replacement.")
+            continue
+        numbers = [int(path.name.removeprefix("attempt")) for path in directories]
+        _require(numbers == list(range(1, max(numbers) + 1)), "Resume attempt history has a gap.")
+        results = [path for path in directories if (path / "unit_result.json").exists()]
+        _require(len(results) <= 1, "Multiple preserved results cannot be selected or replaced.")
+        complete = unit / "complete.json"
+        if complete.exists():
+            _require(len(results) == 1, "A finished unit lost its preserved result; refuse replacement.")
+            attempt = _record(complete).get("attempt", 1)
+            _require(attempt == int(results[0].name.removeprefix("attempt")), "Completed attempt differs from its result.")
+        elif results:
+            attempt = int(results[0].name.removeprefix("attempt"))
+        else:
+            _require(max(numbers) == 1, "The identical planned retry has already been used; stop for a decision.")
+            _require(not unit.name.startswith("ecc30_science_"), "Partial scientific outputs require diagnosis before resume.")
+            attempt = 2
+        attempts[unit.name] = attempt
+    commands = {}
+    for command in (Path(root) / "commands").glob("*_attempt*.json"):
+        match = re.fullmatch(r"(.+)_attempt([12])\.json", command.name)
+        _require(match is not None, "An unsupported attempt command cannot be resumed.")
+        commands.setdefault(match[1], set()).add(int(match[2]))
+    for name, numbers in commands.items():
+        if name in attempts:
+            _require(max(numbers) <= attempts[name], "A later attempt cannot replace a preserved result.")
+        elif not (Path(root) / "runs" / name).exists():
+            _require(numbers == {1}, "The identical planned retry has already been used.")
+            attempts[name] = 2
+    return attempts
+
+
+def restore_session(config, transport, state, state_path, source, check_session):
+    """Restore authenticated bytes at their original paths, without replacing a result."""
+    from ec_clean30 import phase3, phase4, workstation
+
+    resume = validate_resume(config, source)
+    if resume is None:
+        return
+    if state.get("resume_restored"):
+        _require(state["resume_restored"] == resume["preservation_sha256"], "Restored session binding changed.")
+        return
+    campaign_root = PurePosixPath(config["remote_campaign"])
+    staged, attempts = {}, {}
+    _, reviewed = _bound_record(config["phase4"], "request")
+    outputs = [{"execution_root": f"{config['remote_campaign']}/runs/fold0/g2",
+                "primary_root": config["durable_root"], "mirror_root": config["mirror_root"]},
+               {"execution_root": reviewed["remote_request_template"]["execution_root"],
+                "primary_root": reviewed["durable_root"], "mirror_root": reviewed["mirror_root"]}]
+    for record in resume["inventories"]:
+        remote = record["execution_root"]
+        if remote in {item["execution_root"] for item in outputs}:
+            continue
+        suffix = "_preserved_" + PurePosixPath(remote).parent.name
+        outputs.append({"execution_root": remote, "primary_root": reviewed["durable_root"] + suffix,
+                        "mirror_root": reviewed["mirror_root"] + suffix})
+    state["resume_output_roots"] = outputs
+    state["phase4"] = {"preservation_roots": outputs, "max_download_bytes": reviewed["max_download_bytes"],
+                       "host_state_root": reviewed["host_state_root"]}
+    transport.stop_controller.register_output_roots(outputs)
+    workstation._write(state_path, state)
+    previous_fold = resume["config"].get("execution_fold", 0)
+    if config.get("execution_fold", 0) != previous_fold:
+        old = resume["config"]
+        view = f"{config['remote_campaign']}/views/fold{previous_fold}"
+        if transport.read_json(f"{view}/view_manifest.json", optional=True) is None:
+            item = next(item for item in old["stage"] if item["remote"] == old["view_archive"])
+            workstation._stage_file(config, transport, item)
+            transport.remote([config["remote_python"], f"{config['remote_repo']}/scripts/run_ec_clean30_phase3.py",
+                "unpack-view", "--archive", old["view_archive"], "--sha256", old["view_archive_sha256"],
+                "--destination", view, "--fold", str(previous_fold)], timeout=300)
+    def add(local, remote, digest):
+        path = PurePosixPath(remote)
+        _require(campaign_root in path.parents and ".." not in path.parts, "Resume output escapes the campaign.")
+        previous = staged.get(str(path))
+        _require(previous is None or previous["sha256"] == digest, "Preserved output snapshots disagree.")
+        staged[str(path)] = {"local": str(local), "remote": str(path), "sha256": digest}
+
+    for record in resume["inventories"]:
+        local = Path(record["primary_root"])
+        remote = PurePosixPath(record["execution_root"])
+        for entry in record["files"]:
+            if entry["path"] == "execution_state.json" or entry["path"].startswith("closeout/"):
+                continue  # New allocation bookkeeping; the original stays in the immutable inventory.
+            add(local / entry["path"], remote / entry["path"], entry["sha256"])
+            if Path(entry["path"]).name == phase3.PRETRAIN_ATTACHMENT_MARKER:
+                marker = phase3.verify_preserved_pretrain_attachment(local / entry["path"],
+                    original_attempt=remote / Path(entry["path"]).parent)
+                finished = any(((local / entry["path"]).parent / name).is_file()
+                               for name in ("pretrain_preparation.json", "attachment_result.json"))
+                for file in marker["files"] if finished else []:
+                    add((local / entry["path"]).parent / "attachment_snapshot" / file["path"],
+                        PurePosixPath(marker["identity"]["view_root"]) / "whole_protein_pretrain" / file["path"], file["sha256"])
+            if Path(entry["path"]).name == phase4.SCIENTIFIC_PENDING:
+                marker = phase4.verify_preserved_scientific_outputs(local / entry["path"],
+                    original_attempt=remote / Path(entry["path"]).parent)
+                # Out-of-root pointers are immutable. The live step chain is already in the inventory.
+                for file in marker["files"]:
+                    if file["exists"] and remote not in PurePosixPath(file["path"]).parents:
+                        add((local / entry["path"]).parent / file["snapshot"], file["path"], file["sha256"])
+        if str(remote).endswith(f"/runs/fold{config.get('execution_fold', 0)}/phase4"):
+            attempts = resume_attempts(local)
+        execution = local / "execution_state.json"
+        if execution.exists():
+            prior = _record(execution)
+            _require(not prior.get("pending_transfer"), "Resume cannot discard a pending transfer.")
+            target = execution
+            if prior.get("active_child"):
+                # The bound terminal provider receipt proves that this old child cannot still run.
+                prior.update(owner=None, active_child=None)
+                target = Path(config["state_root"]) / ("resume_" + hashlib.sha256(str(remote).encode()).hexdigest() + ".json")
+                if not target.exists():
+                    workstation._write(target, prior)
+            add(target, remote / "execution_state.json", _file_sha(target))
+    _stage_pipeline_files({"remote_campaign": str(campaign_root), "stage_files": list(staged.values())},
+                          transport, check_session)
+    prior = resume["state"]
+    for key in ("completed", "g2_evidence", "pretrain_preparation"):
+        if key in prior:
+            state[key] = prior[key]
+    g2 = next(record for record in resume["inventories"] if record["execution_root"].endswith("/fold0/g2"))
+    state["resume_g2_attempts"] = g2_resume_attempts(Path(g2["primary_root"]), source)
+    for action, name in workstation.measurement_queue(source):
+        prefix, terminal = g2_unit_paths(action, name)
+        attempt = state["resume_g2_attempts"].get(name, 1)
+        path = Path(g2["primary_root"]) / "runs" / f"{prefix}_attempt{attempt}" / terminal
+        if path.is_file():
+            phase3.require_record_precedence(_record(path), source)
+            state.setdefault("g2_evidence", {})[name] = {"local_path": str(path), "sha256": _file_sha(path),
+                "remote_path": str(PurePosixPath(g2["execution_root"]) / path.relative_to(g2["primary_root"]))}
+    state["completed"] = [name for _, name in workstation.measurement_queue(source) if name in state.get("g2_evidence", {})]
+    state.update(resume_restored=resume["preservation_sha256"], resume_attempts=attempts)
+    workstation._write(state_path, state)
 
 def prepare_g2(config, transport, state, session, ready, manifest, probe, check_session):
     """Return reviewed preparation metadata; this callback never accesses a pod."""
@@ -393,11 +675,22 @@ def prepare_phase4(config, transport, state, session, ready, manifest, probe, ch
                    remote_campaign=config["remote_campaign"])
     preparation = state["pretrain_preparation"]
     request["measurement_files"][preparation["sha256"]] = preparation["local_path"]
+    if state.get("resume_attempts"):
+        _require(not request.get("attempts") or request["attempts"] == state["resume_attempts"],
+                 "Reviewed attempts conflict with preserved results.")
+        request["attempts"] = state["resume_attempts"]
+        if request.get("run_final_clean"):
+            from ec_clean30 import phase4
+            request["final_clean_request"] = {**request["final_clean_request"],
+                "farms_by_unit": phase4.final_farms_by_unit({**request, "clean_scope": "final"})}
     template = dict(request["remote_request_template"])
-    template.update(execution_manifest=manifest, freeze1c=freeze["remote"], g3_authority=remote_g3,
+    template.update(fold=request["fold"], execution_manifest=manifest, freeze1c=freeze["remote"], g3_authority=remote_g3,
                     g3_sha256=_file_sha(g3), vm_probe=probe,
                     measurement_files={row["sha256"]: row["remote_path"] for row in state["g2_evidence"].values()})
     template["measurement_files"][preparation["sha256"]] = preparation["remote_path"]
+    if request["fold"] > 0:
+        cache = preparation["record"]["caches"]["cuda"]
+        template.update(seq_cache=cache["path"], seq_manifest_sha256=cache["sha256"])
     request["remote_request_template"] = template
     request["stage_files"] = [*request.get("stage_files", []),
                               {"local": str(g3), "remote": remote_g3, "sha256": _file_sha(g3)}]
@@ -452,6 +745,8 @@ def run_phase4_pipeline(request, *, transport, check_session, record_progress):
         record("clean_inner", phase4.run_clean_remote_queue)
         record("held_out_sanity", phase4.run_scientific_step, step="held_out_sanity")
         record("verify_sanity", phase4.run_scientific_step, step="verify_sanity")
+    if fold > 0:
+        record("attach_fold", phase4.run_fold_attachment)
     record("s1", phase4.run_s1_queue)
     record("select_s1", phase4.run_scientific_step, step="select_s1")
     record("select_s2", phase4.run_scientific_step, step="select_s2")
@@ -465,13 +760,17 @@ def run_phase4_pipeline(request, *, transport, check_session, record_progress):
     record("s4", phase4.run_refit_queue)
     if request.get("run_final_clean", False):
         final = dict(request["final_clean_request"])
-        allowed = {"clean_scope", "clean_inputs", "clean_forecasts", "clean_timeouts", "farms_by_unit", "farms_by_arm"}
+        allowed = {"clean_scope", "clean_inputs", "clean_forecasts", "clean_timeouts", "farms_by_unit",
+                   "embedding_forecasts", "embedding_timeouts"}
         _require(set(final) <= allowed and final.get("clean_scope") == "final",
                  "Final CLEAN overrides may not change source, session, caps or persistence.")
         template = {**request["remote_request_template"],
-                    **{key: value for key, value in final.items() if key not in {"clean_forecasts", "clean_timeouts"}}}
-        record("clean_final", phase4.run_clean_remote_queue,
-               unit_request={**request, **final, "remote_request_template": template})
+                    **{key: value for key, value in final.items() if key not in {"clean_forecasts", "clean_timeouts", "embedding_forecasts", "embedding_timeouts"}}}
+        final_request = {**request, **final, "remote_request_template": template}
+        farms = phase4.final_farms_by_unit(final_request)
+        _require(final.get("farms_by_unit") == farms, "Final CLEAN farms must match their seed-specific producers.")
+        record("final_embeddings", phase4.run_embedding_queue, unit_request=final_request)
+        record("clean_final", phase4.run_clean_remote_queue, unit_request=final_request)
     return {"status": "passed", "fold": fold, **phase3.source_identity(source)}
 
 
@@ -480,7 +779,7 @@ def run_v5(config: Mapping[str, Any], config_path: Path, *, authorization_path: 
     """Explicit launch entry point; all publication, approval and retry gates precede provider access."""
     from ec_clean30 import phase3, workstation
 
-    _require(config.get("provider") == "runpod" and config.get("execution_scope") == "g2_then_fold0_v5",
+    _require(config.get("provider") == "runpod" and config.get("execution_scope") in {"g2_then_fold0_v5", "fold_execution_v5"},
              "Execution v5 requires its explicit Runpod configuration.")
     workstation.prepare_session_chain_receipt(config)
     source = phase3.verify_execution_source(Path(config["execution_manifest"]),
@@ -517,7 +816,8 @@ def run_v5(config: Mapping[str, Any], config_path: Path, *, authorization_path: 
                 closeout = state.get("closeout", {})
                 preserved = bool(closeout.get("preservation_sha256")) and (
                     closeout.get("provider_absence_verified") is True or closeout.get("provider_stop_verified") is True)
-                outcome = ("completed" if state.get("status") in {"phase4_complete", "stopped_futility"}
+                outcome = ("completed" if (state.get("workload_admitted") or
+                            state.get("status") in {"phase4_complete", "stopped_futility"})
                            and preserved and not state.get("preservation_error") else "failed")
                 ledger.finish_window(window_id, outcome=outcome, closeout_sha256=_file_sha(state_path),
                                       provider_terminal=terminal)

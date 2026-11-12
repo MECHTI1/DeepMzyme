@@ -1787,7 +1787,7 @@ def verify_pretrain_evidence(path: Path, source: Mapping[str, Any], *, view: vie
 def _pretrain_name(request: Mapping[str, Any]) -> str:
     attempt = request.get("attempt", 1)
     _require(type(attempt) is int and attempt > 0, "F6 preparation requires a positive attempt number.")
-    return f"ecc30_pretrain_fold0_attempt{attempt}"
+    return f"ecc30_pretrain_fold{request.get('fold', 0)}_attempt{attempt}"
 
 
 def _pretrain_marker(path: Path) -> dict[str, Any]:

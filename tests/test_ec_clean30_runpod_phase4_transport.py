@@ -112,7 +112,7 @@ def test_preservation_set_checks_every_registered_root(tmp_path, problem):
         assert _allow_set is False
         checked.append(path)
         return controller._sha(path)
-    owner = SimpleNamespace(config_sha=identity["config_sha256"], _owned_id=lambda: "pod",
+    owner = SimpleNamespace(config={}, config_sha=identity["config_sha256"], _owned_id=lambda: "pod",
                             _state=lambda: {"session_id": "session", "required_preservation_roots": roots},
                             _verify_preservation=verify_child)
     if problem:
@@ -179,7 +179,7 @@ def test_empty_registered_phase4_tree_is_allowed_only_before_its_own_admission(t
     state = {"session_id": "session", "workload_admitted": True,
              "required_preservation_roots": [{"execution_root": "/campaign/g2"}, {"execution_root": "/campaign/phase4"}],
              "admitted_output_roots": ["/campaign/g2"] + (["/campaign/phase4"] if admitted else [])}
-    owner = SimpleNamespace(config_sha=identity["config_sha256"], _owned_id=lambda: "pod", _state=lambda: state)
+    owner = SimpleNamespace(config={}, config_sha=identity["config_sha256"], _owned_id=lambda: "pod", _state=lambda: state)
     if admitted:
         with pytest.raises(controller.RunpodError, match="admitted workload"):
             controller.RunpodController._verify_preservation(owner, path, _allow_set=False)
@@ -216,7 +216,7 @@ def test_controller_refuses_pending_hot_marker_even_when_execution_state_looks_t
         return result
 
     monkeypatch.setattr(Path, "stat", device_stat)
-    owner = SimpleNamespace(config_sha=identity["config_sha256"], _owned_id=lambda: "pod",
+    owner = SimpleNamespace(config={}, config_sha=identity["config_sha256"], _owned_id=lambda: "pod",
                             _state=lambda: {"session_id": "session", "workload_admitted": False})
     with pytest.raises(controller.RunpodError, match="Hot attempt is not completely preserved"):
         controller.RunpodController._verify_preservation(owner, path)

@@ -143,17 +143,21 @@ def test_pipeline_order_and_binding_stop(approved, monkeypatch, decision):
     events = []
     request = {"execution_manifest": "manifest", "amendment_chain_receipt": "receipt",
                "expected_chain": source["amendment_chain"], **phase3.source_identity(source),
-               "provider": "runpod", "remote_campaign": "/workspace/campaign", "run_final_clean": True,
-               "remote_request_template": {"session_id": "owned", "clean_inputs": "inner"},
+               "provider": "runpod", "fold": 0, "remote_campaign": "/workspace/campaign", "run_final_clean": True,
+               "remote_request_template": {"session_id": "owned", "clean_inputs": "inner", "execution_root": "/workspace/campaign/runs/fold0/phase4"},
                "final_clean_request": {"clean_scope": "final", "clean_inputs": "final",
                                        "clean_forecasts": {}, "clean_timeouts": {}}}
+
+    request["final_clean_request"]["farms_by_unit"] = phase4.final_farms_by_unit({**request, "clean_scope": "final"})
 
     def queue(name):
         def call(request, **options):
             assert options["close_session"] is False
             if request.get("clean_scope") == "final":
-                assert request["remote_request_template"] == {"session_id": "owned", "clean_inputs": "final", "clean_scope": "final"}
-            events.append("clean_final" if request.get("clean_scope") == "final" else name)
+                assert request["remote_request_template"]["clean_inputs"] == "final"
+                assert request["remote_request_template"]["farms_by_unit"] == request["farms_by_unit"]
+            events.append(("final_embeddings" if name == "clean_embeddings" else "clean_final")
+                          if request.get("clean_scope") == "final" else name)
             return {"status": "passed"}
         return call
 
@@ -169,7 +173,7 @@ def test_pipeline_order_and_binding_stop(approved, monkeypatch, decision):
                                     record_progress=lambda name, result: None)
     expected = ["clean_embeddings", "clean_inner", "held_out_sanity", "verify_sanity", "s1", "select_s1", "select_s2", "futility"]
     if decision == "continue":
-        expected += ["select_s4", "s4", "clean_final"]
+        expected += ["select_s4", "s4", "final_embeddings", "clean_final"]
     assert events == expected
     assert result["status"] == ("passed" if decision == "continue" else "stop_futility")
 

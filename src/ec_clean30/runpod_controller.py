@@ -1055,6 +1055,8 @@ class RunpodController:
                          and item.stat().st_size == entry["size_bytes"] and _sha(item) == entry["sha256"],
                          "Preservation bytes are missing or differ between local copies.")
             members[name] = entry
+        from ec_clean30.execution_v5 import inherited_artifacts
+        inherited = inherited_artifacts(self.config)
         # A recovered execution state alone cannot prove that local hot data was copied.
         for name in members:
             if Path(name).name in {"pretrain_attachment.json", "scientific_outputs_pending.json"}:
@@ -1075,7 +1077,8 @@ class RunpodController:
                             phase4.verify_preserved_scientific_outputs(root / name,
                                 original_attempt=Path(remote_root) / Path(name).parent)
                             owner = _read((root / name).parent / "request.json")
-                        _require(all(owner.get(key) == identity[key] for key in ("session_id", "pod_id")),
+                        _require(all(owner.get(key) == identity[key] for key in ("session_id", "pod_id"))
+                                 or inherited.get(str(Path(remote_root) / name)) == members[name]["sha256"],
                                  "External-output snapshot belongs to another allocation.")
                     except (OSError, ValueError, KeyError) as exc:
                         raise RunpodError(f"External scientific outputs are not completely preserved: {exc}") from exc
@@ -1108,15 +1111,17 @@ class RunpodController:
                  "Collected bytes do not cover the complete remote inventory.")
         manifests = proof.get("host_pull_manifests", [])
         _require(isinstance(manifests, list) and len(set(manifests)) == len(manifests), "Invalid HostPull manifest list.")
+        inherited_only = bool(inherited) and bool(remote_files) and bool(proof.get("execution_root")) and all(
+            inherited.get(str(Path(proof["execution_root"]) / entry["path"])) == entry["sha256"] for entry in remote_files)
         admitted = state.get("workload_admitted")
         if not _allow_set and state.get("required_preservation_roots"):
             _require(proof.get("execution_root") in [row["execution_root"] for row in state["required_preservation_roots"]],
                      "Preservation child names an unregistered execution root.")
             admitted = proof["execution_root"] in state.get("admitted_output_roots", [])
         if admitted:
-            _require(remote_files and manifests, "An admitted workload needs its complete artifacts and HostPull acknowledgments.")
+            _require(remote_files and (manifests or inherited_only), "An admitted workload needs its complete artifacts and HostPull acknowledgments.")
         else:
-            _require(not remote_files or manifests, "Nonempty execution artifacts require HostPull acknowledgments.")
+            _require(not remote_files or manifests or inherited_only, "Nonempty execution artifacts require HostPull acknowledgments.")
         for name in manifests:
             _require(name in members, "A HostPull manifest is absent from the preserved inventory.")
             manifest = _read(roots[0] / name)

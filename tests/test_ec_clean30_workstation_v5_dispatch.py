@@ -329,8 +329,7 @@ def test_final_clean_needs_separate_bound_inputs_and_farms(reviewed_phase4, monk
     from ec_clean30 import phase4
 
     case = reviewed_phase4
-    final_ids = {"ecc30_clean_final_r1", "ecc30_clean_final_r2", "ecc30_clean_final_c_esmc"}
-    monkeypatch.setattr(phase4, "clean_final_units", lambda fold: tuple({"unit_id": name} for name in final_ids))
+    final_ids = {unit["unit_id"] for unit in phase4.clean_final_units(0)}
     case.request["run_final_clean"] = True
     case.preapproval["clean_unit_ids"] = sorted(set(case.preapproval["clean_unit_ids"]) | final_ids)
     case.preapproval["clean_inputs_sha256_by_scope"] = {"fold0_inner": sha("inputs"), "fold0_final": sha("final")}
@@ -339,12 +338,13 @@ def test_final_clean_needs_separate_bound_inputs_and_farms(reviewed_phase4, monk
         ws.validate_phase4_plan(case.config, case.source, case.request, case.preapproval)
     case.request["final_clean_request"] = {"clean_scope": "final", "clean_inputs": "/workspace/campaign/inputs/final",
         "clean_forecasts": dict.fromkeys(final_ids, 100), "clean_timeouts": dict.fromkeys(final_ids, 90),
-        "farms_by_arm": {arm: {"base_farm": f"/workspace/campaign/final_farms/{arm}/base",
-                               "masked_farm": f"/workspace/campaign/final_farms/{arm}/masked"}
-                          for arm in ("r1", "r2", "c_esmc")}}
+        "farms_by_unit": phase4.final_farms_by_unit({**case.request, "clean_scope": "final"}),
+        "embedding_forecasts": {unit["unit_id"]: 100 for unit in phase4.embedding_units({**case.request, "clean_scope": "final"})},
+        "embedding_timeouts": {unit["unit_id"]: 90 for unit in phase4.embedding_units({**case.request, "clean_scope": "final"})}}
+    case.request["remote_request_template"].update(hf_home="/cache", esmc_weights="/cache/weights")
     assert ws.validate_phase4_plan(case.config, case.source, case.request, case.preapproval)["status"] == "passed"
-    case.request["final_clean_request"]["farms_by_arm"].pop("c_esmc")
-    with pytest.raises(ws.WorkstationError, match="farm mapping is incomplete"):
+    case.request["final_clean_request"]["farms_by_unit"].pop(next(iter(final_ids)))
+    with pytest.raises(ws.WorkstationError, match="per-seed producer"):
         ws.validate_phase4_plan(case.config, case.source, case.request, case.preapproval)
 
 
@@ -363,3 +363,29 @@ def test_pending_external_outputs_block_cleanup_inventory(case, tmp_path, monkey
     case.transport.remote = remote
     with pytest.raises(AssertionError, match="Pending .* data blocks cleanup"):
         ws._preserve_runpod_outputs(case.config, case.transport, case.transport.stop_controller, case.session)
+
+
+@pytest.mark.parametrize("fold", [1, 2, 3, 4])
+def test_later_fold_request_uses_its_own_plan_and_retains_fold0_chain(reviewed_phase4, monkeypatch, fold):
+    case = reviewed_phase4
+    request = json.loads(json.dumps(case.request).replace("/fold0/", f"/fold{fold}/").replace("/views/fold0", f"/views/fold{fold}"))
+    request["fold"] = fold
+    template = request["remote_request_template"]
+    template["fold0_step_chain"] = "/workspace/campaign/runs/fold0/phase4/step_chain.json"
+    template.update({key: "/workspace/campaign/inputs/" + key for key in
+                     ("corpus_table", "holdout_receipt", "identity_work", "official_split_dir")})
+    plan = {"format": "deepmzyme_ec_clean30_fold_plan_v2", "fold": fold, "plan_sha256": sha(f"plan{fold}")}
+    Path(request["local_plan"]).write_text(json.dumps(plan))
+    request["stage_files"][0]["sha256"] = ws._sha(Path(request["local_plan"]))
+    monkeypatch.setattr(campaign, "build_fold_plan_v2", lambda fold: plan)
+    for group in ("clean", "embedding"):
+        request[group + "_forecasts"] = {}
+        request[group + "_timeouts"] = {}
+    for suffix in ("forecasts", "timeouts"):
+        request["scientific_" + suffix] = {key: value for key, value in request["scientific_" + suffix].items()
+                                          if key in {"select_s1", "select_s2", "select_s4"}}
+    request.update(attachment_forecast_seconds=100, attachment_timeout_seconds=90)
+    case.config.update(execution_scope="fold_execution_v5", execution_fold=fold, resume={"bound": True})
+    preapproval = {**case.preapproval, "allowed_folds": [fold], "plan_sha256_by_fold": {str(fold): plan["plan_sha256"]},
+                   "allowed_steps": {str(fold): ["S1", "S4"]}, "clean_unit_ids": [], "clean_inputs_sha256_by_scope": {}}
+    assert ws.validate_phase4_plan(case.config, case.source, request, preapproval)["status"] == "passed"
