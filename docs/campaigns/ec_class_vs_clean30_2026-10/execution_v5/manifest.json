@@ -1,0 +1,53 @@
+{
+  "amendment_chain": [
+    "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea",
+    "777130e4727768847e281a0aea593d44036c77107d2519ea8dddabe951ab682c"
+  ],
+  "amendment_path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/amendment.json",
+  "campaign_id": "ec_class_vs_clean30_2026-10",
+  "execution_file_set": [
+    "scripts/run_ec_clean30_phase3.py",
+    "scripts/run_ec_clean30_phase4.py",
+    "scripts/run_ec_clean30_workstation.py",
+    "src/ec_clean30/container_caps.py",
+    "src/ec_clean30/execution_v5.py",
+    "src/ec_clean30/hot_storage.py",
+    "src/ec_clean30/phase3.py",
+    "src/ec_clean30/phase4.py",
+    "src/ec_clean30/runpod_bootstrap.py",
+    "src/ec_clean30/runpod_controller.py",
+    "src/ec_clean30/workstation.py"
+  ],
+  "fit_chain": [
+    "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea",
+    "777130e4727768847e281a0aea593d44036c77107d2519ea8dddabe951ab682c"
+  ],
+  "format": "deepmzyme_ec_clean30_execution_v5",
+  "freeze1_sha256": "28077f4c3701820c9aa20f53b570d12f8b70a46514211fc63e62976e393a3c0c",
+  "freeze1b_sha256": "fc6f032805f084d7aef4f704a42149e92fb7894af3699b2ad5c12e86c87bcbdb",
+  "hardware_profiles": [
+    "runpod_l4",
+    "runpod_rtx4090"
+  ],
+  "official_fold0_training_sha256": "ab8a8a21219aec19ba03dd7205dec8d8c1a156ff5cfad23aad344c7d7fbdd9c1",
+  "purpose": "Runpod G2 v2 and fold execution under a published scientific identity; separate launch authority required",
+  "runtime_locks": {
+    "path": "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v3/runtime_locks_v2.json",
+    "sha256": "dbbf3cd47be2062f444d4648a57b54c4aa83e717437e139dd3e20a2e261c0483"
+  },
+  "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4",
+  "source_sha256": {
+    "scripts/run_ec_clean30_phase3.py": "d430de569f0aa98a9fce305c4c8d6af3aadd9646dab80bee2ed97a712748650a",
+    "scripts/run_ec_clean30_phase4.py": "95c3cd506ded1c728882471c8cc3d879168a5efaf4d8ea47bb5a71d7aed31759",
+    "scripts/run_ec_clean30_workstation.py": "1d2a394867c4a4fc4197b4f589845481ffcbbc3676e6c1c57e433141f798c42f",
+    "src/ec_clean30/container_caps.py": "9bbbb625f902705c9f126c5a48f3940844d08f7737ce233b43719564c38bfccd",
+    "src/ec_clean30/execution_v5.py": "228be6489536ca0fc49133b07658694d0e2159872f01c7828abe0c091534759c",
+    "src/ec_clean30/hot_storage.py": "2a735e90e3089c913930c79b39471dec11904622182b88da15d6360faf335ab5",
+    "src/ec_clean30/phase3.py": "d8c4a70b2959c7058b43030cba0fa70c0962c9f7e0ffc04919e5773ce6b8da43",
+    "src/ec_clean30/phase4.py": "bb241e247d614d62cd01ee730649f177d4313bbbdf0afede61ebcbf104d8c2c9",
+    "src/ec_clean30/runpod_bootstrap.py": "a22b3a1f21895f441ee950180ec40eea377b5962024b95bd076de3d756396460",
+    "src/ec_clean30/runpod_controller.py": "542abf5080a4d139a01aa5f84650ef136f5a56a688b2967718e79cccc56a11b5",
+    "src/ec_clean30/workstation.py": "bdde205b635c35efbcb4bf0a8bc1f7d7f122359d0a5de0536b988c2069fac0f0"
+  },
+  "timing_inputs_sha256": "ee368d99a5e88a6b5f84c3cd131b8d043432d41cea59c5266beb1d9fac48ff2f"
+}
