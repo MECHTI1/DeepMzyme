@@ -31,7 +31,7 @@ chain receipt and the bound view-manifest digests. After the [execution correcti
 the published chain passed full verification at `0d4cc56`, including C7. The re-pinned [v5 manifest](manifest.json)
 pins all 11 closed execution files, the runtime locks and the existing timing-input closure; only the five
 corrected files changed their pins. Its draft verification passed on that clean published source tree, and
-published-mode verification is pending. It supersedes the first v5 manifest (`bb8f50fd…`, verified at `2bff344`).
+published-mode verification passed at `bd016f2` with a fresh chain receipt. It supersedes the first v5 manifest (`bb8f50fd…`, verified at `2bff344`).
 [Verification](cpu_verification.json) records the private receipt, build and publication evidence hashes.
 No GPU completion time is measured yet; the approved ceiling is recorded [below](#fold-0-ceiling-a2-d8).
 
