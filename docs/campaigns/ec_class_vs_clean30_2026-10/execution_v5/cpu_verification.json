@@ -405,20 +405,7 @@
       "fold_execution_v5"
     ]
   },
-  "pending": [
-    "Publish manifest v5 and obtain a fresh workstation chain receipt on the resulting clean published tree.",
-    "Complete the fold-0 cost forecast, approved numerical ceiling, bound shared retry ledger and separate explicit launch authorization.",
-    "Qualify actual GPU execution within separate launch authority; CPU checks do not establish live recovery or CUDA throughput."
-  ],
-  "preserved": {
-    "commands_py": true,
-    "private_harness_bytes_and_pins": true,
-    "published_execution_v4": true,
-    "science_owned_source": "Unchanged except the delegated runtime_precision entry in scoring.SCORER_CODE_PATHS",
-    "science_worktree": "Read-only; source_changes and science-owned chain verifier/tests were not edited"
-  },
-  "publication": "Execution source and amendment 2 published; manifest built and verified as a draft, pending publication.",
-  "publication_verification_20261112": {
+  "manifest_build_verification_20261112": {
     "amendment_chain": [
       "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea",
       "777130e4727768847e281a0aea593d44036c77107d2519ea8dddabe951ab682c"
@@ -444,6 +431,45 @@
     "published_chain_verification": "passed, including C7 on the live execution tree",
     "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4",
     "timing_input_files_verified": true
+  },
+  "pending": [
+    "Complete the fold-0 cost forecast, approved numerical ceiling, bound shared retry ledger and separate explicit launch authorization.",
+    "Qualify actual GPU execution within separate launch authority; CPU checks do not establish live recovery or CUDA throughput."
+  ],
+  "preserved": {
+    "commands_py": true,
+    "private_harness_bytes_and_pins": true,
+    "published_execution_v4": true,
+    "science_owned_source": "Unchanged except the delegated runtime_precision entry in scoring.SCORER_CODE_PATHS",
+    "science_worktree": "Read-only; source_changes and science-owned chain verifier/tests were not edited"
+  },
+  "publication": "Execution source, amendment 2 and manifest v5 published; published-mode verification passed at 2bff344.",
+  "publication_verification_20261112": {
+    "amendment_chain": [
+      "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea",
+      "777130e4727768847e281a0aea593d44036c77107d2519ea8dddabe951ab682c"
+    ],
+    "chain_receipt": {
+      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/chain_receipt_published_2bff344.json",
+      "sha256": "4cd00e4891f3078909938fb5de03f925f04b9439cf86338facbcf86256007354"
+    },
+    "chain_verification": "passed, including C7 on the live tree",
+    "evidence": {
+      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/execution_v5_published_2bff344.json",
+      "sha256": "3ba67b8b764f1ae3423e9fa62ae8cae1429551d5f61e0a07a8c8cfd37533c999"
+    },
+    "execution_source_pin_count": 11,
+    "format": "deepmzyme_ec_clean30_execution_v5_publication_verification_v1",
+    "gpu_or_provider_operations": 0,
+    "launch_authorized": false,
+    "manifest": {
+      "path": "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/manifest.json",
+      "sha256": "bb8f50fd35f69529fb56097a9f27fd7ef7237a9f7ac2a7abf533d2dbe72d237d"
+    },
+    "manifest_published": true,
+    "manifest_verification": "passed with require_published=True",
+    "published_commit": "2bff344322445dc22147c70aa34cdda562c7373e",
+    "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4"
   },
   "source_sha256": {
     "scripts/run_clean_split30_comparator.py": "5530b2801b41de02b6b83e25fdbefb8881f51c419a4ae214c88b46fef8a96402",
@@ -480,5 +506,5 @@
     "tests/test_ec_clean30_workstation_posix.py": "b0c4a681a10bfddaa3baa8c2fef46d27072bd6349694bf5fae1b85d0097f58cc",
     "tests/test_ec_clean30_workstation_v5_dispatch.py": "06c8c79a46a111e2bbf0c0815af184673978221102592e4d16508f03d1944a65"
   },
-  "status": "execution_source_published_manifest_built_unpublished"
+  "status": "execution_manifest_published_verified_launches_paused"
 }

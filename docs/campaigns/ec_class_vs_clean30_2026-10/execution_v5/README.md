@@ -1,7 +1,7 @@
 # Execution v5 — Runpod G2 through Fold 0
 
-Status: execution source published, 2026-11-12; manifest built but unpublished. All launch attempts are paused.
-The manifest must be published before a separate explicit launch authorization.
+Status: published, 2026-11-12; CPU implementation only. All launch attempts are paused.
+Publication does not grant launch authorization.
 There is no current fold-0 cost approval. The previous G2-only limits and launch requests do not authorize v5.
 
 ## Execution contract
@@ -29,10 +29,10 @@ or a chain below sequence 2 cannot authorize real work. Link 2 is published. Its
 chain receipt and the bound view-manifest digests. The published chain passed full verification at `e8f3830`,
 including C7. The resulting [v5 manifest](manifest.json) pins all 11 closed execution files, the runtime locks
 and the existing timing-input closure. Its draft verification passed on that clean published source tree;
-the manifest itself remains unpublished. [Verification](cpu_verification.json) records the private receipt
-and build-evidence hashes. A complete cost forecast also remains pending.
+published-mode verification passed at `2bff344` with a fresh chain receipt. [Verification](cpu_verification.json)
+records the private receipt, build and publication evidence hashes. A complete cost forecast remains pending.
 
-The staged POSIX correction is included here, with its original bytes preserved as
+The POSIX correction is included here, with its original bytes preserved as
 [component manifest](posix_component_manifest.json) and [component verification](posix_component_verification.json).
 These record the earlier component checks, using their original filenames inside the records; they do not
 authenticate the later v5 changes. The [configuration draft](workstation_config.example.json) is not launch
@@ -119,9 +119,9 @@ preserved union cache and the fold's bound `corpus_table`, `holdout_receipt`, `i
 `official_split_dir`; `attachment_forecast_seconds` and `attachment_timeout_seconds` are explicit reviewed bounds.
 The route then runs the complete canonical S1, S2 and S4 sequence and optional authorized final CLEAN queue.
 
-Pending publication steps: publish the v5 manifest, obtain a fresh workstation chain receipt on the resulting
-clean published tree, complete the cost forecast and approve its numerical envelope and launch.
-The manifest was built from the clean published receipt context; staged manifest bytes are not publication.
+Pending launch requirements: complete the cost forecast and approve its numerical envelope and launch.
+Each session requires a fresh workstation chain receipt on its clean published tree. The published manifest
+and receipt checks establish provenance; they do not satisfy the numerical or launch-authorization gates.
 None of the CPU checks grants launch or spending authority.
 
 ## Provisional cost scenarios

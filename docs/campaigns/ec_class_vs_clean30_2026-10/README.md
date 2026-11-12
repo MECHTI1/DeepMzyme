@@ -1,6 +1,6 @@
 # EC class versus CLEAN on the official CLEAN split30 benchmark
 
-Status: active (2026-11-11; amendment 2 recorded, in force once published; launches paused, v5 CPU-checked draft)
+Status: active (2026-11-12; amendment 2 and execution v5 published and verified; launches paused)
 
 Goal: predict the first EC digit and outperform retrained CLEAN on the official `split30` five-fold metalloenzyme
 benchmark and its test proteins without a ≥30% identity hit to training. This is a secondary benchmark;
@@ -30,6 +30,6 @@ The [log](log.md) preserves capacity attempts and verified cache seeding.
 blocked scientific admission. The pod is stopped and deleted; G2 remains 0/12.
 The POSIX correction is retained inside v5. [evc-036](log.md#evc-036) records the CPU-checked dispatch hooks.
 [evc-037](log.md#evc-037) records amendment 2.
-Next: verify the published amendment chain, publish v5, approve the fold-0 ceiling and obtain
-separate explicit launch authorization. No launch loop is active.
+Next: complete the cost forecast, approve the fold-0 ceiling and obtain separate explicit launch authorization.
+No launch loop is active.
 Root STATUS is stale (evc-009); [DATASETS](../../DATASETS.md#test-use-ledger) owns exposures and identity restrictions.
