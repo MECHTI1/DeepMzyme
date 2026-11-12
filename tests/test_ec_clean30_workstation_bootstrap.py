@@ -672,3 +672,168 @@ def test_posix_preparation_failure_precedes_payload_and_preserves_closeout(cache
     assert 'posix_refused' in case.events
     assert case.events.index('preserve') < case.events.index('stop')
     assert not {'admit', 'queue'}.intersection(case.events)
+
+
+def test_only_kernel_delegation_refusals_classify_as_host_rejections(tmp_path, monkeypatch):
+    from ec_clean30 import container_caps
+    local = phase3.REPO_ROOT / "src/ec_clean30/container_caps.py"
+    source = {"source_sha256": {"src/ec_clean30/container_caps.py": ws._sha(local)}}
+    config = {"bootstrap_python": "/py", "cgroup_root": "/sys/fs/cgroup", "state_root": str(tmp_path)}
+    session = {"session_id": "s1", "pod_id": "p1"}
+
+    class Transport:
+        def __init__(self, error):
+            self.error = error
+
+        def upload(self, *a):
+            pass
+
+        def stat_file(self, remote):
+            return {"sha256": ws._sha(local), "size_bytes": local.stat().st_size}
+
+        def remote(self, argv, **kw):
+            raise ws.WorkstationError(self.error)
+
+    with pytest.raises(ws.HostRejected):
+        ws._bootstrap_runpod(config, Transport(ws.HOST_REJECTION_PREFIX + " v1 controls are not writable"), source, session)
+    with pytest.raises(ws.WorkstationError) as other:
+        ws._bootstrap_runpod(config, Transport("Remote command failed (2): ssh lost"), source, session)
+    assert not isinstance(other.value, ws.HostRejected)
+
+    class Evidence(Transport):
+        def remote(self, argv, **kw):
+            return json.dumps({"parent_limits_unchanged": True} if "prepare" in argv else {"fixture": "weak"})
+
+    monkeypatch.setattr(container_caps, "validate_probe_evidence",
+                        lambda e: (_ for _ in ()).throw(container_caps.CapError("swap present")))
+    with pytest.raises(ws.HostRejected, match="swap present"):
+        ws._bootstrap_runpod(config, Evidence(""), source, session)
+
+
+def _v5_host_case(case, monkeypatch, rejections):
+    case.config["execution_scope"] = "g2_then_fold0_v5"
+    case.config["g2_max_download_bytes"] = 10 * ws.GIB
+    case.ready["source"]["format"] = phase3.EXECUTION_V5_FORMAT
+    case.ready["source"]["execution_manifest_sha256"] = "a" * 64
+    write(case.path, case.config)
+    events, begun = case.events, time.time()
+
+    class Host:
+        def __init__(self, n):
+            self.n, self.root = n, Path(case.config["state_root"]) / ("." if n == 1 else f"host_try_{n}")
+
+        def start(self, replacing=None):
+            events.append(("start", self.n, replacing and replacing["pod_id"]))
+            return self.session()
+
+        def session(self, previous=None):
+            return {"session_id": f"s{self.n}", "pod_id": f"p{self.n}", "allocation_started_unix": begun,
+                    "deadline_unix": begun + 6900, "hard_stop_unix": begun + 7020}
+
+        @contextmanager
+        def maintain_heartbeat(self, *, interval):
+            events.append(("heartbeat_enter", self.n))
+            try:
+                yield SimpleNamespace(check=lambda: None)
+            finally:
+                events.append(("heartbeat_exit", self.n))
+
+        def write_ssh_config(self):
+            return Path(case.config["state_root"]) / "ssh_config"
+
+        def admit_workload(self):
+            events.append(("admit", self.n))
+
+        def stop(self):
+            events.append(("stop", self.n))
+            return {"desiredStatus": "EXITED", "runtimeStatus": "stopped"}
+
+        def release_rejected_host(self, reason):
+            assert reason.startswith("HostRejected: " + ws.HOST_REJECTION_PREFIX)
+            events.append(("release", self.n))
+            return {"status": "DELETED", "pod_id": f"p{self.n}"}
+
+        def replacement_released(self):
+            events.append(("released", self.n))
+
+    tries = iter(range(rejections))
+
+    def bootstrap(config, transport, source, session):
+        events.append(("bootstrap", session["pod_id"]))
+        if next(tries, None) is not None:
+            raise ws.HostRejected(ws.HOST_REJECTION_PREFIX + " fixture host")
+
+    monkeypatch.setattr(ws, "_bootstrap_runpod", bootstrap)
+    monkeypatch.setattr(ws, "_host_controller", lambda config, path, n: Host(n))
+    monkeypatch.setattr(ws, "_host_transport", lambda config, controller: case.transport)
+    monkeypatch.setattr(ws, "_stage_runpod_runtime", lambda *a: events.append("stage"))
+    monkeypatch.setattr(ws, "_prepare_g2_v5", lambda *a: events.append("pretrain"))
+    monkeypatch.setattr(ws, "_complete_g2_v5", lambda *a: events.append("freeze1c_v2"))
+    monkeypatch.setattr(ws, "_continue_runpod_phase4", lambda *a: events.append("phase4"))
+    gate = lambda config, path, ready: {"config_sha256": ws._sha(path), "execution_manifest_sha256": "a" * 64}
+    return Host(1), dict(pre_allocation=gate, prepare_phase4=lambda *a: {}, prepare_g2=lambda *a: {},
+                         complete_g2=lambda *a: {})
+
+
+def test_v5_host_rejection_replaces_the_host_inside_the_same_window(cached_driver, monkeypatch):
+    case = cached_driver
+    first, callbacks = _v5_host_case(case, monkeypatch, rejections=1)
+    result = ws._run_runpod_g2(case.config, case.path, controller=first, transport=case.transport, **callbacks)
+    e = case.events
+    assert ("start", 1, None) in e and ("start", 2, "p1") in e
+    # The rejected pod is released only after the replacement create returned, then the overlap ends.
+    assert (e.index(("bootstrap", "p1")) < e.index(("start", 2, "p1")) < e.index(("release", 1))
+            < e.index(("heartbeat_exit", 1)) < e.index(("released", 2)) < e.index(("bootstrap", "p2")))
+    assert ("stop", 1) not in e and e.count(("stop", 2)) == 1
+    assert e.index(("admit", 2)) < e.index("queue") < e.index("phase4") < e.index("preserve") < e.index(("stop", 2))
+    assert result["host_try"] == 2 and result["pod_id"] == "p2" and result["session_id"] == "s2"
+    assert [row["pod_id"] for row in result["host_rejections"]] == ["p1"]
+    assert result["host_rejections"][0]["release"]["status"] == "DELETED"
+    assert "error" not in result and result["provider_stop_verified"]
+
+
+def test_v5_host_rejections_stop_after_the_bounded_number_of_tries(cached_driver, monkeypatch):
+    from ec_clean30 import runpod_controller
+    case = cached_driver
+    first, callbacks = _v5_host_case(case, monkeypatch, rejections=runpod_controller.HOST_TRY_LIMIT)
+    with pytest.raises(ws.HostRejected):
+        ws._run_runpod_g2(case.config, case.path, controller=first, transport=case.transport, **callbacks)
+    e = case.events
+    limit = runpod_controller.HOST_TRY_LIMIT
+    assert [x for x in e if isinstance(x, tuple) and x[0] == "start"] == [
+        ("start", 1, None), *[("start", n, f"p{n - 1}") for n in range(2, limit + 1)]]
+    assert [x for x in e if isinstance(x, tuple) and x[0] == "release"] == [("release", n) for n in range(1, limit)]
+    assert [x for x in e if isinstance(x, tuple) and x[0] == "stop"] == [("stop", limit)]
+    assert not {"queue", "stage"}.intersection(x for x in e if isinstance(x, str))
+    state = json.loads((Path(case.config["state_root"]) / "driver_state.json").read_text())
+    assert state["closed"] is True and state["status"] == "interrupted" and state["host_try"] == limit
+
+
+def test_prepared_input_proof_moves_to_a_new_pass_without_rehashing(tmp_path, monkeypatch):
+    config = {"provider": "runpod", "artifact_cache": {"fixture": True}, "state_root": str(tmp_path / "w1"),
+              "durable_root": str(tmp_path / "g2a"), "mirror_root": str(tmp_path / "g2b"),
+              "execution_manifest": str(tmp_path / "manifest.json"), "stage": [{"sha256": "a" * 64}],
+              "runpod": {"state_root": str(tmp_path / "w1"), "pod_name": "w1-pod", "max_runtime_seconds": 7020,
+                         "quote": {"observed_at": "before", "source": "fixture", "hourly_compute_usd": .89}}}
+    path = tmp_path / "config.json"
+    write(path, config)
+    calls = []
+    monkeypatch.setattr(ws, "_validate_runpod_structure", lambda c: None)
+    monkeypatch.setattr(ws, "_local_storage", lambda c: calls.append(("local_storage", c["state_root"])))
+    monkeypatch.setattr(runpod_controller, "validate_config", lambda c, *, fresh: {"status": "ready"})
+    monkeypatch.setattr(phase3, "verify_execution_source", lambda *a, **kw: {"published": True})
+    monkeypatch.setattr(ws, "preflight", lambda *a, **kw: calls.append("full_input_check") or
+                        {"status": "ready", "source": {"published": True}, "staging_peak_bytes": 1})
+    ws._prepared_preflight(config, path, published=True)
+    for name in ("prepared_inputs.json", "prepared_config.json"):
+        (tmp_path / "w2").mkdir(exist_ok=True)
+        (tmp_path / "w2" / name).write_bytes((tmp_path / "w1" / name).read_bytes())
+    config.update(state_root=str(tmp_path / "w2"), durable_root=str(tmp_path / "g2c"), mirror_root=str(tmp_path / "g2d"))
+    config["runpod"].update(state_root=str(tmp_path / "w2"), pod_name="w2-pod")
+    write(path, config)
+    result = ws._prepared_preflight(config, path, published=True)
+    assert result["input_proof_reused"] is True and calls.count("full_input_check") == 1
+    assert ("local_storage", str(tmp_path / "w2")) in calls
+    config["runpod"]["max_runtime_seconds"] = 7000
+    write(path, config)
+    assert ws._prepared_preflight(config, path, published=True)["input_proof_reused"] is False

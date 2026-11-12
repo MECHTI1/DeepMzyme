@@ -33,7 +33,7 @@ with p.with_suffix('.lock').open('a+') as lock:
   if state.get('reject_create_error'):
    p.write_text(json.dumps(state));print(json.dumps(state['reject_create_error']),file=sys.stderr);sys.exit(1)
   options=dict(zip(args[::2],args[1::2])); now=state.get('created_at',datetime.datetime.now(datetime.timezone.utc).isoformat())
-  pod={'id':'ownedpod123','name':options['--name'],'createdAt':now,'desiredStatus':'RUNNING','runtimeStatus':'running',
+  pod={'id':'ownedpod123' if state['create_calls']==1 else 'replacementpod%d'%state['create_calls'],'name':options['--name'],'createdAt':now,'desiredStatus':'RUNNING','runtimeStatus':'running',
        'gpuCount':1,'gpuId':state.get('actual_gpu',options['--gpu-id']),'imageName':options['--image'],
        'machine':{'dataCenterId':state.get('actual_dc',options['--data-center-ids']),'secureCloud':True},
        'volumeInGb':int(options['--volume-in-gb']),'volumeMountPath':options['--volume-mount-path'],
@@ -1043,3 +1043,62 @@ def test_persistent_named_adoption_also_has_no_deletion_authority(fixture, tmp_p
     path = preservation(controller, tmp_path / "primary", mirror_device)
     assert controller.closeout(path)["status"] == "STOPPED"
     assert not json.loads(api.read_text()).get("deleted_ids")
+
+
+def _kill_watchdog(controller):
+    if controller.state_path.exists():
+        pid = json.loads(controller.state_path.read_text()).get("watchdog_pid")
+        if pid:
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+
+
+def test_replacement_host_overlaps_only_its_rejected_predecessor_then_releases_it(fixture):
+    config, path, api, _, make = fixture
+    first = make()
+    first.start()
+    assert first.host_try == 1
+    second = rc.RunpodController(config, path, host_try=2)
+    try:
+        assert second.root == first.root / "host_try_2" and second.cfg["pod_name"] == "g2-unique-fixture-h2"
+        with pytest.raises(rc.RunpodError, match="must name its rejected predecessor"):
+            second.start()
+        with pytest.raises(rc.RunpodError, match="Only the previous try's own pre-workload pod"):
+            second.start(replacing={"pod_id": "foreign", "state_root": str(first.root)})
+        with pytest.raises(rc.RunpodError, match="not the previous host try"):
+            second.start(replacing={"pod_id": "ownedpod123", "state_root": str(second.root)})
+        assert json.loads(api.read_text())["create_calls"] == 1
+        session = second.start(replacing={"pod_id": "ownedpod123", "state_root": str(first.root)})
+        assert session["pod_id"] == "replacementpod2"
+        snapshot = json.loads(second.snapshot_path.read_text())
+        assert snapshot["host_try"] == 2
+        # The predecessor is still running while the replacement exists; only its own release ends the overlap.
+        assert {p["id"] for p in json.loads(api.read_text())["pods"]} == {"ownedpod123", "replacementpod2"}
+        receipt = first.release_rejected_host("Remote command failed (125): container caps refused: fixture")
+        assert receipt["status"] == "DELETED" and receipt["preservation_required"] is False
+        assert json.loads(first.state_path.read_text())["phase"] == "deleted"
+        second.replacement_released()
+        assert second._replacing is None
+        assert second.session(session["session_id"])["pod_id"] == "replacementpod2"
+        assert json.loads(api.read_text())["deleted_ids"] == ["ownedpod123"]
+    finally:
+        if second.state_path.exists() and json.loads(second.state_path.read_text()).get("phase") not in {"stopped", "deleted"}:
+            second.stop()
+        _kill_watchdog(second)
+
+
+def test_first_try_never_replaces_and_admitted_work_is_never_released(fixture):
+    config, path, _, _, make = fixture
+    controller = make()
+    with pytest.raises(rc.RunpodError, match="never replaces"):
+        controller.start(replacing={"pod_id": "x", "state_root": str(controller.root)})
+    with pytest.raises(rc.RunpodError, match="Invalid same-window host try"):
+        rc.RunpodController(config, path, host_try=rc.HOST_TRY_LIMIT + 1)
+    controller = make()
+    controller.start()
+    controller.admit_workload()
+    with pytest.raises(rc.RunpodError, match="Only a pre-workload allocation"):
+        controller.release_rejected_host("late refusal")
+    assert json.loads(controller.state_path.read_text())["phase"] != "deleted"

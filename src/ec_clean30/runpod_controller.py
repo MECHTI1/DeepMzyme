@@ -28,6 +28,10 @@ import uuid
 import urllib.parse
 import urllib.request
 
+# One launch window may replace a host whose kernel refused delegation before any workload, at most this many tries.
+HOST_TRY_LIMIT = 3
+
+
 class RunpodError(RuntimeError):
     """A configuration, ownership, budget, or shutdown check failed."""
 
@@ -306,9 +310,20 @@ def _public_pod(pod: Mapping[str, Any]) -> dict[str, Any]:
 class RunpodController:
     """Bound one immutable launch intent to one pod; cleanup never widens ownership."""
 
-    def __init__(self, config: Mapping[str, Any], config_path: Path, *, _snapshot: Mapping[str, Any] | None = None):
+    def __init__(self, config: Mapping[str, Any], config_path: Path, *, host_try: int = 1,
+                 _snapshot: Mapping[str, Any] | None = None):
+        if _snapshot is not None:
+            host_try = _snapshot.get("host_try", 1)
+        _require(type(host_try) is int and 1 <= host_try <= HOST_TRY_LIMIT, "Invalid same-window host try.")
+        self.host_try = host_try
         self.config = json.loads(json.dumps(config))
         self.cfg = _settings(self.config)
+        if host_try > 1:
+            # A replacement host keeps the reviewed configuration bytes but owns its own receipts,
+            # watchdog and provider name inside the same pass.
+            self.cfg["state_root"] = str(Path(self.cfg["state_root"]) / f"host_try_{host_try}")
+            self.cfg["pod_name"] = f"{self.cfg['pod_name']}-h{host_try}"
+        self._replacing: str | None = None
         self.cost = _validate(self.config, fresh=False)
         self.config_path = Path(config_path).resolve()
         self.root = Path(self.cfg["state_root"]).resolve()
@@ -527,7 +542,7 @@ class RunpodController:
 
     def _no_other_gpu(self, rows: list[dict[str, Any]], own: str | None = None) -> None:
         for pod in rows:
-            if pod["id"] == own or _stopped(pod):
+            if pod["id"] in (own, self._replacing) or _stopped(pod):
                 continue
             _require(_gpu_count(pod) == 0, "Another Runpod GPU is active or its state is uncertain.")
 
@@ -653,7 +668,7 @@ class RunpodController:
 
     def _arm_watchdog(self) -> None:
         snapshot = {"config": self.config, "config_path": str(self.config_path),
-                    "source_sha256": self.source_sha, "cli_sha256": self.cli_sha}
+                    "source_sha256": self.source_sha, "cli_sha256": self.cli_sha, "host_try": self.host_try}
         _write(self.snapshot_path, snapshot)
         log = self.root / "watchdog.log"
         with log.open("ab") as handle:
@@ -679,9 +694,66 @@ class RunpodController:
                 "--volume-in-gb", str(cfg["volume_gb"]), "--volume-mount-path", cfg.get("volume_mount_path", "/workspace"),
                 "--env", json.dumps(cfg["runtime_environment"], sort_keys=True), "--ports", "22/tcp"]
 
-    def start(self) -> dict[str, Any]:
+    def _admit_replacement(self, replacing: Mapping[str, Any] | None) -> None:
+        """Only a later host try may overlap, and only its predecessor's own pre-workload pod.
+
+        The rejected pod stays allocated until the replacement create returns, so that
+        provider slot cannot be handed straight back to this window.
+        """
+        if self.host_try == 1:
+            _require(replacing is None, "The first host try never replaces a pod.")
+            return
+        _require(isinstance(replacing, Mapping) and set(replacing) == {"pod_id", "state_root"},
+                 "A replacement host try must name its rejected predecessor.")
+        base = self.root.parent
+        expected = base if self.host_try == 2 else base / f"host_try_{self.host_try - 1}"
+        prior = Path(replacing["state_root"]).resolve()
+        _require(prior == expected, "The rejected predecessor is not the previous host try of this pass.")
+        owner, state = _read(prior / "ownership.json"), _read(prior / "session.json")
+        _require(owner.get("pod_id") == replacing["pod_id"] == state.get("pod_id")
+                 and owner.get("config_sha256") == self.config_sha == state.get("config_sha256")
+                 and owner.get("session_id") == state.get("session_id")
+                 and not state.get("adopted") and not state.get("workload_admitted")
+                 and not state.get("admitted_output_roots") and not state.get("required_preservation_roots"),
+                 "Only the previous try's own pre-workload pod may overlap a replacement allocation.")
+        self._replacing = replacing["pod_id"]
+
+    def replacement_released(self) -> None:
+        """End the overlap only after the provider no longer lists the rejected predecessor."""
+        if self._replacing is not None:
+            _require(not any(pod["id"] == self._replacing for pod in self._pods()),
+                     "The rejected predecessor is still listed; the replacement cannot proceed.")
+            self._replacing = None
+
+    def release_rejected_host(self, reason: str) -> dict[str, Any]:
+        """Delete this try's own pod after a pre-workload kernel refusal; nothing ran, so nothing is preserved."""
+        owned = self._owned_id()
+        _require(owned, "No owned Runpod allocation is bound for release.")
+        state = self._state()
+        _require(not state.get("adopted") and not state.get("workload_admitted")
+                 and not state.get("admitted_output_roots") and not state.get("required_preservation_roots"),
+                 "Only a pre-workload allocation can be released without preservation.")
+        if state.get("phase") != "deleted":
+            self.stop()
+            try:
+                self._call("delete", owned)
+            except RunpodError:
+                # A lost DELETE reply is reconciled from a fresh list, never a new pod.
+                if any(pod["id"] == owned for pod in self._pods()):
+                    raise
+        _require(not any(pod["id"] == owned for pod in self._pods()), "Provider deletion is not verified.")
+        receipt = {"pod_id": owned, "session_id": state["session_id"], "status": "DELETED",
+                   "provider_absence_verified": True, "preservation_required": False,
+                   "reason": "pre_workload_host_rejection",
+                   "rejection_sha256": hashlib.sha256(str(reason).encode()).hexdigest(),
+                   "verified_at": _utc(time.time())}
+        self._update(phase="deleted", delete_receipt=receipt)
+        return receipt
+
+    def start(self, *, replacing: Mapping[str, Any] | None = None) -> dict[str, Any]:
         if self._launch_intent_begun is None:
             self._launch_intent_begun = False
+        self._admit_replacement(replacing)
         _require(not self.cfg.get("adopt_pod_id"), "An adoption configuration can never create a pod; use adopt().")
         self._unchanged()
         search = bool(self.cfg.get('stock_search_seconds'))

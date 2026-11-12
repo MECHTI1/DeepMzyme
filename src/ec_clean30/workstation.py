@@ -81,6 +81,16 @@ class WorkstationError(RuntimeError):
     """Readiness, ownership, persistence or a fixed operational ceiling refused work."""
 
 
+class HostRejected(WorkstationError):
+    """The allocated host refused kernel delegation before any staging; the inputs are not at fault."""
+
+
+HOST_REJECTION_PREFIX = "Remote command failed (125): container caps refused:"
+# A new pass (recovery, retry or resume) re-proves its own roots locally; the staged inputs do not move.
+PASS_LOCAL_FIELDS = ("state_root", "durable_root", "mirror_root")
+PASS_LOCAL_RUNPOD_FIELDS = ("state_root", "pod_name")
+
+
 def _require(condition: Any, message: str) -> None:
     if not condition:
         raise WorkstationError(message)
@@ -843,6 +853,10 @@ def _preparation_identity(config: Mapping[str, Any]) -> str:
         settings.pop("data_center_id", None)
         for name in ("observed_at", "source"):
             settings["quote"].pop(name, None)
+        for name in PASS_LOCAL_RUNPOD_FIELDS:
+            settings.pop(name, None)
+        for name in PASS_LOCAL_FIELDS:
+            value.pop(name, None)
     return json.dumps(value, sort_keys=True, allow_nan=False)
 
 
@@ -866,7 +880,9 @@ def _prepared_preflight(config: Mapping[str, Any], config_path: Path, *, publish
             _local_storage(config)
             result = {**original, "config_sha256": _sha(config_path), "cost": cost,
                       "input_proof_reused": True, "original_input_proof_sha256": _sha(proof_path),
-                      "allowed_metadata_changes": ["runpod.data_center_id", "runpod.quote.observed_at", "runpod.quote.source"]}
+                      "allowed_metadata_changes": ["runpod.data_center_id", "runpod.quote.observed_at", "runpod.quote.source",
+                                                   *(f"runpod.{name}" for name in PASS_LOCAL_RUNPOD_FIELDS),
+                                                   *PASS_LOCAL_FIELDS]}
             _write(root / "readiness.json", result)
             return result
     result = preflight(config, config_path, published=published, fresh=fresh)
@@ -1104,13 +1120,23 @@ def _bootstrap_runpod(config, transport, source, session):
     transport.upload(local, remote)
     _require(transport.stat_file(remote) == {"sha256": _sha(local), "size_bytes": local.stat().st_size},
              "Bootstrap helper transfer differs.")
-    prepared = json.loads(transport.remote([config["bootstrap_python"], remote, "prepare", "--cgroup-root",
-                          config["cgroup_root"], "--owner-id", session["pod_id"]], timeout=60))
+    def host_step(argv, timeout):
+        try:
+            return json.loads(transport.remote(argv, timeout=timeout))
+        except WorkstationError as exc:
+            if str(exc).startswith(HOST_REJECTION_PREFIX):
+                raise HostRejected(str(exc)) from None
+            raise
+
+    prepared = host_step([config["bootstrap_python"], remote, "prepare", "--cgroup-root",
+                          config["cgroup_root"], "--owner-id", session["pod_id"]], 60)
     _require(prepared.get("parent_limits_unchanged") is True, "Bootstrap changed provider limits.")
     _write(Path(config["state_root"]) / "bootstrap_prepare.json", prepared)
-    evidence = json.loads(transport.remote([config["bootstrap_python"], remote, "probe", "--cgroup-root",
-                                          config["cgroup_root"]], timeout=90))
-    container_caps.validate_probe_evidence(evidence)
+    evidence = host_step([config["bootstrap_python"], remote, "probe", "--cgroup-root", config["cgroup_root"]], 90)
+    try:
+        container_caps.validate_probe_evidence(evidence)
+    except container_caps.CapError as exc:
+        raise HostRejected(f"container caps evidence refused: {exc}") from None
     _require(evidence["helper_sha256"] == source["source_sha256"]["src/ec_clean30/container_caps.py"],
              "Early kernel proof belongs to another helper.")
     _write(Path(config["state_root"]) / "bootstrap_kernel.json", evidence)
@@ -2272,6 +2298,15 @@ def _operator_hold(config, config_path, state, state_path, session, source, chec
         _write(state_path, state)
 
 
+def _host_controller(config, config_path, host_try):
+    from ec_clean30 import runpod_controller
+    return runpod_controller.RunpodController(config, config_path, host_try=host_try)
+
+
+def _host_transport(config, controller):
+    return RunpodTransport(config, controller)
+
+
 def _run_runpod_g2(config, config_path, *, transport=None, controller=None, pre_allocation=None,
                    prepare_phase4=None, prepare_g2=None, complete_g2=None, recover_window=False):
     from ec_clean30 import runpod_controller
@@ -2314,7 +2349,10 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None, pre_
                          "The launch authorization binding cannot change during this session.")
                 state["launch_binding"] = binding
                 _write(state_path, state)
-            controller = controller or runpod_controller.RunpodController(config, config_path)
+            host_try = state.get("host_try", 1)
+            _require(type(host_try) is int and 1 <= host_try <= runpod_controller.HOST_TRY_LIMIT,
+                     "Invalid recorded same-window host try.")
+            controller = controller or runpod_controller.RunpodController(config, config_path, host_try=host_try)
             transport = transport or RunpodTransport(config, controller)
             cached = bool(config.get("artifact_cache"))
             if cached:
@@ -2405,6 +2443,42 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None, pre_
                 except Exception as exc:
                     state.update(status='interrupted', error=f'{type(exc).__name__}: {exc}')
                     state.setdefault('qualification_errors', []).append(state['error'])
+                    if (isinstance(exc, HostRejected) and continuation and not keep_alive and session is not None
+                            and host_try < runpod_controller.HOST_TRY_LIMIT
+                            and not state.get('workload_admission_attempted') and not state.get('completed')):
+                        # Same window, new host: the rejected pod stays allocated until the replacement
+                        # create returns, then is deleted (nothing ran on it, so nothing is preserved).
+                        previous, previous_session, previous_heartbeat = controller, session, heartbeat_context
+                        rejection = state.pop('error')
+                        state.pop('status', None)
+                        state.setdefault('host_rejections', []).append(
+                            {'host_try': host_try, 'pod_id': previous_session['pod_id'],
+                             'session_id': previous_session['session_id'], 'error': rejection})
+                        for key in previous_session:
+                            state.pop(key, None)
+                        host_try += 1
+                        state['host_try'] = host_try
+                        _write(state_path, state)
+                        controller = _host_controller(config, config_path, host_try)
+                        transport = _host_transport(config, controller)
+                        session = heartbeat_context = heartbeat = None
+                        try:
+                            session = controller.start(replacing={'pod_id': previous_session['pod_id'],
+                                                                  'state_root': str(previous.root)})
+                        finally:
+                            try:
+                                state['host_rejections'][-1]['release'] = previous.release_rejected_host(rejection)
+                            finally:
+                                previous_heartbeat.__exit__(None, None, None)
+                                _write(state_path, state)
+                        controller.replacement_released()
+                        state.update(session)
+                        _write(state_path, state)
+                        heartbeat_context = controller.maintain_heartbeat(interval=30)
+                        heartbeat = heartbeat_context.__enter__()
+                        transport.deadline_unix = session["deadline_unix"]
+                        transport.reserve_seconds = RESERVE_SECONDS
+                        continue
                     if not keep_alive:
                         raise
                     problem = exc

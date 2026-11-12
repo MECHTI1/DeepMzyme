@@ -1822,3 +1822,22 @@ overrode the rolling $10 GPU policy for this window up to that ceiling
 ([fold-0 ceiling](execution_v5/README.md#fold-0-ceiling-a2-d8)). The execution manifest is re-pinned in the v5
 record after this entry. No campaign fit, G2 event, allocation or authenticated provider operation occurred.
 G2 remains 0/12. Next: the re-pinned manifest, the launch inputs and separate explicit launch authorization.
+
+## evc-040
+
+2026-11-12 — **First v5 launch window failed on a host without cgroup delegation; same-window host replacement.**
+The maintainer started the first launch at `975aa55` with a 16-hour session time-box (pause at about $15) inside
+the approved $85 fold-0 ceiling. Window `ec30v5-g2f0-w1` reserved at 11:59 UTC; the pod was created at 11:59:44 UTC.
+The first remote step, the container caps `prepare`, refused because the host exposed read-only cgroup v1 controls.
+The controller deleted the pod and verified its absence at 12:00:33 UTC, after about one minute of billing. No
+staging, G2 unit or workload admission occurred. The window closed as failed, the first of the two allowed.
+
+Hosts that qualified on 2026-11-03 delegated cgroup v2, and the provider documents no way to select or exclude a
+host, so the maintainer approved one more execution-only batch in `workstation.py` and `runpod_controller.py`
+([host replacement](execution_v5/README.md#host-replacement-within-a-launch-window)). A container caps refusal
+before staging now replaces the host within the same window, at most three hosts per window, and the prepared input
+proof no longer binds pass-local paths or the pod name. Both are class (a) under A2-GOV-7: no scientific file, rule,
+unit or chain link changes; `phase3.lane_gate` and `phase4.replay_cpu_logits` keep their pinned hashes; the
+scientific identity stays `66705ae7…98533f4`. The targeted CPU tests for the controller, workstation, v5
+dispatcher and Phase-4 transport passed (**635 passes**), capped at two CPU cores and 3 GB. G2 remains 0/12.
+Next: the re-pinned manifest and window `ec30v5-g2f0-w2` in a new pass.

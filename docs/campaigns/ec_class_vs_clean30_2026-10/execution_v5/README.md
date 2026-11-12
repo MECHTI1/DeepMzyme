@@ -157,6 +157,27 @@ stops the pod, closeout cannot preserve its outputs, no A2-D6 resume is possible
 until it is cleaned up. A crash inside the controller start before its session record exists leaves the ledger
 window open; the maintainer closes it by hand after confirming with the provider that no pod exists.
 
+## Host replacement within a launch window
+
+The first launch window (`ec30v5-g2f0-w1`, 2026-11-12) ended at its first remote step: the allocated host exposed
+read-only cgroup v1 controls, so the container caps helper refused kernel delegation before any staging. The pod was
+deleted with provider absence verified after about one minute, and the window closed as failed. Earlier qualified
+hosts of the same pool delegated cgroup v2, and the provider offers no host selection, so the refusal belongs to the
+host, not to the inputs ([evc-040](../log.md#evc-040)). Two class (a) execution changes follow (A2-GOV-7):
+
+- **Same-window host replacement.** A container caps refusal of `prepare` or `probe` during bootstrap, before any
+  staging or workload admission, no longer ends the window. The coordinator allocates a replacement host under its
+  own controller session (`host_try_<n>` receipts, its own watchdog, pod name `<pod name>-h<n>`, full session
+  time-box) while the rejected pod stays allocated, then deletes the rejected pod and verifies its absence. Nothing
+  ran on it, so nothing is preserved. At most three hosts are tried per window; the third refusal closes the
+  window as failed. Every other refusal, and any refusal after staging begins, keeps the previous behavior.
+- **Input proof across passes.** The prepared input proof no longer binds the pass-local paths (`state_root`,
+  `durable_root`, `mirror_root`, `runpod.state_root`) or the pod name, so a new pass for a retry or a resume can
+  reuse it at the same published source; the local storage check still runs on the new roots.
+
+A coordinator crash during a replacement leaves both sessions under their own watchdogs; the ledger window then
+needs the manual closure described above.
+
 ## Fold-0 ceiling (A2-D8)
 
 On 2026-11-12 the maintainer approved the fold-0 spending ceiling that A2-D8 requires before G2:
