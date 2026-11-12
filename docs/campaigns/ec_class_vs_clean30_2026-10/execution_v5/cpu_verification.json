@@ -1,5 +1,5 @@
 {
-  "base_commit": "975aa55db3fcd96f6c6408b4c61d5549167947a1",
+  "base_commit": "6c8f9c3b6afb648771f8eeb6ca1da17fd6531f4a",
   "chain_interface": {
     "full_verifier_on_pod": false,
     "identity": [
@@ -15,10 +15,8 @@
     "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/cpu_verification.json",
     "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/manifest.json",
     "docs/campaigns/ec_class_vs_clean30_2026-10/log.md",
-    "src/ec_clean30/runpod_controller.py",
-    "src/ec_clean30/workstation.py",
-    "tests/test_ec_clean30_runpod_controller.py",
-    "tests/test_ec_clean30_workstation_bootstrap.py"
+    "src/ec_clean30/container_caps.py",
+    "tests/test_ec_clean30_container_caps.py"
   ],
   "checks": {
     "C7": {
@@ -123,6 +121,24 @@
       "src/ec_clean30/phase3.py::lane_gate": "77d13394ad188a51a5d8258023bf5542132f4c9df53447995a1ed2e9fc4930d4",
       "src/ec_clean30/phase4.py::replay_cpu_logits": "e7d1d3a497d484a59c04544e0808ad699f720ce55511dbaa7b18099b2254f537",
       "status": "unchanged"
+    },
+    "supervised_caps_20261112": {
+      "corrections": [
+        "container_caps.py gains the cgroup_v1_readonly backend: kernel scheduler affinity on claimed whole cores, a supervised memory cap over the whole process tree, and the unchanged no-swap host rule"
+      ],
+      "docs_contract": "0 strict failures, 11 warnings (unchanged)",
+      "local_end_to_end": "The probe ran end to end in this backend on the workstation with real processes (affinity proof, supervised kill, descendant cleanup, nested command) and its evidence validated",
+      "pinned_functions_unchanged": true,
+      "scientific_files_changed": false,
+      "stated_difference": "The memory cap is supervised, not a kernel limit, and the CPU cap is whole pinned cores, not a bandwidth quota",
+      "targeted_run": {
+        "caps": "two CPU cores, 3 GB",
+        "failed": 0,
+        "passed": 772,
+        "scope": "container caps, Runpod controller and bootstrap, workstation, v5 dispatcher, Phase-4 transport, execution v3 and pretrain execution tests",
+        "skipped": 1
+      },
+      "trigger": "Windows ec30v5-g2f0-w1 and -w2 ended at container caps prepare on hosts with read-only cgroup v1 controls; w2's replacement create was refused for capacity"
     },
     "syntax": {
       "status": "passed"
@@ -658,6 +674,76 @@
     },
     "status": "execution_manifest_published_verified_launch_not_authorized"
   },
+  "historical_publication_20261112_f57effa": {
+    "base_commit": "975aa55db3fcd96f6c6408b4c61d5549167947a1",
+    "changed_files": [
+      "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/README.md",
+      "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/cpu_verification.json",
+      "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/manifest.json",
+      "docs/campaigns/ec_class_vs_clean30_2026-10/log.md",
+      "src/ec_clean30/runpod_controller.py",
+      "src/ec_clean30/workstation.py",
+      "tests/test_ec_clean30_runpod_controller.py",
+      "tests/test_ec_clean30_workstation_bootstrap.py"
+    ],
+    "manifest_build_verification": {
+      "amendment_chain": [
+        "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea",
+        "777130e4727768847e281a0aea593d44036c77107d2519ea8dddabe951ab682c"
+      ],
+      "build_evidence": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/execution_v5_build_98d95b7.json",
+        "sha256": "bea874200b888aee85f52ad26cf0f35921d424880c7729cdb28d1c63e6295751"
+      },
+      "chain_receipt": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/chain_receipt_published_98d95b7.json",
+        "sha256": "6cc8fc1bd4b1c04a9c8d5d38f15b6fa1ff938327f9b244ce184881f09d9f54c4"
+      },
+      "execution_source_commit": "98d95b7c6df060269ca0c60ec375739aa658e7a1",
+      "execution_source_published": true,
+      "gpu_or_provider_operations": 0,
+      "manifest": {
+        "path": "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/manifest.json",
+        "sha256": "81e18aece6b8be4923665f6328409f8c8659b55edb047ac837646384d9de3579"
+      },
+      "manifest_published": false,
+      "manifest_source_pin_count": 11,
+      "manifest_verification": "passed with require_published=False on the clean published source tree before copying identical candidate bytes to the repository document",
+      "published_chain_verification": "passed, including C7 on the live execution tree",
+      "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4",
+      "supersedes_manifest_sha256": "72a5dadfca39a173bb90097c3ebfed691e5d59d88d442bfea01a2257faad0490",
+      "timing_input_files_verified": true
+    },
+    "publication": "Host replacement and the re-pinned manifest v5 published; published-mode verification passed at f57effa.",
+    "publication_verification": {
+      "amendment_chain": [
+        "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea",
+        "777130e4727768847e281a0aea593d44036c77107d2519ea8dddabe951ab682c"
+      ],
+      "chain_receipt": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/chain_receipt_published_f57effa.json",
+        "sha256": "07fbdc076ac667147a3ee6c85fd1bf6a66b86b714ad6c224dea725eea10c7ed6"
+      },
+      "chain_verification": "passed, including C7 on the live tree",
+      "evidence": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/execution_v5_published_f57effa.json",
+        "sha256": "34c8a599ee2a3d69a5b14e0bdad2785b00e66f15f3b08d0c582554ca56442b43"
+      },
+      "execution_source_pin_count": 11,
+      "format": "deepmzyme_ec_clean30_execution_v5_publication_verification_v1",
+      "gpu_or_provider_operations": 0,
+      "launch_authorized": false,
+      "manifest": {
+        "path": "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/manifest.json",
+        "sha256": "81e18aece6b8be4923665f6328409f8c8659b55edb047ac837646384d9de3579"
+      },
+      "manifest_published": true,
+      "manifest_verification": "passed with require_published=True",
+      "published_commit": "f57effa7c79022b59c71dca283e2123d12459822",
+      "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4"
+    },
+    "status": "execution_manifest_published_verified_launch_not_authorized"
+  },
   "integration_science_sha256": {
     "scripts/run_ec_clean30_campaign.py": "190d968e2e3421e69e7f3472f01fdf9d82dd0ec58b679ced34bf6a0613010e46",
     "scripts/run_ec_clean30_clean_sanity.py": "01a68db20a237c90125603aa779b72ec66d40d9be3433e8fe2ac5b6d66829da5",
@@ -724,26 +810,26 @@
       "777130e4727768847e281a0aea593d44036c77107d2519ea8dddabe951ab682c"
     ],
     "build_evidence": {
-      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/execution_v5_build_98d95b7.json",
-      "sha256": "bea874200b888aee85f52ad26cf0f35921d424880c7729cdb28d1c63e6295751"
+      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/execution_v5_build_b457842.json",
+      "sha256": "d779949d6f0deb5ec3b4d284b5462ab1e5ed24dfcb2833786571ab775d2247be"
     },
     "chain_receipt": {
-      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/chain_receipt_published_98d95b7.json",
-      "sha256": "6cc8fc1bd4b1c04a9c8d5d38f15b6fa1ff938327f9b244ce184881f09d9f54c4"
+      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/chain_receipt_published_b457842.json",
+      "sha256": "080d3aca47a4ed60bbcd2c3fbcaf38d85ca322489ecd9521dc7bf85dbc47fbbf"
     },
-    "execution_source_commit": "98d95b7c6df060269ca0c60ec375739aa658e7a1",
+    "execution_source_commit": "b457842cbb2adc84680257aaa8847691d17a63c5",
     "execution_source_published": true,
     "gpu_or_provider_operations": 0,
     "manifest": {
       "path": "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/manifest.json",
-      "sha256": "81e18aece6b8be4923665f6328409f8c8659b55edb047ac837646384d9de3579"
+      "sha256": "e023e955fc6ac4737277cb890d44db88970ced9b6b11cea222e12af89ce64a83"
     },
     "manifest_published": false,
     "manifest_source_pin_count": 11,
     "manifest_verification": "passed with require_published=False on the clean published source tree before copying identical candidate bytes to the repository document",
     "published_chain_verification": "passed, including C7 on the live execution tree",
     "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4",
-    "supersedes_manifest_sha256": "72a5dadfca39a173bb90097c3ebfed691e5d59d88d442bfea01a2257faad0490",
+    "supersedes_manifest_sha256": "81e18aece6b8be4923665f6328409f8c8659b55edb047ac837646384d9de3579",
     "timing_input_files_verified": true
   },
   "pending": [
@@ -757,33 +843,13 @@
     "science_owned_source": "Unchanged except the delegated runtime_precision entry in scoring.SCORER_CODE_PATHS",
     "science_worktree": "Read-only; source_changes and science-owned chain verifier/tests were not edited"
   },
-  "publication": "Host replacement and the re-pinned manifest v5 published; published-mode verification passed at f57effa.",
+  "publication": "Supervised caps and the re-pinned manifest v5 committed; published-mode verification follows in the next commit.",
   "publication_verification": {
-    "amendment_chain": [
-      "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea",
-      "777130e4727768847e281a0aea593d44036c77107d2519ea8dddabe951ab682c"
-    ],
-    "chain_receipt": {
-      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/chain_receipt_published_f57effa.json",
-      "sha256": "07fbdc076ac667147a3ee6c85fd1bf6a66b86b714ad6c224dea725eea10c7ed6"
-    },
-    "chain_verification": "passed, including C7 on the live tree",
-    "evidence": {
-      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/execution_v5_published_f57effa.json",
-      "sha256": "34c8a599ee2a3d69a5b14e0bdad2785b00e66f15f3b08d0c582554ca56442b43"
-    },
-    "execution_source_pin_count": 11,
-    "format": "deepmzyme_ec_clean30_execution_v5_publication_verification_v1",
-    "gpu_or_provider_operations": 0,
-    "launch_authorized": false,
     "manifest": {
       "path": "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/manifest.json",
-      "sha256": "81e18aece6b8be4923665f6328409f8c8659b55edb047ac837646384d9de3579"
+      "sha256": "e023e955fc6ac4737277cb890d44db88970ced9b6b11cea222e12af89ce64a83"
     },
-    "manifest_published": true,
-    "manifest_verification": "passed with require_published=True",
-    "published_commit": "f57effa7c79022b59c71dca283e2123d12459822",
-    "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4"
+    "status": "pending"
   },
   "source_sha256": {
     "scripts/run_clean_split30_comparator.py": "5530b2801b41de02b6b83e25fdbefb8881f51c419a4ae214c88b46fef8a96402",
@@ -798,6 +864,7 @@
     "src/ec_clean30/workstation.py": "575a11c1f8017a90f0e90093e91c90b3f3c646eba2728753a9d6c8e71439ff69",
     "tests/test_clean_split30_runner.py": "38846fbe102f1d229b89e77a2cfe572b5cdc6919966fb22d8ca3fa0ffe7faab8",
     "tests/test_ec_clean30_closeout_inventory.py": "1b2de360254549c933fd8f556dbf7fc8d91f3a139848d4beb19084b1f4d33891",
+    "tests/test_ec_clean30_container_caps.py": "60c57c39752be087661a831aebec893f672c318906a0c501764a204577775762",
     "tests/test_ec_clean30_execution_v5.py": "8e298d9d69a8c950d50eab9396c011555eb8f25d86f74bcaf3bcd9114aca8016",
     "tests/test_ec_clean30_hot_storage.py": "03cb23273b4d5f77d687752c9547c2a44280a811ee162bf1a03f4958f0346cfc",
     "tests/test_ec_clean30_manifest_v5.py": "ec6d2096094fa93ab54b23d53227214f91f188e7df11ad83e08c7d57b7127207",
@@ -824,5 +891,5 @@
     "tests/test_ec_clean30_workstation_posix.py": "b0c4a681a10bfddaa3baa8c2fef46d27072bd6349694bf5fae1b85d0097f58cc",
     "tests/test_ec_clean30_workstation_v5_dispatch.py": "51cbade8fb18d188973e93f41fa184517fc8fbd235cc0924290d5be87484f63c"
   },
-  "status": "execution_manifest_published_verified_launch_not_authorized"
+  "status": "execution_manifest_rebuilt_publication_verification_pending"
 }
