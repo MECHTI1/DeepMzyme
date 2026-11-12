@@ -27,11 +27,13 @@ owns scientific choices, unit lists and selection rules; execution code must not
 The published [amendment-2 interface contract](../amendment2/interface_contract.md) owns the chain verifier
 and scientific rules. Manifest v5 is constructed from a published chain receipt; a draft link
 or a chain below sequence 2 cannot authorize real work. Link 2 is published. Its five private dry-run-v2 receipts stay on the workstation; the pod uses the
-chain receipt and the bound view-manifest digests. The published chain passed full verification at `e8f3830`,
-including C7. The resulting [v5 manifest](manifest.json) pins all 11 closed execution files, the runtime locks
-and the existing timing-input closure. Its draft verification passed on that clean published source tree;
-published-mode verification passed at `2bff344` with a fresh chain receipt. [Verification](cpu_verification.json)
-records the private receipt, build and publication evidence hashes. A complete cost forecast remains pending.
+chain receipt and the bound view-manifest digests. After the [execution corrections](#execution-corrections-of-2026-11-12),
+the published chain passed full verification at `0d4cc56`, including C7. The re-pinned [v5 manifest](manifest.json)
+pins all 11 closed execution files, the runtime locks and the existing timing-input closure; only the five
+corrected files changed their pins. Its draft verification passed on that clean published source tree, and
+published-mode verification is pending. It supersedes the first v5 manifest (`bb8f50fd…`, verified at `2bff344`).
+[Verification](cpu_verification.json) records the private receipt, build and publication evidence hashes.
+No GPU completion time is measured yet; the approved ceiling is recorded [below](#fold-0-ceiling-a2-d8).
 
 The POSIX correction is included here, with its original bytes preserved as
 [component manifest](posix_component_manifest.json) and [component verification](posix_component_verification.json).
