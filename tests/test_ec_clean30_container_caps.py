@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import errno
+import json
 import os
 from pathlib import Path
 import signal
@@ -309,12 +310,109 @@ def test_prepare_inspects_existing_v1_delegation_without_changing_it(kernel_v1):
     assert created == children == []
 
 
-def test_prepare_refuses_unwritable_v1_before_creating_any_child(kernel_v1, monkeypatch):
+def test_prepare_selects_supervision_for_unwritable_v1_without_creating_any_child(kernel_v1, monkeypatch):
     root, created, children, _ = kernel_v1
     monkeypatch.setattr(caps.os, 'access', lambda *args: False)
-    with pytest.raises(caps.CapError, match='not writable'):
-        caps.prepare(root, owner_id='owned-pod')
+    monkeypatch.setattr(caps, '_subreaper', lambda: True)
+    assert caps.prepare(root, owner_id='owned-pod') == {
+        'status': 'supervised_without_delegation', 'backend': 'cgroup_v1_readonly', 'owner_id': 'owned-pod',
+        'cgroup_root': str(root), 'parent_limits_unchanged': True, 'probe_required': True}
     assert created == children == []
+    monkeypatch.setattr(caps, '_subreaper', lambda: False)
+    with pytest.raises(caps.CapError, match='subreaper'):
+        caps.prepare(root, owner_id='owned-pod')
+
+
+READONLY_DRIVER = r"""
+import json, sys
+from pathlib import Path
+from ec_clean30 import container_caps as caps
+root = Path(sys.argv[1]); (root / 'cpu').mkdir(parents=True, exist_ok=True); (root / 'memory').mkdir(exist_ok=True)
+basis = {'swap_total_kib': 0, 'swap_devices': [], 'basis': 'host_has_no_swap_backing', 'pswpin': 5, 'pswpout': 6,
+         'boot_id': Path('/proc/sys/kernel/random/boot_id').read_text().strip()}
+caps._v1_roots = lambda path, **kw: {'cpu': root / 'cpu', 'memory': root / 'memory'}
+caps._v1_backend = lambda path: caps.READONLY_BACKEND
+caps._no_host_swap = lambda: dict(basis)
+caps.CPU_CLAIM_ROOT = root / 'claims'
+"""
+
+
+def _supervised(tmp_path, body, timeout=120):
+    """The supervisor owns its whole process tree, so each case runs in a wrapper process of its own."""
+    result = subprocess.run([sys.executable, '-c', READONLY_DRIVER + body, str(tmp_path / 'ro')],
+                            capture_output=True, text=True, timeout=timeout,
+                            env={**os.environ, 'PYTHONPATH': str(Path(caps.__file__).resolve().parents[1])})
+    assert result.returncode == 0, result.stderr[-2000:]
+    return json.loads(result.stdout.strip().splitlines()[-1])
+
+
+def test_readonly_backend_probe_passes_end_to_end_and_its_evidence_validates(tmp_path):
+    evidence = _supervised(tmp_path, "print(json.dumps(caps.probe(root)))")
+    assert evidence['backend'] == 'cgroup_v1_readonly'
+    caps.validate_probe_evidence(evidence)
+    assert evidence['cpu_throttle_test']['affinity_proof']['affinity_cpus'] == 1
+    assert evidence['memory_oom_test']['returncode'] == -signal.SIGKILL
+    assert [len(evidence['profiles'][name]['cpu_affinity']) for name in ('fit', 'esm1b')] == [2, 4]
+    for change in ('cpu', 'cores', 'swap', 'descendant'):
+        bad = deepcopy(evidence)
+        if change == 'cpu':
+            bad['cpu_throttle_test']['affinity_proof']['cpu_seconds'] = 4 * bad['cpu_throttle_test']['affinity_proof']['wall_seconds']
+        elif change == 'cores':
+            bad['profiles']['esm1b']['cpu_affinity'] = bad['profiles']['esm1b']['cpu_affinity'][:3]
+        elif change == 'swap':
+            bad['profiles']['fit']['after']['zero_swap_basis']['pswpout'] += 1
+        else:
+            bad['profiles']['fit']['descendant_cleanup_count'] = 0
+        with pytest.raises(caps.CapError):
+            caps.validate_probe_evidence(bad)
+
+
+def test_readonly_backend_kills_the_whole_tree_above_its_memory_cap(tmp_path):
+    program = "payload=bytearray(160*1024*1024); import time; time.sleep(30)"
+    result = _supervised(tmp_path, f"""
+try:
+    caps._run(root, 2 * caps.PERIOD_US, 96 * 1024**2, [sys.executable, '-c', {program!r}], timeout=20)
+    print(json.dumps({{'refused': False}}))
+except caps.CapError as exc:
+    print(json.dumps({{'refused': True, 'error': str(exc), 'left': len(caps._descendants(__import__('os').getpid()))}}))
+""")
+    assert result['refused'] and 'OOM' in result['error'] and result['left'] == 0
+
+
+def test_readonly_backend_refuses_a_child_that_widens_its_cpu_affinity(tmp_path):
+    program = "import os,time; os.sched_setaffinity(0, range(os.cpu_count())); time.sleep(30)"
+    result = _supervised(tmp_path, f"""
+try:
+    caps._run(root, caps.PERIOD_US, 1024**3, [sys.executable, '-c', {program!r}], timeout=20)
+    print(json.dumps({{'refused': False}}))
+except caps.CapError as exc:
+    print(json.dumps({{'refused': True, 'error': str(exc)}}))
+""")
+    assert result['refused'] and 'affinity' in result['error']
+
+
+def test_readonly_backend_gives_concurrent_commands_distinct_cores_and_nests_on_the_parents_cores(tmp_path):
+    result = _supervised(tmp_path, """
+import os
+first = caps._ReadonlyScope(root, 2 * caps.PERIOD_US, 1024**3); first.establish()
+second = caps._ReadonlyScope(root, 2 * caps.PERIOD_US, 1024**3); second.establish()
+env = first.environment()
+out = {'first': list(first.cpus), 'second': list(second.cpus), 'threads': env.get('OMP_NUM_THREADS') == os.environ.get('OMP_NUM_THREADS'),
+       'scope': env[caps.SCOPE_ENV] == first.path.name}
+nested = "import json,os,sys; exec(open(sys.argv[2]).read()); " \
+         "print(json.dumps(caps._run(root, 2*caps.PERIOD_US, 512*1024**2, [sys.executable,'-c','import os;print(sorted(os.sched_getaffinity(0)))'], capture=True)))"
+driver = root / 'driver.py'; driver.write_text(DRIVER)
+inner = caps._run(root, 2 * caps.PERIOD_US, 1024**3, [sys.executable, '-c', nested, str(root), str(driver)], capture=True)
+out['outer'] = inner['cpu_affinity']; record = json.loads(inner['stdout'].strip().splitlines()[-1])
+out['inner'] = record['cpu_affinity']; out['inner_seen'] = json.loads(record['stdout']); out['enclosing'] = record['before']['enclosing_scope'] == Path(inner['cgroup']).name
+first.cleanup(); second.cleanup()
+third = caps._ReadonlyScope(root, 2 * caps.PERIOD_US, 1024**3); third.establish(); out['third'] = list(third.cpus); third.cleanup()
+print(json.dumps(out))
+""".replace('DRIVER', repr(READONLY_DRIVER)))
+    assert len(result['first']) == len(result['second']) == 2 and not set(result['first']) & set(result['second'])
+    assert result['third'] == result['first'] and result['threads'] and result['scope']
+    assert not set(result['outer']) & (set(result['first']) | set(result['second']))
+    assert result['inner'] == result['inner_seen'] == result['outer'] and result['enclosing']
 
 
 @pytest.fixture
@@ -539,7 +637,7 @@ def kernel_v1(tmp_path, monkeypatch):
     cpu, memory = root / 'cpu,cpuacct', root / 'memory'
     cpu.mkdir(parents=True)
     memory.mkdir()
-    monkeypatch.setattr(caps, '_v1_roots', lambda path: {'cpu': cpu, 'memory': memory})
+    monkeypatch.setattr(caps, '_v1_roots', lambda path, **kw: {'cpu': cpu, 'memory': memory})
     basis = {'swap_total_kib': 0, 'swap_devices': [], 'basis': 'host_has_no_swap_backing', 'pswpin': 5, 'pswpout': 6,
              'boot_id': Path('/proc/sys/kernel/random/boot_id').read_text().strip()}
     monkeypatch.setattr(caps, '_no_host_swap', lambda: dict(basis))

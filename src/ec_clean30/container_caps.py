@@ -4,6 +4,16 @@ The provider must delegate v2 cpu/memory controllers or container-scoped v1
 controller mounts on a genuinely swap-free host. This module changes only new
 owned leaves, never ancestor limits or mounts. v1 rejects any host swap backing
 or swap I/O during a child; swappiness=0 alone is not a zero-swap guarantee.
+
+Where the container-scoped v1 controls exist but are read-only, the
+``cgroup_v1_readonly`` backend applies instead: whole CPU cores are capped by
+kernel scheduler affinity on cores claimed for this command alone, and the
+memory cap is enforced by this supervisor, which follows every descendant
+as a child subreaper and kills the whole tree above the limit. A capped command
+started inside another one keeps to its parent's cores. The host must
+still have no swap backing. The memory cap there is supervised, not a kernel
+limit: it counts process memory only and reacts within one poll interval,
+while the provider's own container limit stays the kernel bound.
 """
 from __future__ import annotations
 
@@ -11,6 +21,7 @@ import argparse
 import ctypes
 from contextlib import contextmanager
 import errno
+import fcntl
 import hashlib
 import json
 import math
@@ -20,6 +31,7 @@ import re
 import secrets
 import signal
 import socket
+import stat
 import subprocess
 import sys
 import time
@@ -28,6 +40,10 @@ from typing import Any, Iterator, Sequence
 GIB = 1024**3
 PERIOD_US = 100_000
 PROBE_FORMAT = "deepmzyme_ec_clean30_container_caps_probe_v1"
+READONLY_BACKEND = "cgroup_v1_readonly"
+POLL_SECONDS = .25
+CPU_CLAIM_ROOT = Path("/tmp/deepmzyme-g2-cpu-claims")
+SCOPE_ENV = "DEEPMZYME_CAPS_SCOPE"
 
 
 class CapError(RuntimeError):
@@ -118,7 +134,7 @@ def _no_host_swap() -> dict[str, Any]:
             'boot_id': _read(Path('/proc/sys/kernel/random/boot_id'))}
 
 
-def _v1_roots(root: Path) -> dict[str, Path]:
+def _v1_roots(root: Path, *, writable: bool = True) -> dict[str, Path]:
     _require(_pidfd_available()
              and hasattr(os, 'eventfd') and hasattr(os, 'eventfd_read'),
              'v1 requires race-safe pidfd cleanup and eventfd OOM notifications.')
@@ -138,8 +154,8 @@ def _v1_roots(root: Path) -> dict[str, Path]:
             if controller not in details[2].split(','):
                 continue
             member, mounted_root = memberships.get(controller), _mount_unescape(fields[3])
-            _require(mount.resolve() == mount and 'rw' in fields[5].split(',')
-                     and not os.statvfs(mount).f_flag & os.ST_RDONLY,
+            _require(mount.resolve() == mount and (not writable or ('rw' in fields[5].split(',')
+                     and not os.statvfs(mount).f_flag & os.ST_RDONLY)),
                      'Both v1 controller mounts must be canonical and writable.')
             # A host-wide cgroup mount is never an acceptable delegation.
             _require(mounted_root != '/' and member in (mounted_root, '/')
@@ -152,12 +168,26 @@ def _v1_roots(root: Path) -> dict[str, Path]:
     return found
 
 
+def _v1_backend(root: Path) -> str:
+    """Writable container-scoped v1 leaves when delegated; otherwise the supervised read-only backend."""
+    try:
+        if all(os.access(path, os.W_OK | os.X_OK) for path in _v1_roots(root).values()):
+            return 'cgroup_v1'
+    except CapError:
+        pass
+    # The same container-scoped mounts and the same no-swap host are still required, read-only.
+    _v1_roots(root, writable=False)
+    _require(hasattr(os, 'sched_setaffinity') and hasattr(os, 'sched_getaffinity'),
+             'The read-only backend requires kernel scheduler affinity.')
+    return READONLY_BACKEND
+
+
 def validate_root(root: Path) -> Path:
     root = Path(root)
     _require(root.is_absolute() and root.is_dir(), "The delegated cgroup root must be an existing absolute directory.")
     _require(root == root.resolve(), "The delegated cgroup root must be canonical and contain no symlinks.")
     if not (root / 'cgroup.type').exists():
-        _v1_roots(root)
+        _v1_backend(root)
         return root
     _require_cgroup_mount(root)
     _require(_read(root / "cgroup.type") == "domain", "A valid domain cgroup is required.")
@@ -243,6 +273,10 @@ def prepare(root: Path, *, owner_id: str) -> dict[str, Any]:
              "A safe explicit allocation owner ID is required.")
     if not (root / 'cgroup.type').exists():
         validate_root(root)
+        if _v1_backend(root) == READONLY_BACKEND:
+            _require(_subreaper(), "The read-only backend requires child-subreaper supervision.")
+            return {'status': 'supervised_without_delegation', 'backend': READONLY_BACKEND, 'owner_id': owner_id,
+                    'cgroup_root': str(root), 'parent_limits_unchanged': True, 'probe_required': True}
         delegated = _v1_roots(root)
         _require(all(os.access(path, os.W_OK | os.X_OK) for path in delegated.values()),
                  "The container-scoped v1 controls are not writable by this container.")
@@ -535,12 +569,241 @@ class _V1Scope:
             path.rmdir()
 
 
+def _subreaper() -> bool:
+    """Make this wrapper the reaper of every orphaned descendant, so none leaves its process tree."""
+    libc = ctypes.CDLL(None, use_errno=True)
+    if libc.prctl(36, 1, 0, 0, 0) != 0:  # PR_SET_CHILD_SUBREAPER
+        return False
+    value = ctypes.c_int(0)
+    return libc.prctl(37, ctypes.byref(value), 0, 0, 0) == 0 and value.value == 1  # PR_GET_CHILD_SUBREAPER
+
+
+def _process_table() -> dict[int, tuple[int, str]]:
+    table = {}
+    for entry in os.listdir('/proc'):
+        if not entry.isdigit():
+            continue
+        try:
+            fields = Path(f'/proc/{entry}/stat').read_text().rsplit(')', 1)[1].split()
+        except (FileNotFoundError, ProcessLookupError, IndexError):
+            continue
+        table[int(entry)] = (int(fields[1]), fields[0])
+    return table
+
+
+def _descendants(root_pid: int) -> dict[int, str]:
+    table = _process_table()
+    children: dict[int, list[int]] = {}
+    for pid, (parent, _) in table.items():
+        children.setdefault(parent, []).append(pid)
+    found, queue = {}, list(children.get(root_pid, []))
+    while queue:
+        pid = queue.pop()
+        if pid not in found:
+            found[pid] = table[pid][1]
+            queue.extend(children.get(pid, []))
+    return found
+
+
+def _status_kib(pid: int, path: str, names: tuple[str, ...]) -> dict[str, int]:
+    values = {}
+    for line in Path(f'/proc/{pid}/{path}').read_text().splitlines():
+        key, _, rest = line.partition(':')
+        if key in names:
+            values[key] = int(rest.split()[0])
+    return values
+
+
+class _ReadonlyScope:
+    """Affinity-capped cores and a supervised memory cap where the v1 controls are read-only."""
+    backend = READONLY_BACKEND
+
+    def __init__(self, root: Path, cpu_quota_us: int, memory_bytes: int):
+        name = f'deepmzyme-g2-{os.getpid()}-{secrets.token_hex(8)}'
+        self.path = root / name  # Logical identity only; no kernel object is created.
+        self.provider = _v1_roots(root, writable=False)
+        self.memory_bytes = memory_bytes
+        self.cores = max(1, -(-cpu_quota_us // PERIOD_US))
+        self.limits = {'cpu': {'policy': 'sched_setaffinity', 'cores': self.cores,
+                               'requested_quota_us': cpu_quota_us, 'period_us': PERIOD_US},
+                       'memory': {'policy': 'supervised_process_tree', 'limit_bytes': memory_bytes,
+                                  'poll_seconds': POLL_SECONDS}}
+        self.host_swap = _no_host_swap()
+        self.cpus: tuple[int, ...] = ()
+        self.claims: list[int] = []
+        self.child_pid: int | None = None
+        self.oom_events = self.oom_kills = self.kill_count = self.polls = 0
+        self.current = self.peak = 0
+        self.established = False
+        # A capped command started inside another one stays on its parent's claimed cores.
+        self.parent_scope = os.environ.get(SCOPE_ENV) or None
+
+    def establish(self) -> None:
+        _require(_pidfd_available() and _subreaper(),
+                 'The read-only backend requires pidfd cleanup and child-subreaper supervision.')
+        earlier = _descendants(os.getpid())
+        self._reap(earlier)
+        _require(all(state == 'Z' for state in earlier.values()), 'The supervising wrapper already has live descendants.')
+        _require(os.sched_getscheduler(0) == os.SCHED_OTHER, 'CPU containment requires the ordinary fair scheduler.')
+        if self.parent_scope is not None:
+            _require(re.fullmatch(r'deepmzyme-g2-[0-9]+-[0-9a-f]{16}', self.parent_scope) is not None,
+                     'The enclosing capped command has an invalid identity.')
+            inherited = sorted(os.sched_getaffinity(0))
+            _require(len(inherited) >= self.cores, 'The enclosing capped command has fewer cores than this one needs.')
+            self.established = True
+            self.cpus = tuple(inherited[:self.cores])
+            self.snapshot()
+            return
+        CPU_CLAIM_ROOT.mkdir(mode=0o700, exist_ok=True)
+        info = os.lstat(CPU_CLAIM_ROOT)
+        _require(stat.S_ISDIR(info.st_mode) and info.st_uid == os.getuid() and not info.st_mode & 0o022,
+                 'The CPU claim directory is not a private directory of this user.')
+        self.established = True
+        chosen = []
+        for cpu in sorted(os.sched_getaffinity(0)):
+            descriptor = os.open(CPU_CLAIM_ROOT / f'cpu{cpu}', os.O_RDWR | os.O_CREAT | os.O_CLOEXEC | os.O_NOFOLLOW, 0o600)
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError:
+                os.close(descriptor)
+                continue
+            self.claims.append(descriptor)
+            chosen.append(cpu)
+            if len(chosen) == self.cores:
+                break
+        _require(len(chosen) == self.cores, 'Too few unclaimed CPU cores remain for this capped command.')
+        self.cpus = tuple(chosen)
+        self.snapshot()
+
+    def _provider_bounds(self) -> dict[str, Any]:
+        bounds = {}
+        for key, name in (('memory', 'memory.limit_in_bytes'), ('memory', 'memory.memsw.limit_in_bytes'),
+                          ('cpu', 'cpu.cfs_quota_us'), ('cpu', 'cpu.cfs_period_us')):
+            try:
+                bounds[name] = int(_read(self.provider[key] / name))
+            except (OSError, ValueError):
+                bounds[name] = None
+        return bounds
+
+    def snapshot(self) -> dict[str, Any]:
+        host_swap = _no_host_swap()
+        _require(host_swap == self.host_swap, 'Host swap configuration or swap I/O counters changed during the capped command.')
+        return {'limits': self.limits, 'backend': self.backend, 'zero_swap_basis': host_swap,
+                'cpu_affinity': list(self.cpus), 'enclosing_scope': self.parent_scope,
+                'provider_container_bounds': self._provider_bounds(),
+                'cpu_stat': {'supervised_polls': self.polls, 'nr_throttled': 0, 'throttled_usec': 0},
+                'memory_events': {'oom': self.oom_events, 'oom_kill': self.oom_kills},
+                'swap_current_source': 'host_no_swap_invariant', 'swap_current_bytes': 0,
+                'memory_current_bytes': self.current, 'memory_peak_bytes': self.peak}
+
+    def attach(self) -> None:
+        os.sched_setaffinity(0, self.cpus)
+        _require(os.sched_getaffinity(0) == set(self.cpus), 'The child did not take its capped CPU affinity before exec.')
+        _require(os.sched_getscheduler(0) == os.SCHED_OTHER, 'CPU containment requires the ordinary fair scheduler.')
+
+    def environment(self) -> dict[str, str]:
+        env = dict(os.environ)
+        env[SCOPE_ENV] = self.path.name
+        return env
+
+    def _reap(self, members: dict[int, str]) -> None:
+        # Adopted orphans become this wrapper's children; the main child is left to its own waiter.
+        table = _process_table()
+        for pid, state in members.items():
+            if state == 'Z' and pid != self.child_pid and table.get(pid, (None,))[0] == os.getpid():
+                try:
+                    os.waitpid(pid, os.WNOHANG)
+                except ChildProcessError:
+                    pass
+
+    def enforce(self) -> None:
+        """One supervision poll: no swap, no widened affinity, and the whole tree under its memory cap."""
+        self.polls += 1
+        _require(_no_host_swap() == self.host_swap,
+                 'Host swap configuration or swap I/O counters changed during the capped command.')
+        members = _descendants(os.getpid())
+        self._reap(members)
+        allowed, resident, live = set(self.cpus), 0, []
+        for pid, state in members.items():
+            if state == 'Z':
+                continue
+            try:
+                for task in os.listdir(f'/proc/{pid}/task'):
+                    if not os.sched_getaffinity(int(task)) <= allowed:
+                        self.kill()
+                        raise CapError('A capped process left its CPU affinity; its outputs cannot qualify.')
+                usage = _status_kib(pid, 'status', ('VmRSS', 'VmSwap'))
+            except (FileNotFoundError, ProcessLookupError):
+                continue
+            if usage.get('VmSwap', 0):
+                self.kill()
+                raise CapError('A capped process used swap; its outputs cannot qualify.')
+            resident += usage.get('VmRSS', 0) * 1024
+            live.append(pid)
+        if resident > self.memory_bytes * 6 // 10:
+            # Resident sizes count shared pages once per process; settle near the cap on proportional sizes.
+            exact = 0
+            for pid in live:
+                try:
+                    usage = _status_kib(pid, 'smaps_rollup', ('Pss', 'SwapPss'))
+                except (FileNotFoundError, ProcessLookupError, PermissionError):
+                    usage = None
+                if usage is None or 'Pss' not in usage:
+                    exact = resident
+                    break
+                if usage.get('SwapPss', 0):
+                    self.kill()
+                    raise CapError('A capped process used swap; its outputs cannot qualify.')
+                exact += usage['Pss'] * 1024
+            resident = exact
+        self.current, self.peak = resident, max(self.peak, resident)
+        if resident > self.memory_bytes:
+            self.oom_events += 1
+            self.oom_kills += max(1, self.kill())
+
+    def kill(self) -> int:
+        """Kill every descendant of this wrapper; recheck membership before each signal."""
+        killed, until = 0, time.monotonic() + 5
+        while True:
+            members = _descendants(os.getpid())
+            self._reap(members)
+            live = [pid for pid, state in members.items() if state != 'Z']
+            if not live:
+                return killed
+            _require(time.monotonic() < until, 'Capped descendants remain after recursive termination.')
+            for pid in live:
+                try:
+                    descriptor = _pidfd_open(pid)
+                    try:
+                        if pid in _descendants(os.getpid()):
+                            signal.pidfd_send_signal(descriptor, signal.SIGKILL)
+                            killed += 1
+                            self.kill_count += 1
+                    finally:
+                        os.close(descriptor)
+                except (ProcessLookupError, FileNotFoundError):
+                    pass
+            time.sleep(.02)
+
+    def cleanup(self) -> None:
+        if not self.established:
+            return
+        try:
+            self.kill()
+        finally:
+            for descriptor in self.claims:
+                os.close(descriptor)
+            self.claims = []
+
+
 @contextmanager
 def _scope(root: Path, cpu_quota_us: int, memory_bytes: int) -> Iterator[_Scope]:
     _require(type(cpu_quota_us) is int and cpu_quota_us > 0, "A positive CPU quota is required.")
     _require(type(memory_bytes) is int and memory_bytes > 0, "A positive memory limit is required.")
     root = validate_root(root)
-    scope = (_Scope if (root / 'cgroup.type').exists() else _V1Scope)(root, cpu_quota_us, memory_bytes)
+    kind = (_Scope if (root / 'cgroup.type').exists()
+            else _ReadonlyScope if _v1_backend(root) == READONLY_BACKEND else _V1Scope)
+    scope = kind(root, cpu_quota_us, memory_bytes)
     try:
         scope.establish()
         yield scope
@@ -560,13 +823,28 @@ def _run(root: Path, cpu_quota_us: int, memory_bytes: int, argv: Sequence[str], 
         if isinstance(scope, _V1Scope):
             evidence['controller_cgroups'] = {key: str(path) for key, path in scope.paths.items()}
             evidence['memsw_accounting_available'] = scope.memsw_available
+        supervised = isinstance(scope, _ReadonlyScope)
+        if supervised:
+            evidence['cpu_affinity'] = list(scope.cpus)
         if emit:
             print(json.dumps({"container_caps_started": evidence}, sort_keys=True), file=sys.stderr, flush=True)
-        child = subprocess.Popen(list(argv), preexec_fn=scope.attach,
+        child = subprocess.Popen(list(argv), preexec_fn=scope.attach, env=scope.environment() if supervised else None,
                                  stdout=subprocess.PIPE if capture else None,
                                  stderr=subprocess.PIPE if capture else None, text=capture)
+        if supervised:
+            scope.child_pid = child.pid
         try:
-            if isinstance(scope, _V1Scope):
+            if supervised:
+                until = time.monotonic() + timeout if timeout is not None else None
+                while True:
+                    try:
+                        stdout, stderr = child.communicate(
+                            timeout=min(POLL_SECONDS, max(.001, until - time.monotonic())) if until else POLL_SECONDS)
+                        break
+                    except subprocess.TimeoutExpired:
+                        scope.enforce()
+                        _require(until is None or time.monotonic() < until, 'The supervised command exceeded its timeout.')
+            elif isinstance(scope, _V1Scope):
                 until = time.monotonic() + timeout if timeout is not None else None
                 while True:
                     try:
@@ -593,7 +871,7 @@ def _run(root: Path, cpu_quota_us: int, memory_bytes: int, argv: Sequence[str], 
         _require(allow_oom or after["memory_events"].get("oom_kill", 0) == 0,
                  "A process in the capped command was OOM-killed; its outputs cannot qualify.")
     evidence["cleanup_verified"] = True
-    if isinstance(scope, _V1Scope):
+    if isinstance(scope, (_V1Scope, _ReadonlyScope)):
         evidence['descendant_cleanup_count'] = scope.kill_count
     return evidence
 
@@ -601,15 +879,35 @@ def _run(root: Path, cpu_quota_us: int, memory_bytes: int, argv: Sequence[str], 
 def probe(root: Path) -> dict[str, Any]:
     """Exercise kernel enforcement in bounded disposable scopes, then both profiles."""
     root = validate_root(root)
-    cpu = _run(root, PERIOD_US // 4, 64 * 1024**2,
-               [sys.executable, "-c", "import time; end=time.monotonic()+2\nwhile time.monotonic()<end: pass"],
-               timeout=15, capture=True)
-    _require(cpu["returncode"] == 0 and cpu["after"]["cpu_stat"].get("nr_throttled", 0) > 0
-             and cpu["after"]["cpu_stat"].get("throttled_usec", 0) > 0,
-             "The contained CPU probe did not demonstrate kernel throttling.")
+    backend = 'cgroup_v2' if (root / 'cgroup.type').exists() else _v1_backend(root)
+    if backend == READONLY_BACKEND:
+        # Four busy processes on one capped core: the kernel must hold their total CPU time to that core.
+        busy = "import time\nend=time.monotonic()+2\nwhile time.monotonic()<end: pass"
+        program = ("import os,subprocess,sys,time; start=time.monotonic(); before=os.times(); "
+                   f"jobs=[subprocess.Popen([sys.executable,'-c',{busy!r}]) for _ in range(4)]; "
+                   "codes=[job.wait() for job in jobs]; after=os.times(); "
+                   "print(json.dumps({'affinity_cpus':len(os.sched_getaffinity(0)),'busy_processes':len(jobs),"
+                   "'returncodes':codes,'wall_seconds':time.monotonic()-start,"
+                   "'cpu_seconds':after.children_user+after.children_system-before.children_user-before.children_system}))")
+        cpu = _run(root, PERIOD_US // 4, 64 * 1024**2, [sys.executable, "-c", "import json; " + program],
+                   timeout=30, capture=True)
+        _require(cpu["returncode"] == 0, "The contained CPU probe failed.")
+        proof = json.loads(cpu["stdout"].strip().splitlines()[-1])
+        _require(proof["affinity_cpus"] == 1 and proof["busy_processes"] == 4 and proof["returncodes"] == [0] * 4
+                 and 0 < proof["cpu_seconds"] <= 1.25 * proof["wall_seconds"],
+                 "The contained CPU probe did not demonstrate the kernel affinity cap.")
+        cpu["affinity_proof"] = proof
+    else:
+        cpu = _run(root, PERIOD_US // 4, 64 * 1024**2,
+                   [sys.executable, "-c", "import time; end=time.monotonic()+2\nwhile time.monotonic()<end: pass"],
+                   timeout=15, capture=True)
+        _require(cpu["returncode"] == 0 and cpu["after"]["cpu_stat"].get("nr_throttled", 0) > 0
+                 and cpu["after"]["cpu_stat"].get("throttled_usec", 0) > 0,
+                 "The contained CPU probe did not demonstrate kernel throttling.")
     cpu["status"] = "passed"
+    hold = "; import time; time.sleep(10)" if backend == READONLY_BACKEND else ""
     memory = _run(root, PERIOD_US, 64 * 1024**2,
-                  [sys.executable, "-c", "payload=bytearray(128*1024*1024); print(len(payload))"],
+                  [sys.executable, "-c", f"payload=bytearray(128*1024*1024){hold}; print(len(payload))"],
                   timeout=15, capture=True, allow_oom=True)
     _require(memory["returncode"] == -signal.SIGKILL
              and memory["after"]["memory_events"].get("oom_kill", 0) > 0,
@@ -629,19 +927,29 @@ def probe(root: Path) -> dict[str, Any]:
                 "own=Path('/proc/self/cgroup').read_text(); "
                 "assert Path('/proc/'+str(child.pid)+'/cgroup').read_text()==own; "
                 "print(own); print('descendant_membership_verified='+str(child.pid))")
+        if backend == READONLY_BACKEND:
+            program = ("import os,subprocess,sys; "
+                "child=subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)'],"
+                "stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True); "
+                "own=os.sched_getaffinity(0); assert os.sched_getaffinity(child.pid)==own; "
+                f"print(os.environ['{SCOPE_ENV}']); print('affinity_cpus='+str(len(own))); "
+                "print('descendant_membership_verified='+str(child.pid))")
         evidence = _run(root, cores * PERIOD_US, gib * GIB,
                         [sys.executable, "-c", program],
                         timeout=15, capture=True)
         _require(evidence["returncode"] == 0 and Path(evidence["cgroup"]).name in evidence["stdout"],
                  "The profile probe did not confirm its actual cgroup membership.")
         evidence.update({"cpu_cores": cores, "status": "passed"})
-        if evidence['backend'] == 'cgroup_v1':
+        if evidence['backend'] in ('cgroup_v1', READONLY_BACKEND):
             _require('descendant_membership_verified=' in evidence['stdout']
                      and evidence['descendant_cleanup_count'] > 0,
                      'v1 profile qualification must exercise actual inherited membership and pidfd descendant cleanup.')
+        if evidence['backend'] == READONLY_BACKEND:
+            _require(f'affinity_cpus={cores}\n' in evidence['stdout'] and len(evidence['cpu_affinity']) == cores,
+                     'The supervised profile did not run on exactly its capped cores.')
         profiles[name] = evidence
     return {"format": PROBE_FORMAT, "status": "passed", "cgroup_root": str(root),
-            'backend': 'cgroup_v2' if (root / 'cgroup.type').exists() else 'cgroup_v1',
+            'backend': backend,
             "hostname": socket.gethostname(), "boot_id": _read(Path("/proc/sys/kernel/random/boot_id")),
             "created_unix": time.time(), "python_executable": sys.executable,
             "helper_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
@@ -663,9 +971,19 @@ def validate_probe_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
 
         def check(record: dict[str, Any], quota: int, memory: int, *, oom: bool = False) -> None:
             backend = evidence.get('backend', 'cgroup_v2')
-            _require(backend in ('cgroup_v1', 'cgroup_v2')
+            _require(backend in ('cgroup_v1', 'cgroup_v2', READONLY_BACKEND)
                      and record.get('backend', 'cgroup_v2') == backend, 'Cgroup backend evidence differs.')
-            if backend == 'cgroup_v1':
+            if backend == READONLY_BACKEND:
+                cores = max(1, -(-quota // PERIOD_US))
+                expected = {'cpu': {'policy': 'sched_setaffinity', 'cores': cores,
+                                    'requested_quota_us': quota, 'period_us': PERIOD_US},
+                            'memory': {'policy': 'supervised_process_tree', 'limit_bytes': memory,
+                                       'poll_seconds': POLL_SECONDS}}
+                _require(type(record['cpu_affinity']) is list and len(set(record['cpu_affinity'])) == cores
+                         and all(type(cpu) is int and cpu >= 0 for cpu in record['cpu_affinity'])
+                         and type(record['descendant_cleanup_count']) is int,
+                         'The supervised record lacks its exact claimed CPU cores.')
+            elif backend == 'cgroup_v1':
                 expected = {'cpu': {'cpu.cfs_quota_us': str(quota), 'cpu.cfs_period_us': str(PERIOD_US)},
                             'memory': {'memory.limit_in_bytes': str(memory),
                                        'memory.swappiness': '0', 'memory.use_hierarchy': '1'}}
@@ -690,6 +1008,16 @@ def validate_probe_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
                      "The cap probe lacks exact kernel limits, membership or cleanup evidence.")
             for stage in ("before", "after"):
                 snapshot = record[stage]
+                if backend == READONLY_BACKEND:
+                    basis = snapshot['zero_swap_basis']
+                    _require(snapshot['cpu_affinity'] == record['cpu_affinity']
+                             and snapshot['swap_current_source'] == 'host_no_swap_invariant'
+                             and basis['basis'] == 'host_has_no_swap_backing' and basis['swap_total_kib'] == 0
+                             and basis['swap_devices'] == [] and basis['boot_id'] == evidence['boot_id']
+                             and all(type(basis[key]) is int and basis[key] >= 0 for key in ('pswpin', 'pswpout'))
+                             and basis == record['before']['zero_swap_basis']
+                             and type(snapshot['memory_peak_bytes']) is int and snapshot['memory_peak_bytes'] >= 0,
+                             'The supervised record lacks unchanged genuine no-swap host evidence.')
                 if backend == 'cgroup_v1':
                     basis = snapshot['zero_swap_basis']
                     _require(snapshot['raw_limits'] == expected and snapshot['oom_control']['oom_kill_disable'] == 0
@@ -719,16 +1047,26 @@ def validate_probe_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
             _require(record["cpu_cores"] == cores and record["returncode"] == 0
                      and Path(record["cgroup"]).name in record["stdout"],
                      "The G2 cap profile lacks successful in-child membership proof.")
-            if evidence.get('backend') == 'cgroup_v1':
+            if evidence.get('backend') in ('cgroup_v1', READONLY_BACKEND):
                 _require('descendant_membership_verified=' in record['stdout']
                          and type(record['descendant_cleanup_count']) is int and record['descendant_cleanup_count'] > 0,
                          'The v1 profile lacks exercised descendant cleanup.')
+            if evidence.get('backend') == READONLY_BACKEND:
+                _require(f'affinity_cpus={cores}\n' in record['stdout'],
+                         'The supervised profile lacks its in-child affinity proof.')
         cpu = evidence["cpu_throttle_test"]
         check(cpu, PERIOD_US // 4, 64 * 1024**2)
-        _require(cpu["returncode"] == 0
-                 and cpu["after"]["cpu_stat"]["nr_throttled"] > cpu["before"]["cpu_stat"]["nr_throttled"]
-                 and cpu["after"]["cpu_stat"]["throttled_usec"] > cpu["before"]["cpu_stat"]["throttled_usec"],
-                 "The cap probe did not establish actual kernel CPU throttling.")
+        if evidence.get('backend') == READONLY_BACKEND:
+            proof = cpu["affinity_proof"]
+            _require(cpu["returncode"] == 0 and proof["affinity_cpus"] == 1 and proof["busy_processes"] == 4
+                     and proof["returncodes"] == [0] * 4
+                     and 0 < proof["cpu_seconds"] <= 1.25 * proof["wall_seconds"],
+                     "The cap probe did not establish the kernel affinity cap.")
+        else:
+            _require(cpu["returncode"] == 0
+                     and cpu["after"]["cpu_stat"]["nr_throttled"] > cpu["before"]["cpu_stat"]["nr_throttled"]
+                     and cpu["after"]["cpu_stat"]["throttled_usec"] > cpu["before"]["cpu_stat"]["throttled_usec"],
+                     "The cap probe did not establish actual kernel CPU throttling.")
         memory = evidence["memory_oom_test"]
         check(memory, PERIOD_US, 64 * 1024**2, oom=True)
         _require(memory["returncode"] == -signal.SIGKILL and memory["after"]["memory_events"]["oom_kill"] > 0,

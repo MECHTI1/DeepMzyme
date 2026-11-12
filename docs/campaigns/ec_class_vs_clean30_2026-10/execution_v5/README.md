@@ -1,7 +1,7 @@
 # Execution v5 — Runpod G2 through Fold 0
 
 Status: published, 2026-11-12, with the [execution corrections](#execution-corrections-of-2026-11-12) of the
-same day and the [host replacement](#host-replacement-within-a-launch-window) that followed the first launch window; CPU implementation only. The [fold-0 ceiling](#fold-0-ceiling-a2-d8) is approved. Neither publication
+same day, the [host replacement](#host-replacement-within-a-launch-window) that followed the first launch window and the [supervised caps](#supervised-caps-on-hosts-with-read-only-cgroup-controls) that followed the second; CPU implementation only. The [fold-0 ceiling](#fold-0-ceiling-a2-d8) is approved. Neither publication
 nor the ceiling grants launch authorization: each launch needs its own explicit authorization. The previous
 G2-only limits and launch requests do not authorize v5.
 
@@ -179,6 +179,29 @@ host, not to the inputs ([evc-040](../log.md#evc-040)). Two class (a) execution 
 
 A coordinator crash during a replacement leaves both sessions under their own watchdogs; the ledger window then
 needs the manual closure described above.
+
+## Supervised caps on hosts with read-only cgroup controls
+
+The second launch window (`ec30v5-g2f0-w2`) met the same read-only cgroup v1 controls on its first host, and its
+replacement create was refused for capacity while the rejected pod was held. A third host of another GPU type and an
+earlier pod showed the same read-only controls, so this is the provider's normal container setup, not a rare host
+([evc-041](../log.md#evc-041)). The maintainer therefore approved a third backend in `container_caps.py`,
+`cgroup_v1_readonly`, used only where the container-scoped v1 controls exist but cannot be written:
+
+- **CPU.** Each capped command runs on whole cores set by kernel scheduler affinity (2 for the fit profile, 4 for
+  the ESM-1b, CLEAN and science profiles). Concurrent commands claim distinct cores; a command started inside
+  another capped command stays on its parent's cores. The supervisor refuses a run whose process widens its affinity.
+- **Memory.** The wrapper becomes the reaper of every descendant, sums the memory of the whole process tree four
+  times per second and kills the tree above the cap; the run then fails as an out-of-memory run does.
+- **Swap.** The host must have no swap backing, checked from procfs before, during and after each command, as for
+  the writable v1 backend.
+
+This backend differs from the kernel cgroup backends, and the difference is part of the record. The memory cap is
+supervised, not a kernel limit: it counts process memory, not page cache, and a spike shorter than one poll interval
+can pass; the provider's own container limit remains the kernel bound. The CPU cap is a count of whole cores, not a
+bandwidth quota, so G2 timings on such a host are measured on pinned cores. Every probe and unit record names its
+backend. Hosts with writable cgroup v2 or v1 controls keep their previous backends unchanged. The change is
+execution-only (A2-GOV-7 class (a)): no scientific file, rule, unit, chain link or pinned function changes.
 
 ## Fold-0 ceiling (A2-D8)
 

@@ -1841,3 +1841,22 @@ unit or chain link changes; `phase3.lane_gate` and `phase4.replay_cpu_logits` ke
 scientific identity stays `66705ae7…98533f4`. The targeted CPU tests for the controller, workstation, v5
 dispatcher and Phase-4 transport passed (**635 passes**), capped at two CPU cores and 3 GB. G2 remains 0/12.
 Next: the re-pinned manifest and window `ec30v5-g2f0-w2` in a new pass.
+
+## evc-041
+
+2026-11-12 — **Second v5 launch window failed the same way; supervised caps for read-only cgroup controls.**
+Window `ec30v5-g2f0-w2` started at `6c8f9c3` at 12:41 UTC with the 16-hour session time-box. Its first host again
+exposed read-only cgroup v1 controls. The new host replacement kept the window open and requested a second host
+while the rejected pod was held, and the provider refused that create for capacity. The rejected pod was deleted
+with absence verified, about one minute was billed, and the window closed as failed: the second of the two allowed.
+No staging, G2 unit or workload admission occurred. A separately started pod of another GPU type showed the same
+read-only controls, and the earlier pod that had delegated cgroup v2 could not start for lack of a free GPU.
+
+The maintainer approved one more execution-only batch: the `cgroup_v1_readonly` backend in `container_caps.py`
+([supervised caps](execution_v5/README.md#supervised-caps-on-hosts-with-read-only-cgroup-controls)). On such hosts
+whole CPU cores are capped by kernel scheduler affinity, and the memory cap is enforced by the wrapper over the
+whole process tree; the host must still have no swap. The record states how this differs from a kernel cgroup limit.
+The change is class (a) under A2-GOV-7: no scientific file, rule, unit or chain link changes; `phase3.lane_gate`
+and `phase4.replay_cpu_logits` keep their pinned hashes; the scientific identity stays `66705ae7…98533f4`. The
+maintainer also approved a second retry record with a fresh failed-window ledger; the first ledger is kept as
+history. G2 remains 0/12. Next: the re-pinned manifest and window `ec30v5-g2f0-w3`.
