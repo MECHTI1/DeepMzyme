@@ -1767,3 +1767,31 @@ occurred. G2 remains 0/12. Next: the chain verification after publication, the v
 fold-0 ceiling and separate explicit launch authorization.
 
 Amendment chain link 2: `777130e4727768847e281a0aea593d44036c77107d2519ea8dddabe951ab682c`
+
+## evc-038
+
+2026-11-12 — **Pre-data findings from synthetic downstream walks; nothing executed on campaign data.** After
+[evc-037](#evc-037), the post-fit steps were walked end to end on synthetic data on the workstation CPU, with no
+campaign file read: S1, S2, FUT, S4, the refit recipe and a fold-1 continuation; the refits; the label-free test
+exports and the baseline; claim and score with 10,000 draws over five folds. Every step completed. G2 remains 0/12,
+so no fold-0 data existed when these findings were made.
+
+- **Freeze 2 binding (defect correction before Freeze 2).** The amendment-2 rule text says that Freeze 2 binds the
+  chain receipt, the verified refit recipes and the scoring τ (A2-SEL-9 and the analysis pins of
+  [amendment 2](amendment2/amendment.md)). `provenance.build_freeze2_manifest` binds the checkpoints and the code
+  only. The scoring pass already requires the chain receipt and one verified refit recipe per fold, so no claim can
+  be scored against another record; the missing part is the earlier gate that protects the one-shot label-free test
+  exports. On 2026-11-12 the maintainer decided to correct it through a defect amendment (A2-GOV-7, class (b))
+  before Freeze 2 is built. The correction changes no fold unit, step or CLEAN arm, so no fold-0 step is rerun and
+  no result is labelled development-exposed.
+- **Report wording.** The decision lines of the scoring report end in a doubled period; this is corrected with the
+  Freeze 2 change or as an analysis completion (class (a2)).
+- **Execution dispatch (class (a)).** The fold-0 science dispatch of execution v5 passes the CLEAN sanity flags to
+  S2 and S4, which refuse them; it gives one disposition list to both the sanity receipt and S1/FUT; and it reads one
+  result list for all units. The execution side corrects these before the v5 manifest.
+- **Private CLEAN components.** Synthetic CPU checks on 2026-11-11 showed that the pinned ESM-1b farm harness
+  accepts masked seeds 43 and 46, that the CLEAN training patch and distance helper run at the 960-wide ESMC input,
+  and that the ESMC tokenizer reads `<mask>` as one token. The final-arm CLEAN farm dispatch (one masked farm per
+  seed, the C-ESMC farms and the fold 1–4 routes) is execution work.
+
+No campaign fit, G2 event, allocation or provider operation occurred.
