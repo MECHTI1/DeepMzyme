@@ -1795,3 +1795,30 @@ so no fold-0 data existed when these findings were made.
   seed, the C-ESMC farms and the fold 1–4 routes) is execution work.
 
 No campaign fit, G2 event, allocation or provider operation occurred.
+
+## evc-039
+
+2026-11-12 — **Execution corrections before the first v5 launch, and the approved fold-0 ceiling.** While the
+first launch of the published v5 at `9084931` was being prepared, offline reproductions with the real functions
+showed that it would fail. The v5 unit check refused every G2 unit of a real controller session. The selector's
+overlay identity input was refused before allocation. The closeout inventory exceeded the 4 MiB SSH output bound.
+A refusal before the launch intent left its ledger window open for good. A resume after the first Phase-4 unit was
+refused, would have read lost farms, and would have checked each restored file with the provider.
+
+The maintainer lifted the hold on `main` for one execution-only batch. It changes only `phase3.py`, `phase4.py`,
+`workstation.py`, `runpod_controller.py` and `execution_v5.py`; the corrections are listed in the
+[v5 record](execution_v5/README.md#execution-corrections-of-2026-11-12). They are class (a) under A2-GOV-7:
+no scientific file, rule, unit or chain link changes; `phase3.lane_gate` and `phase4.replay_cpu_logits` keep
+their pinned hashes; the scientific identity stays `66705ae7…98533f4`. The chain verification with C7 passed on
+the corrected tree. The full CPU suite passed with **4,851 passes, 63 skips and 15 subtest passes**, including
+**44 CPU smoke passes and one missing-local-fixture skip**; checks were capped at two CPU cores and 3 GB. A
+separate review of the batch found that the first restore design failed through the POSIX storage aliases and
+across devices; this was corrected and tested before this record. Reverting any single correction makes its new
+tests fail. While that was being checked, a deliberately reverted test path twice sent an unauthenticated
+catalog request with a fake test token; both requests were refused, and the test now blocks network access.
+
+Under A2-D8 the maintainer approved a fold-0 gross ceiling of **$85** with a **72-hour** session time-box and
+overrode the rolling $10 GPU policy for this window up to that ceiling
+([fold-0 ceiling](execution_v5/README.md#fold-0-ceiling-a2-d8)). The execution manifest is re-pinned in the v5
+record after this entry. No campaign fit, G2 event, allocation or authenticated provider operation occurred.
+G2 remains 0/12. Next: the re-pinned manifest, the launch inputs and separate explicit launch authorization.

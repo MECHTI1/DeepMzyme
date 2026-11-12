@@ -1,9 +1,12 @@
 """Offline v5 orchestration contracts with fake workers and provider transport."""
+import contextlib
 import hashlib
+import io
 import json
 import copy
 from pathlib import Path
 import sys
+import tarfile
 import time
 from types import SimpleNamespace
 
@@ -16,6 +19,30 @@ from ec_clean30 import campaign, workstation as ws  # noqa: E402
 
 def sha(value):
     return hashlib.sha256(value.encode()).hexdigest()
+
+
+def overlay_stage(tmp_path, *, fold=0, campaign_root="/workspace/campaign", members=None):
+    """The reviewed G2 stage tar that carries the selector's overlay identity copy onto the pod."""
+    if members is None:
+        members = {"identity": None, f"identity/fold{fold}": None,
+                   f"identity/fold{fold}/components_inner.tsv": b"synthetic\n", "overlay_manifest.json": b"{}\n"}
+    local = tmp_path / "overlay_stage" / f"fold{fold}.tar"
+    local.parent.mkdir(parents=True, exist_ok=True)
+    with tarfile.open(local, "w") as archive:
+        for name, data in members.items():
+            info = tarfile.TarInfo(name)
+            if data is None:
+                info.type = tarfile.DIRTYPE
+                archive.addfile(info)
+            elif isinstance(data, tuple):
+                info.type, info.linkname = tarfile.SYMTYPE, data[1]
+                archive.addfile(info)
+            else:
+                info.size = len(data)
+                archive.addfile(info, io.BytesIO(data))
+    return {"kind": "tar", "local": str(local), "remote": f"{campaign_root}/staging/overlay_fold{fold}.tar",
+            "sha256": hashlib.sha256(local.read_bytes()).hexdigest(),
+            "extract_to": f"{campaign_root}/overlay/ecc30-overlay-v1"}
 
 
 @pytest.fixture
@@ -35,8 +62,10 @@ def case(tmp_path, monkeypatch):
               "profiles": {key: {"cap_prefix": ["cap", "--"], "memory_limit_bytes": 100000}
                            for key in ("fit", "esm1b")}, "embedding": {"esmc": {}, "esm1b": {}},
               "lane_limits": {"cpu_percent": 600, "ram_bytes": 24000, "vram_bytes": 21000}}
-    session = {"pod_id": "owned-pod", "session_id": "owned-session", "allocation_started_unix": time.time(),
-               "deadline_unix": time.time() + 50000, "max_total_seconds": 50000}
+    started = time.time()
+    # The controller's shape: the stop-request deadline lies one stop reserve before the hard stop.
+    session = {"pod_id": "owned-pod", "session_id": "owned-session", "allocation_started_unix": started,
+               "hard_stop_unix": started + 50000, "deadline_unix": started + 50000 - 120, "max_total_seconds": 50000}
     recipes = tuple((f"science_recipe_{index}", object()) for index in range(7))
     monkeypatch.setattr(campaign, "timing_recipes_v2", lambda: recipes, raising=False)
     config["bounds"] = {name: {"forecast_seconds": 100, "unit_timeout_seconds": 90}
@@ -250,7 +279,11 @@ def reviewed_phase4(case, tmp_path, monkeypatch):
     for key, memory in (("cap_prefix", "memory_bytes"), ("distance_cap_prefix", "distance_map_memory_bytes")):
         template[key] = container_caps.cap_prefix(config["remote_python"], config["remote_repo"], config["cgroup_root"],
                                                  cpu_cores=2, memory_bytes=profile[memory])
-    template["scientific_inputs"] = {"components": "/workspace/campaign/inputs/components.tsv",
+    # The published Freeze 1 names each fold view's data overlay; the selector reads its identity copy,
+    # which one reviewed G2 stage tar carries onto the pod.
+    case.source["frozen_views"] = {str(fold): {"overlay": {"id": "ecc30-overlay-v1"}} for fold in range(5)}
+    config["stage"] = [overlay_stage(tmp_path)]
+    template["scientific_inputs"] = {"components": "/workspace/campaign/overlay/ecc30-overlay-v1/identity/fold0",
         "clean_sanity_record": root + "/sanity.json", "clean_sanity_dispositions": [],
         "clean_sanity_verify_all": root + "/sanity_all.json", "futility_out": root + "/futility.json",
         "f6_corpus": "/workspace/campaign/inputs/corpus.tsv",
@@ -356,9 +389,14 @@ def test_pending_external_outputs_block_cleanup_inventory(case, tmp_path, monkey
     case.config["bootstrap_python"] = sys.executable
 
     def remote(argv, **kwargs):
-        monkeypatch.setattr(sys, "argv", ["-c", str(root)])
-        exec(compile(argv[2], "<remote-inventory>", "exec"), {})
-        pytest.fail("Pending external scientific output did not block cleanup")
+        monkeypatch.setattr(sys, "argv", ["-c", str(root), *argv[4:]])
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            exec(compile(argv[2], "<remote-inventory>", "exec"), {})
+        # The work estimate takes only the root; the hashing program checks every marker before writing.
+        if len(argv) > 4:
+            pytest.fail("Pending external scientific output did not block cleanup")
+        return output.getvalue()
 
     case.transport.remote = remote
     with pytest.raises(AssertionError, match="Pending .* data blocks cleanup"):
@@ -366,12 +404,14 @@ def test_pending_external_outputs_block_cleanup_inventory(case, tmp_path, monkey
 
 
 @pytest.mark.parametrize("fold", [1, 2, 3, 4])
-def test_later_fold_request_uses_its_own_plan_and_retains_fold0_chain(reviewed_phase4, monkeypatch, fold):
+def test_later_fold_request_uses_its_own_plan_and_retains_fold0_chain(reviewed_phase4, monkeypatch, fold, tmp_path):
     case = reviewed_phase4
     request = json.loads(json.dumps(case.request).replace("/fold0/", f"/fold{fold}/").replace("/views/fold0", f"/views/fold{fold}"))
     request["fold"] = fold
     template = request["remote_request_template"]
     template["fold0_step_chain"] = "/workspace/campaign/runs/fold0/phase4/step_chain.json"
+    template["scientific_inputs"]["components"] = f"/workspace/campaign/overlay/ecc30-overlay-v1/identity/fold{fold}"
+    case.config["stage"] = [overlay_stage(tmp_path, fold=fold)]
     template.update({key: "/workspace/campaign/inputs/" + key for key in
                      ("corpus_table", "holdout_receipt", "identity_work", "official_split_dir")})
     plan = {"format": "deepmzyme_ec_clean30_fold_plan_v2", "fold": fold, "plan_sha256": sha(f"plan{fold}")}
@@ -389,3 +429,93 @@ def test_later_fold_request_uses_its_own_plan_and_retains_fold0_chain(reviewed_p
     preapproval = {**case.preapproval, "allowed_folds": [fold], "plan_sha256_by_fold": {str(fold): plan["plan_sha256"]},
                    "allowed_steps": {str(fold): ["S1", "S4"]}, "clean_unit_ids": [], "clean_inputs_sha256_by_scope": {}}
     assert ws.validate_phase4_plan(case.config, case.source, request, preapproval)["status"] == "passed"
+
+
+def test_one_overlay_components_path_passes_launch_check_worker_and_real_selector(reviewed_phase4, tmp_path):
+    from ec_clean30 import phase4, selector, simulation
+
+    case = reviewed_phase4
+    campaign_root = tmp_path / "remote" / "campaign"
+    request = json.loads(json.dumps(case.request).replace("/workspace/campaign", str(campaign_root)))
+    case.config["remote_campaign"] = str(campaign_root)
+    template = request["remote_request_template"]
+    components = template["scientific_inputs"]["components"]
+    folder = campaign_root / "overlay/ecc30-overlay-v1/identity/fold0"
+    assert components == str(folder)
+    folder.mkdir(parents=True)
+    for name in simulation._calibration_file_names(0):
+        (folder / name).write_text("synthetic\n")
+    (folder.parent.parent / simulation.OVERLAY_MANIFEST).write_text("{}\n")
+    case.config["stage"] = [overlay_stage(tmp_path, campaign_root=str(campaign_root))]
+    assert ws.validate_phase4_plan(case.config, case.source, request, case.preapproval)["status"] == "passed"
+    view = SimpleNamespace(fold=0, campaign_root=campaign_root, overlay={"id": "ecc30-overlay-v1"})
+    assert phase4._science_paths(template, view)["components"] == components
+    assert selector.check_components_path(0, Path(components), smoke=False) == folder
+
+
+OVERLAY = "/workspace/campaign/overlay/ecc30-overlay-v1"
+
+
+@pytest.mark.parametrize("value", [
+    OVERLAY + "/Identity/fold0", OVERLAY + "/identity/fold1", OVERLAY + "/identity/fold0/",
+    OVERLAY + "/identity/fold0/components_inner.tsv", OVERLAY + "/identity/../identity/fold0",
+    OVERLAY + "/inner_copy/fold0", "/workspace/campaign/identity/fold0", "/workspace/alias_fold0",
+    "/workspace/campaign/overlay/ecc30-overlay-v2/identity/fold0", "workspace/campaign/overlay/ecc30-overlay-v1/identity/fold0",
+    "/workspace/campaign/runs/fold1/identity/fold0", [OVERLAY + "/identity/fold0"], None])
+def test_components_must_be_the_frozen_overlay_copy_of_this_fold(reviewed_phase4, value):
+    case = reviewed_phase4
+    case.request["remote_request_template"]["scientific_inputs"]["components"] = value
+    with pytest.raises(ws.WorkstationError, match="frozen overlay copy"):
+        ws.validate_phase4_plan(case.config, case.source, case.request, case.preapproval)
+
+
+@pytest.mark.parametrize("key", ["f6_corpus", "r1_inner_lists", "clean_sanity_dispositions"])
+def test_identity_paths_stay_refused_outside_components(reviewed_phase4, key):
+    case = reviewed_phase4
+    scientific = case.request["remote_request_template"]["scientific_inputs"]
+    path = OVERLAY + "/identity/fold0/components_inner.tsv"
+    scientific[key] = path if key == "f6_corpus" else [path, *scientific[key][1:]]
+    with pytest.raises(ws.phase3.Phase3Error, match="Restricted identity"):
+        ws.validate_phase4_plan(case.config, case.source, case.request, case.preapproval)
+
+
+def test_components_need_a_frozen_overlay_record_without_test_names(reviewed_phase4):
+    case = reviewed_phase4
+    case.source["frozen_views"]["0"] = {"overlay": {"id": "ecc30-overlay-test"}}
+    case.request["remote_request_template"]["scientific_inputs"]["components"] = (
+        "/workspace/campaign/overlay/ecc30-overlay-test/identity/fold0")
+    with pytest.raises(ws.WorkstationError, match="frozen overlay copy"):
+        ws.validate_phase4_plan(case.config, case.source, case.request, case.preapproval)
+    case.source["frozen_views"]["0"] = {}
+    with pytest.raises(ws.WorkstationError, match="names no data overlay"):
+        ws.validate_phase4_plan(case.config, case.source, case.request, case.preapproval)
+
+
+FOLD0 = "identity/fold0/components_inner.tsv"
+
+
+@pytest.mark.parametrize("change", [
+    lambda config, tmp: config.update(stage=[]),
+    lambda config, tmp: config["stage"].append(overlay_stage(tmp / "second")),
+    lambda config, tmp: config["stage"][0].update(extract_to="/workspace/campaign/overlay/ecc30-overlay-v1/identity"),
+    lambda config, tmp: config["stage"][0].update(kind="file"),
+    lambda config, tmp: config["stage"][0].update(sha256=sha("other bytes")),
+    lambda config, tmp: config.update(stage=[overlay_stage(tmp, members={FOLD0: b"x\n"})]),
+    lambda config, tmp: config.update(stage=[overlay_stage(tmp, members={"overlay_manifest.json": b"{}\n"})]),
+    lambda config, tmp: config.update(stage=[overlay_stage(tmp, members={
+        FOLD0: b"x\n", "overlay_manifest.json": b"{}\n", "identity/fold1/components_inner.tsv": b"x\n"})]),
+    lambda config, tmp: config.update(stage=[overlay_stage(tmp, members={
+        FOLD0: b"x\n", "overlay_manifest.json": b"{}\n", "union/members.tsv": b"x\n"})]),
+    lambda config, tmp: config.update(stage=[overlay_stage(tmp, members={
+        FOLD0: b"x\n", "overlay_manifest.json": ("link", "identity/fold0/components_inner.tsv")})]),
+    lambda config, tmp: config.update(stage=[overlay_stage(tmp, members={
+        "identity/fold0/link.tsv": ("link", "/etc/passwd"), FOLD0: b"x\n", "overlay_manifest.json": b"{}\n"})]),
+    lambda config, tmp: config.update(stage=[overlay_stage(tmp, members={
+        "identity/fold0/../../escape.tsv": b"x\n", FOLD0: b"x\n", "overlay_manifest.json": b"{}\n"})]),
+])
+def test_overlay_identity_copy_must_be_staged_before_allocation(reviewed_phase4, tmp_path, change):
+    case = reviewed_phase4
+    assert ws.validate_phase4_plan(case.config, case.source, case.request, case.preapproval)["status"] == "passed"
+    change(case.config, tmp_path)
+    with pytest.raises(ws.WorkstationError, match="overlay|Unsafe transfer member"):
+        ws.validate_phase4_plan(case.config, case.source, case.request, case.preapproval)

@@ -37,6 +37,13 @@ CROSS_REGION_ZONES = ("us-west1-a", "us-west1-b", "us-west1-c", "us-east4-a", "u
 PAYLOAD_CEILING_BYTES = 3 * GIB
 EGRESS_RESERVE_GIB = 4
 RESERVE_SECONDS = 900
+# The closeout inventory is a verified control file, never SSH control output (bounded at 4 MiB).
+INVENTORY_LIMIT_BYTES = 512 * 1024 ** 2
+INVENTORY_SCAN_SECONDS = 1800
+INVENTORY_MIN_SECONDS = 120
+INVENTORY_FILE_SECONDS = 0.02
+INVENTORY_HASH_BYTES_PER_SECOND = 32 * 1024 ** 2
+INVENTORY_TRANSFER_BYTES_PER_SECOND = 1024 ** 2
 PUBLISHED_RUNTIME_LOCKS_PATH = "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v3/runtime_locks_v2.json"
 PUBLISHED_RUNTIME_LOCKS_SHA256 = "dbbf3cd47be2062f444d4648a57b54c4aa83e717437e139dd3e20a2e261c0483"
 OFFICIAL_ESM1B_WEIGHTS = {
@@ -839,13 +846,14 @@ def _preparation_identity(config: Mapping[str, Any]) -> str:
     return json.dumps(value, sort_keys=True, allow_nan=False)
 
 
-def _prepared_preflight(config: Mapping[str, Any], config_path: Path, *, published: bool = False) -> dict[str, Any]:
+def _prepared_preflight(config: Mapping[str, Any], config_path: Path, *, published: bool = False,
+                        fresh: bool = True) -> dict[str, Any]:
     """Reuse a completed input proof only for explicit quote/placement changes."""
     if config.get("provider") != "runpod" or not config.get("artifact_cache"):
-        return preflight(config, config_path, published=published)
+        return preflight(config, config_path, published=published, fresh=fresh)
     _validate_runpod_structure(config)
     from ec_clean30 import runpod_controller
-    cost = runpod_controller.validate_config(config)
+    cost = runpod_controller.validate_config(config, fresh=fresh)
     source = _execution_source(config, published=published)
     _validate_published_runtime_locks(config, source)
     root = Path(config["state_root"])
@@ -861,7 +869,7 @@ def _prepared_preflight(config: Mapping[str, Any], config_path: Path, *, publish
                       "allowed_metadata_changes": ["runpod.data_center_id", "runpod.quote.observed_at", "runpod.quote.source"]}
             _write(root / "readiness.json", result)
             return result
-    result = preflight(config, config_path, published=published)
+    result = preflight(config, config_path, published=published, fresh=fresh)
     result.update(config_sha256=_sha(config_path), input_proof_reused=False)
     # Preserve the exact original configuration bytes rather than reserializing its hash binding.
     root.mkdir(parents=True, exist_ok=True)
@@ -871,14 +879,16 @@ def _prepared_preflight(config: Mapping[str, Any], config_path: Path, *, publish
     return result
 
 
-def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool = False) -> dict[str, Any]:
+def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool = False,
+              fresh: bool = True) -> dict[str, Any]:
     """Local-only readiness; no controller or SSH call and no cloud allocation."""
     runpod = config.get("provider", "gcp") == "runpod"
     _require(config.get("provider", "gcp") in {"gcp", "runpod"}, "Unsupported execution provider.")
+    _require(fresh is True or runpod, "Only a recovering Runpod launch window may relax quote freshness.")
     if runpod:
         from ec_clean30 import runpod_controller
         _validate_runpod_structure(config)
-        cost = runpod_controller.validate_config(config)
+        cost = runpod_controller.validate_config(config, fresh=fresh)
         repo_url = config["repo_url"]
         _require(config["hardware_profile"] in {"runpod_l4", "runpod_rtx4090"}, "Explicit Runpod hardware profile required.")
     else:
@@ -1594,13 +1604,47 @@ class RunpodTransport(ControllerTransport):
         raise WorkstationError("GCP lifecycle commands cannot operate a Runpod allocation.")
 
 
+def _remote_inventory(config, transport, session, root, program, state_root):
+    """The closeout inventory as a hashed control file outside its root, downloaded and verified before use.
+
+    SSH output carries only a work estimate and the file's digest. Hashing time scales with the files and bytes
+    found; the transport bounds every call by the remaining session time minus its reserve.
+    """
+    digest = hashlib.sha256(json.dumps([session["pod_id"], session["session_id"], root]).encode()).hexdigest()
+    control = f"{config['remote_campaign']}/g2_requests/closeout/inventory_{digest}.json"
+    _require(PurePosixPath(root) not in PurePosixPath(control).parents,
+             "The inventory control file must lie outside the inventoried root.")
+    scan = ("import json,pathlib,sys; p=pathlib.Path(sys.argv[1]); n=b=0"
+            "\nif p.exists():\n for f in p.rglob('*'):\n  if not f.is_symlink() and f.is_file(): n+=1; b+=f.stat().st_size\n"
+            "print(json.dumps({'files':n,'bytes':b}))")
+    work = json.loads(transport.remote([config["bootstrap_python"], "-c", scan, root], timeout=INVENTORY_SCAN_SECONDS))
+    _require(isinstance(work, dict) and all(type(work.get(key)) is int and work[key] >= 0 for key in ("files", "bytes")),
+             "The remote inventory work estimate is malformed.")
+    timeout = (INVENTORY_MIN_SECONDS + work["files"] * INVENTORY_FILE_SECONDS
+               + work["bytes"] / INVENTORY_HASH_BYTES_PER_SECOND)
+    pointer = json.loads(transport.remote([config["bootstrap_python"], "-c", program, root, control,
+                                           str(INVENTORY_LIMIT_BYTES)], timeout=timeout))
+    _require(isinstance(pointer, dict) and pointer.get("path") == control and type(pointer.get("size_bytes")) is int
+             and 0 < pointer["size_bytes"] <= INVENTORY_LIMIT_BYTES
+             and re.fullmatch(r"[0-9a-f]{64}", str(pointer.get("sha256"))),
+             "The remote inventory digest is malformed or exceeds its size bound.")
+    local = Path(state_root) / "closeout_inventories" / f"inventory_{digest}.json"
+    transport.download(control, local, timeout=INVENTORY_MIN_SECONDS
+                       + pointer["size_bytes"] / INVENTORY_TRANSFER_BYTES_PER_SECOND)
+    _require(local.is_file() and not local.is_symlink() and local.stat().st_size == pointer["size_bytes"]
+             and _sha(local) == pointer["sha256"], "The downloaded remote inventory differs from its remote digest.")
+    inventory = json.loads(local.read_bytes())
+    _require(isinstance(inventory, dict) and isinstance(inventory.get("files"), list), "The remote inventory is malformed.")
+    return inventory
+
+
 def _preserve_runpod_outputs(config, transport, controller, session, *, output=None, receipt_name="preservation_receipt.json",
                             max_download_bytes=PAYLOAD_CEILING_BYTES, host_state_root=None):
     """Read every output back twice before authorizing deletion of persistent storage."""
     output = output or {"execution_root": f"{config['remote_campaign']}/runs/fold0/g2",
                         "primary_root": config["durable_root"], "mirror_root": config["mirror_root"]}
     root = output["execution_root"]
-    program = ("import hashlib,json,pathlib,sys; p=pathlib.Path(sys.argv[1]); files=[]; "
+    program = ("import hashlib,json,os,pathlib,sys; p=pathlib.Path(sys.argv[1]); files=[]; "
         "\nif p.exists():\n for f in sorted(p.rglob('*')):\n"
         "  assert not f.is_symlink(), 'Output symlink is not eligible for cleanup'\n"
         "  if f.is_file():\n"
@@ -1613,8 +1657,12 @@ def _preserve_runpod_outputs(config, transport, controller, session, *, output=N
         "   with f.open('rb') as h: digest=hashlib.file_digest(h,'sha256').hexdigest()\n"
         "   files.append({'path':f.relative_to(p).as_posix(),'size_bytes':f.stat().st_size,'sha256':digest})\n"
         "s=json.loads((p/'execution_state.json').read_text()) if (p/'execution_state.json').exists() else {}; "
-        "print(json.dumps({'files':files,'pending_transfer':s.get('pending_transfer'),'pending_unit':s.get('pending_unit')}))")
-    inventory = json.loads(transport.remote([config["bootstrap_python"], "-c", program, root], timeout=120))
+        "data=json.dumps({'files':files,'pending_transfer':s.get('pending_transfer'),'pending_unit':s.get('pending_unit')}).encode()"
+        "\nassert len(data) <= int(sys.argv[3]), 'Remote inventory exceeds its size bound'\n"
+        "o=pathlib.Path(sys.argv[2]); o.parent.mkdir(parents=True,exist_ok=True); q=o.with_name(o.name+'.partial'); "
+        "q.write_bytes(data); os.replace(q,o); "
+        "print(json.dumps({'path':str(o),'sha256':hashlib.sha256(data).hexdigest(),'size_bytes':len(data)}))")
+    inventory = _remote_inventory(config, transport, session, root, program, host_state_root or config["state_root"])
     identity = {"pod_id": session["pod_id"], "session_id": session["session_id"], "config_sha256": controller.config_sha}
     inventory.update(format="deepmzyme_ec_clean30_runpod_remote_inventory_v1", **identity)
     host = HostPull(transport, Path(output["primary_root"]), Path(host_state_root or config["state_root"]),
@@ -1685,10 +1733,41 @@ def _storage_facts(path: Path) -> tuple[int, int]:
     return path.stat().st_dev, shutil.disk_usage(path).free
 
 
+def _overlay_stage(config: Mapping[str, Any], components: PurePosixPath, fold: int, manifest: str) -> None:
+    """Before allocation: one reviewed tar puts the selector's overlay copy on the pod, and nothing else.
+
+    Phase-4 stage_files refuse identity paths, so only a G2 stage tar extracting to <overlay> can carry
+    <overlay>/identity/fold<K>; without it the pod's first check would come after paid CLEAN work.
+    """
+    overlay, folder = components.parent.parent, f"identity/fold{fold}"
+    items = [item for item in config.get("stage", []) if item.get("kind") == "tar"
+             and item.get("extract_to") == str(overlay)]
+    _require(len(items) == 1, "The overlay identity copy needs exactly one reviewed stage tar "
+             "extracting to <remote campaign>/overlay/<overlay id>.")
+    local = Path(items[0]["local"])
+    _require(local.is_file() and not local.is_symlink() and _sha(local) == items[0].get("sha256"),
+             "The staged overlay identity copy is missing or changed.")
+    files = set()
+    with tarfile.open(local) as archive:
+        for member in archive:
+            name = member.name.removeprefix("./").rstrip("/")
+            if name in ("", ".") and member.isdir():
+                continue  # The archive's own root entry.
+            inside = _relative(name).startswith(folder + "/")
+            _require((member.isdir() and (inside or name in ("identity", folder)))
+                     or (member.isfile() and (inside or name == manifest)),
+                     "The staged overlay carries only this fold's identity copy and the overlay manifest, "
+                     "as regular files.")
+            if member.isfile():
+                files.add(name)
+    _require(manifest in files and any(name.startswith(folder + "/") for name in files),
+             "The staged overlay needs this fold's identity copy and the overlay manifest.")
+
+
 def validate_phase4_plan(config: Mapping[str, Any], source: Mapping[str, Any],
                          request: Mapping[str, Any], preapproval: Mapping[str, Any]) -> dict[str, Any]:
     """Read-only transport validation before allocation; measured G2 fields are added later."""
-    from ec_clean30 import campaign, container_caps, phase4
+    from ec_clean30 import campaign, container_caps, phase4, provenance, views
 
     _require(source.get("format") == phase3.EXECUTION_V5_FORMAT and request.get("fold") in range(5)
              and type(request.get("fold")) is int, "The reviewed v5 continuation must be a complete canonical fold plan.")
@@ -1796,7 +1875,21 @@ def validate_phase4_plan(config: Mapping[str, Any], source: Mapping[str, Any],
              and isinstance(scientific["r1_inner_lists"], list) and len(scientific["r1_inner_lists"]) == 4
              and len(set(scientific["r1_inner_lists"])) == 4,
              "The reviewed scientific inputs must include all sanity, selection and futility paths.")
+    # The real selector reads only the frozen overlay's identity copy; no other input may name such a folder.
+    overlay_id = ((((source.get("frozen_views") or {}).get(str(fold)) or {}).get("overlay")) or {}).get("id")
+    _require(isinstance(overlay_id, str) and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", overlay_id),
+             "The frozen fold view names no data overlay for the selector's identity copy.")
+    components = campaign_root / "overlay" / overlay_id / "identity" / f"fold{fold}"
     for name, value in scientific.items():
+        if name == "components":
+            item = PurePosixPath(value) if isinstance(value, str) else None
+            _require(item is not None and item.is_absolute() and ".." not in item.parts and str(item) == value
+                     and not any(c in value for c in "\n\r\0") and item == components
+                     and not provenance.is_test_named_path(value, relative_to=str(campaign_root)),
+                     "Phase-4 components must be the frozen overlay copy "
+                     "<remote campaign>/overlay/<overlay id>/identity/fold<K>.")
+            _overlay_stage(config, components, fold, views.OVERLAY_MANIFEST_NAME)
+            continue
         values = value if isinstance(value, list) else [value]
         for item in values:
             path = remote_path(item)
@@ -2180,13 +2273,15 @@ def _operator_hold(config, config_path, state, state_path, session, source, chec
 
 
 def _run_runpod_g2(config, config_path, *, transport=None, controller=None, pre_allocation=None,
-                   prepare_phase4=None, prepare_g2=None, complete_g2=None):
+                   prepare_phase4=None, prepare_g2=None, complete_g2=None, recover_window=False):
     from ec_clean30 import runpod_controller
     continuation = config.get("execution_scope") in {"g2_then_fold0_v5", "fold_execution_v5"}
     _require(not continuation or (config.get("provider") == "runpod"
                                  and callable(pre_allocation) and callable(prepare_phase4)
                                  and callable(prepare_g2) and callable(complete_g2)),
              "Execution v5 requires the Runpod launch gate and same-session Phase 4 preparation.")
+    _require(type(recover_window) is bool and (not recover_window or (continuation and callable(pre_allocation))),
+             "Only the v5 launch gate may recover an already reserved launch window.")
     keep_alive = config.get('runpod', {}).get('keep_alive_for_operator', False)
     _require(type(keep_alive) is bool, 'keep_alive_for_operator must be a boolean.')
     if keep_alive:
@@ -2202,7 +2297,9 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None, pre_
         owned = bool(state.get("start_attempted"))
         session, heartbeat_context, heartbeat = None, None, None
         try:
-            ready = _prepared_preflight(config, config_path, published=True)
+            # A recovering window may hold an aged quote only to reach its owned allocation (start already
+            # attempted); a window that never attempted a start re-checks quote freshness below.
+            ready = _prepared_preflight(config, config_path, published=True, fresh=not recover_window)
             if continuation:
                 _require(ready["source"].get("format") == phase3.EXECUTION_V5_FORMAT,
                          "The v5 continuation requires its published execution-v5 manifest.")
@@ -2232,6 +2329,10 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None, pre_
             _require(_status(status, config["gcp_stopped_identity"]) == "TERMINATED", "The retained GCP VM must remain stopped.")
             _write(state_root / "gcp_before.json", {"status": status})
             if not owned:
+                if recover_window:
+                    # A stock search's create admission never checks quote age, so a reserved window
+                    # that never attempted a start needs the fresh quote a new window needs.
+                    runpod_controller.validate_config(config)
                 state["start_attempted"] = True
                 _write(state_path, state)
                 owned = True

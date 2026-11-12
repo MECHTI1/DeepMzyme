@@ -481,6 +481,61 @@ def test_other_active_gpu_blocks_before_watchdog_and_create(fixture):
     assert not json.loads(api.read_text()).get("create_calls")
 
 
+@pytest.mark.parametrize("problem,match", [("stale_quote", "stale"), ("other_active_gpu", "Another Runpod GPU"),
+                                           ("pod_name_collision", "Pod name already exists")])
+def test_refusal_before_launch_intent_stops_as_no_create_attempt_only_in_that_process(fixture, problem, match):
+    config, path, api, _, make = fixture
+    pods = []
+    if problem == "stale_quote":
+        config["runpod"]["quote"]["observed_at"] = "2000-01-01T00:00:00Z"
+    elif problem == "other_active_gpu":
+        pods = [{"id": "other", "name": "other", "gpuCount": 1, "desiredStatus": "RUNNING", "runtimeStatus": "running"}]
+    else:
+        pods = [{"id": "oldpod1", "name": config["runpod"]["pod_name"], "gpuCount": 1,
+                 "desiredStatus": "EXITED", "runtimeStatus": "stopped"}]
+    controller = make(pods=pods)
+    with pytest.raises(rc.RunpodError, match=match):
+        controller.start()
+    receipt = controller.stop()
+    assert receipt["status"] == "NO_CREATE_ATTEMPT" and receipt["launch_intent_absent"] is True
+    assert controller.stop()["status"] == "NO_CREATE_ATTEMPT"
+    assert not controller.state_path.exists() and not controller.snapshot_path.exists()
+    assert not {"create", "stop", "delete"} & set(json.loads(api.read_text()).get("calls", []))
+    # A resumed process cannot know whether an earlier process wrote and then lost an intent.
+    with pytest.raises(rc.RunpodError, match="No authenticated launch state"):
+        rc.RunpodController(config, path).stop()
+
+
+def test_intent_write_failure_is_never_classified_as_no_create_attempt(fixture, monkeypatch):
+    _, _, api, _, make = fixture
+    controller = make()
+    original = rc._write
+
+    def refuse_intent(path, value):
+        if path == controller.state_path:
+            raise OSError("synthetic full receipt disk")
+        return original(path, value)
+
+    monkeypatch.setattr(rc, "_write", refuse_intent)
+    with pytest.raises(OSError, match="synthetic full receipt disk"):
+        controller.start()
+    with pytest.raises(rc.RunpodError, match="No authenticated launch state"):
+        controller.stop()
+    assert not json.loads(api.read_text()).get("create_calls")
+
+
+def test_refused_adoption_before_intent_closes_without_ownership(fixture):
+    config, _, api, _, make = fixture
+    pod = adoption_fixture(config)
+    pod["name"] = "other"
+    controller = make(pods=[pod])
+    with pytest.raises(rc.RunpodError, match="identity differs"):
+        controller.adopt("handedpod123")
+    assert controller.stop()["status"] == "NO_CREATE_ATTEMPT"
+    assert not controller.state_path.exists() and not controller.owner_path.exists()
+    assert not json.loads(api.read_text()).get("stop_calls")
+
+
 def adoption_fixture(config, *, ready=True, started=None):
     started = time.time() - 60 if started is None else started
     stamp = datetime.fromtimestamp(started, timezone.utc).isoformat()

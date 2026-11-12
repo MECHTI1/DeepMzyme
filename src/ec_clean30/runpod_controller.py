@@ -267,9 +267,14 @@ def _validate(config: Mapping[str, Any], *, fresh: bool) -> dict[str, Any]:
             "provider_enforced_stop": False, "stop_mechanism": "independent workstation process"}
 
 
-def validate_config(config: Mapping[str, Any]) -> dict[str, Any]:
-    """Validate local configuration and a fresh fully priced envelope; no API call."""
-    return _validate(config, fresh=True)
+def validate_config(config: Mapping[str, Any], *, fresh: bool = True) -> dict[str, Any]:
+    """Validate local configuration and a fresh fully priced envelope; no API call.
+
+    fresh=False only serves recovery of an already reserved launch window; every
+    create path keeps the fresh quote.
+    """
+    _require(type(fresh) is bool, "Quote freshness must be an explicit boolean.")
+    return _validate(config, fresh=fresh)
 
 
 def _status(pod: Mapping[str, Any]) -> tuple[str, str]:
@@ -316,6 +321,9 @@ class RunpodController:
         self._cached_state: dict[str, Any] | None = None
         self._cached_owner: dict[str, Any] | None = None
         self._heartbeat_guard: _HeartbeatGuard | None = None
+        # None: this process never entered start()/adopt(). False: it entered and
+        # had not yet begun writing a launch intent. True: the write was begun.
+        self._launch_intent_begun: bool | None = None
         self.source_sha = _snapshot["source_sha256"] if _snapshot else _sha(self.config_path)
         self.config_sha = _digest(self.config)
         self.cli_sha = _snapshot["cli_sha256"] if _snapshot else _sha(Path(self.cfg["cli_path"]))
@@ -672,6 +680,8 @@ class RunpodController:
                 "--env", json.dumps(cfg["runtime_environment"], sort_keys=True), "--ports", "22/tcp"]
 
     def start(self) -> dict[str, Any]:
+        if self._launch_intent_begun is None:
+            self._launch_intent_begun = False
         _require(not self.cfg.get("adopt_pod_id"), "An adoption configuration can never create a pod; use adopt().")
         self._unchanged()
         search = bool(self.cfg.get('stock_search_seconds'))
@@ -697,6 +707,7 @@ class RunpodController:
                        self.cfg.get("absolute_hard_stop_unix", begun + self.cost["max_total_seconds"]))
             _require("absolute_hard_stop_unix" not in self.cfg or hard - begun - self.cost["stop_reserve_seconds"] >= 900,
                      "Absolute launch deadline leaves no 900-second closeout reserve.")
+            self._launch_intent_begun = True
             _write(self.state_path, {"schema_version": 1, "session_id": uuid.uuid4().hex, "phase": "arming",
                                     "config_sha256": self.config_sha, "config_source_sha256": self.source_sha,
                                     "preexisting_pod_ids": [p["id"] for p in rows], "create_attempted": False,
@@ -812,6 +823,8 @@ class RunpodController:
         and volume to await configuration. session() remains mandatory before
         any workload and checks the complete approved execution configuration.
         """
+        if self._launch_intent_begun is None:
+            self._launch_intent_begun = False
         _require(pod_id == self.cfg.get("adopt_pod_id"), "Only the explicitly named pod can be adopted.")
         self._unchanged()
         self.cost = validate_config(self.config)
@@ -838,6 +851,7 @@ class RunpodController:
                      "adopted": True, "adopt_pod_id": pod_id, "allocation_started_unix": started,
                      "hard_stop_unix": hard, "deadline_unix": hard - self.cost["stop_reserve_seconds"],
                      "max_total_seconds": hard - started, "cost_admission": self.cost, "stop_requested": False}
+            self._launch_intent_begun = True
             _write(self.state_path, state)
             self._cached_state = dict(state)
         try:
@@ -919,6 +933,12 @@ class RunpodController:
 
     def stop(self) -> dict[str, Any]:
         """Request stop and verify a fresh stopped provider state; never delete data."""
+        if (self._launch_intent_begun is False and self._cached_state is None
+                and not os.path.lexists(self.state_path)):
+            # start()/adopt() in this process refused before writing any launch
+            # intent. Create needs the persisted creating phase, so no provider
+            # request exists. A resumed process never takes this branch.
+            return {"status": "NO_CREATE_ATTEMPT", "launch_intent_absent": True, "verified_at": _utc(time.time())}
         state = self._cleanup_update(stop_requested=True)
         if (not state.get("create_attempted") and not state.get("adopted")) or state.get("create_cancelled_before_post"):
             receipt = {"status": "CREATE_CANCELLED_BEFORE_POST" if state.get("create_cancelled_before_post")

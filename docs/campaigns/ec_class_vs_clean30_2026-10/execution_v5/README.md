@@ -1,8 +1,9 @@
 # Execution v5 — Runpod G2 through Fold 0
 
-Status: published, 2026-11-12; CPU implementation only. All launch attempts are paused.
-Publication does not grant launch authorization.
-There is no current fold-0 cost approval. The previous G2-only limits and launch requests do not authorize v5.
+Status: published, 2026-11-12, with the [execution corrections](#execution-corrections-of-2026-11-12) of the
+same day; CPU implementation only. The [fold-0 ceiling](#fold-0-ceiling-a2-d8) is approved. Neither publication
+nor the ceiling grants launch authorization: each launch needs its own explicit authorization. The previous
+G2-only limits and launch requests do not authorize v5.
 
 ## Execution contract
 
@@ -119,10 +120,61 @@ preserved union cache and the fold's bound `corpus_table`, `holdout_receipt`, `i
 `official_split_dir`; `attachment_forecast_seconds` and `attachment_timeout_seconds` are explicit reviewed bounds.
 The route then runs the complete canonical S1, S2 and S4 sequence and optional authorized final CLEAN queue.
 
-Pending launch requirements: complete the cost forecast and approve its numerical envelope and launch.
-Each session requires a fresh workstation chain receipt on its clean published tree. The published manifest
-and receipt checks establish provenance; they do not satisfy the numerical or launch-authorization gates.
+Pending launch requirements: the reviewed launch inputs, a fresh quote and a separate explicit launch
+authorization. Each session requires a fresh workstation chain receipt on its clean published tree. The published
+manifest and receipt checks establish provenance; they do not satisfy the numerical or launch-authorization gates.
 None of the CPU checks grants launch or spending authority.
+
+## Execution corrections of 2026-11-12
+
+Offline reproductions with the real functions showed seven execution defects before any launch. All are class (a)
+under A2-GOV-7: no scientific file, rule, unit, chain link or pinned function changed ([evc-039](../log.md#evc-039)).
+
+- **Runtime gate.** The v5 unit check compared the stop-request deadline with the session duration, so it refused
+  every G2 unit of a real controller session. It now requires hard stop − start = session duration, with the
+  deadline between start and hard stop.
+- **Selector input.** Phase-4 `components` is the frozen overlay's identity copy,
+  `<remote campaign>/overlay/<overlay id>/identity/fold<K>`, which the general restricted-name guard refused. It is
+  now the one accepted restricted-name input. Exactly one reviewed stage tar must carry this fold's copy and the
+  overlay manifest to `<remote campaign>/overlay/<overlay id>`; the launch check refuses anything else.
+- **Closeout inventory.** The pod writes the inventory as a hashed control file, which is downloaded and verified
+  before use. It no longer passes through SSH output, which is bounded at 4 MiB.
+- **Refusal before a launch intent.** A refusal inside the controller start before its launch intent is written
+  (stale quote, another active GPU, pod-name collision, exhausted stock search) now closes the window as failed.
+  Before, the window stayed open and blocked every later launch. Each such refusal uses one of the two failed windows.
+- **Same-window recovery.** A re-run of the exact open window may hold an aged quote only to reach the allocation it
+  already started; a window that never attempted a start, and every create, still needs a fresh quote. A closed
+  driver record whose ledger row is still open is recorded without provider access.
+- **Resume.** A resumed fold's G3 carries the allocations of earlier sessions admitted to Phase 4. Inner CLEAN fits
+  read the farm of the attempt that holds the preserved embedding result. Preserved files are restored in a few
+  verified archives, also through the POSIX storage aliases, and a remote file is never replaced.
+
+Two operating limits remain. After a workstation or coordinator crash, the same `--run-v5` command must be re-run
+within the 900-second heartbeat timeout, on the workstation whose watchdog is still running. Otherwise the watchdog
+stops the pod, closeout cannot preserve its outputs, no A2-D6 resume is possible, and the stopped pod volume bills
+until it is cleaned up. A crash inside the controller start before its session record exists leaves the ledger
+window open; the maintainer closes it by hand after confirming with the provider that no pod exists.
+
+## Fold-0 ceiling (A2-D8)
+
+On 2026-11-12 the maintainer approved the fold-0 spending ceiling that A2-D8 requires before G2:
+
+| Item | Approved value |
+|---|---|
+| Fold-0 gross ceiling | $85: `fold0_cost_ceiling_usd`, `runpod.gross_ceiling_usd` and the G3 preapproval `cost_usd` |
+| Session time-box | 72 hours: `runpod.requested_hours` 72, `runpod.max_runtime_seconds` and G3 `gpu_seconds` 259,200 |
+| Failed launch windows | at most two further failed windows in the shared ledger |
+| Rolling $10 GPU policy | overridden for the fold-0 window only, up to the $85 ceiling |
+
+The ceiling covers all of fold 0, G2 included. The launch check applies `gross(72)`, from the formula below, to the
+fresh quote and requires at most $85. At the historical rate, with $5 of prior charges and a $2 egress reserve,
+72 hours come to $82.29. If the fresh quote does not fit 72 hours, the session is shortened; the ceiling does not
+rise. Billing ends with the session.
+
+If fold 0 continues in a later session under A2-D6, that session keeps the $85 ceiling and counts the reconciled
+charges of every earlier fold-0 session as prior charges. After Phase-4 admission, its G3 preapproval must equal
+the sum of the session ceilings, as the resume check requires; that sum grants no further spending. The CLEAN
+scope, inputs and caps bound by the first G3 stay fixed, except that a later session may add the final CLEAN scope.
 
 ## Provisional cost scenarios
 
@@ -139,10 +191,11 @@ Using the existing 15% cost margin and $0.30 retained-storage reserve:
 | 24 hours | $25.23 |
 | 36 hours | $37.67 |
 | 48 hours | $50.11 |
+| 72 hours | $74.99 |
 
-These are cost scenarios with the historical storage configuration, not completion forecasts or approved ceilings.
-Final hot/canonical storage capacity must also be priced. The existing rolling $10 policy
-has no approved override, and the 8-hour scenario already crosses its $8 warning threshold before prior costs.
+These are cost scenarios with the historical storage configuration, not completion forecasts. The approved
+ceiling is recorded [above](#fold-0-ceiling-a2-d8). Final hot/canonical storage capacity must also be priced.
+The rolling $10 policy is overridden only for the fold-0 window, up to that ceiling.
 The prepared CLEAN closure contains 8,115 base and 20,120 masked embedding sequences and eight 2,500-epoch
 fits. Historical CPU timing cannot establish their CUDA throughput. Full-training ESMC preparation and F6
 pretraining add work whose CUDA throughput is unmeasured. Forecasts must count CPU replay/export on the billed pod,

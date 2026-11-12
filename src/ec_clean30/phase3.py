@@ -1156,11 +1156,16 @@ def _runtime(request: Mapping[str, Any], *, pretraining: bool = False) -> tuple[
                              allocation_started_unix=float(request["allocation_started_unix"]),
                              reserve_seconds=900, forecast_margin=1.25)
     if source.get("format") == EXECUTION_V5_FORMAT:
+        # The controller ends the session at its hard stop; the stop-request
+        # deadline lies one stop reserve earlier, inside that duration.
+        hard = request.get("hard_stop_unix")
         _require(math.isfinite(policy.max_total_seconds) and policy.max_total_seconds > policy.reserve_seconds
-                 and math.isclose(policy.deadline_unix - policy.allocation_started_unix,
+                 and type(hard) in (int, float) and math.isfinite(hard)
+                 and math.isclose(hard - policy.allocation_started_unix,
                                   policy.max_total_seconds, rel_tol=0, abs_tol=1)
+                 and policy.allocation_started_unix < policy.deadline_unix < hard
                  and re.fullmatch(r"[0-9a-f]{64}", str(request.get("runpod_config_sha256", ""))),
-                 "Execution v5 requires the configured session duration, deadline and Runpod configuration binding.")
+                 "Execution v5 requires the configured session duration, hard stop, deadline and Runpod configuration binding.")
     else:
         _require(policy.max_total_seconds <= 7200, "This G2 package permits at most a two-hour allocation.")
         if profile.startswith("runpod_"):

@@ -1502,6 +1502,30 @@ def verify_preserved_scientific_outputs(local_marker, *, original_attempt):
     return record
 
 
+def _overlay_components(value, view):
+    """The one scientific input inside a restricted-name folder: the bound view's frozen data-overlay copy.
+
+    The real selector and futility steps read only <overlay>/identity/fold<K> next to <overlay>/overlay_manifest.json,
+    so this accepts exactly <campaign root>/overlay/<frozen overlay id>/identity/fold<K>: canonical (no link, no
+    '..'), case-exact, this fold only, never the campaign's own identity folder and never a test-named part.
+    """
+    overlay = getattr(view, "overlay", None) or {}
+    _require(isinstance(value, str) and not any(c in value for c in "\n\r\0")
+             and isinstance(overlay.get("id"), str) and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", overlay["id"]),
+             "Scientific components need the frozen data overlay of a real fold view.")
+    path, campaign_root = Path(value), Path(view.campaign_root).resolve()
+    expected = campaign_root / "overlay" / overlay["id"] / "identity" / f"fold{view.fold}"
+    _require(path.is_absolute() and ".." not in path.parts and str(path) == value and path.resolve() == path
+             and path == expected and path.parts[-2:] == ("identity", f"fold{view.fold}"),
+             "Scientific components must be the canonical frozen overlay copy "
+             "<campaign root>/overlay/<overlay id>/identity/fold<K>.")
+    manifest = path.parent.parent / views.OVERLAY_MANIFEST_NAME
+    _require(manifest.is_file() and not manifest.is_symlink(),
+             "The overlay identity copy needs its regular overlay manifest two folders up.")
+    provenance.refuse_test_paths([path], what="Scientific components", relative_to=campaign_root)
+    selector.check_components_path(view.fold, path, smoke=False)
+
+
 def _science_paths(request, view):
     inputs = request["scientific_inputs"]
     _require(isinstance(inputs, dict) and set(inputs) <= {"components", "clean_sanity_record",
@@ -1510,6 +1534,9 @@ def _science_paths(request, view):
     for name, value in inputs.items():
         paths = value if isinstance(value, list) else [value]
         _require(all(isinstance(path, str) and bool(path) for path in paths), "Scientific inputs must be paths.")
+        if name == "components":
+            _overlay_components(value, view)
+            continue
         for path in paths:
             phase3._no_restricted_path(Path(path))
     root = Path(request["execution_root"]).resolve()

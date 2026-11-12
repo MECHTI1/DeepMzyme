@@ -60,6 +60,26 @@ def test_unresolved_window_blocks_fresh_launch_but_exact_recovery_does_not_reset
     assert current.status()["unresolved_window"]["window_id"] == "first"
 
 
+def test_recovery_query_matches_only_the_exact_open_binding_and_never_writes(ledger):
+    current, root = ledger
+
+    def holds(name, *, config="c" * 64, manifest=SOURCE, pass_root=None):
+        return current.holds_open(name, config_sha256=config, execution_manifest_sha256=manifest,
+                                  pass_root=root / name if pass_root is None else pass_root)
+
+    assert not holds("first")
+    begin(current, root, "first")
+    original = current.path.read_bytes()
+    assert holds("first")
+    assert not holds("first", config="e" * 64) and not holds("first", manifest="e" * 64)
+    assert not holds("first", pass_root=root / "other") and not holds("second")
+    assert current.path.read_bytes() == original
+    fail(current, "first")
+    assert not holds("first")
+    with pytest.raises(v5.LaunchWindowError, match="inside a pass directory"):
+        holds("bad", pass_root=current.path.parent)
+
+
 def test_completed_window_does_not_reset_previous_failures_and_cannot_restart(ledger):
     current, root = ledger
     begin(current, root, "failed")

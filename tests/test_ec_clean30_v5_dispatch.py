@@ -101,7 +101,9 @@ def test_g3_materialization_cannot_increase_preapproved_envelope(approved, tmp_p
     config, _, _, _, source = approved
     preapproval = json.loads(Path(config["phase4"]["preapproval_path"]).read_text())
     freeze = write(tmp_path / "freeze1c.json", {**phase3.source_identity(source), "format": "deepmzyme_ec_clean30_freeze1c_v2"})
-    session = {"session_id": "owned", "allocation_started_unix": 100, "deadline_unix": 3700, "max_total_seconds": 3600}
+    # The controller's shape: the stop-request deadline lies one stop reserve before the hard stop.
+    session = {"session_id": "owned", "allocation_started_unix": 100, "hard_stop_unix": 3700, "deadline_unix": 3580,
+               "max_total_seconds": 3600}
     out = tmp_path / "g3.json"
     value = v5.materialize_g3(preapproval, preapproval_sha256=config["phase4"]["preapproval_sha256"],
                              freeze1c=freeze, out=out, source=source, session=session, gross_ceiling_usd=8)

@@ -1,6 +1,6 @@
 """CPU fixtures for the bounded workstation queue; no controller/network/GPU use."""
 from datetime import datetime, timezone
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stdout
 import hashlib
 import io
 import json
@@ -160,7 +160,7 @@ def test_mirror_failure_withholds_remote_ack_and_next_launch(cycle, tmp_path, mo
     assert ("launch", ".finalize") not in transport.events
 
 
-def test_runpod_closeout_preserves_bookkeeping_without_mistaking_it_for_manifests(cycle, tmp_path):
+def test_runpod_closeout_preserves_bookkeeping_without_mistaking_it_for_manifests(cycle, tmp_path, monkeypatch):
     request, durable, state, _ = cycle
     root = Path(request["execution_root"])
     payloads = {"runs/model.bin": b"checkpoint",
@@ -176,7 +176,16 @@ def test_runpod_closeout_preserves_bookkeeping_without_mistaking_it_for_manifest
         target.write_bytes(data)
         entries.append({"path": name, "size_bytes": len(data), "sha256": ws._sha(target)})
     transport = LocalTransport()
-    transport.remote = lambda *a, **kw: json.dumps({"files": entries, "pending_transfer": None, "pending_unit": None})
+
+    def remote(argv, **kwargs):
+        # The real work-estimate and inventory programs run here; their control file is read by download().
+        monkeypatch.setattr(sys, "argv", ["-c", *argv[3:]])
+        output = io.StringIO()
+        with redirect_stdout(output):
+            exec(compile(argv[2], "<remote-inventory>", "exec"), {})
+        return output.getvalue()
+
+    transport.remote = remote
     config = {"remote_campaign": str(root.parents[2]), "bootstrap_python": sys.executable,
               "durable_root": str(durable), "mirror_root": str(tmp_path / "nvme"), "state_root": str(state)}
     controller = type("Controller", (), {"config_sha": "a" * 64})()
@@ -185,6 +194,7 @@ def test_runpod_closeout_preserves_bookkeeping_without_mistaking_it_for_manifest
     proof = json.loads(receipt.read_text())
     assert proof["host_pull_manifests"] == ["persistence_receipts/unit.json"]
     assert {row["path"] for row in proof["files"]} == set(payloads) | {"closeout/remote_inventory.json"}
+    assert proof["files"][:-1] == sorted(entries, key=lambda row: row["path"])
     for name, data in payloads.items():
         assert (durable / name).read_bytes() == (tmp_path / "nvme" / name).read_bytes() == data
 

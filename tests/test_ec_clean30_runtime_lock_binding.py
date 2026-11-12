@@ -96,7 +96,7 @@ def test_both_preflight_paths_bind_runtime_before_storage_or_archive_io(locked_c
     config, _ = locked_config
     config["runtime_environments"]["fit"]["packages"].pop("torch")
     monkeypatch.setattr(ws, "_validate_runpod_structure", lambda *_: None)
-    monkeypatch.setattr(runpod_controller, "validate_config", lambda *_: {})
+    monkeypatch.setattr(runpod_controller, "validate_config", lambda *_, **__: {})
     monkeypatch.setattr(phase3, "verify_execution_source", lambda *a, **kw: {"format": phase3.BOOTSTRAP_FORMAT})
     monkeypatch.setattr(ws.subprocess, "check_output", lambda *a, **kw: config["repo_url"])
     monkeypatch.setattr(ws, "_local_storage", lambda *_: pytest.fail("Runtime binding must precede storage and archive reads"))

@@ -15,6 +15,7 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import stat
+import tarfile
 import time
 from typing import Any, Iterator, Mapping
 import uuid
@@ -25,6 +26,15 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 TERMINAL_STATES = {"verified_stopped", "verified_absent", "not_allocated"}
 AUTHORIZATION_FORMAT = "deepmzyme_ec_clean30_runpod_launch_authorization_v5"
 PREAPPROVAL_FORMAT = "deepmzyme_ec_clean30_g3_preapproval_v5"
+G3_AUTHORITY_FORMAT = "deepmzyme_ec_clean30_g3_authority_v5"
+# A resumed fold keeps the scope, inputs and caps of its earlier G3; only the ceilings may grow, and
+# its CLEAN unit ids and input pins may only gain the final scope (_authenticated_g3).
+G3_FAMILY_KEYS = ("campaign_id", "scope", "allowed_folds", "plan_sha256_by_fold", "allowed_steps", "clean_unit_ids",
+                  "clean_cap_profile", "science_cap_profile", "hot_work_root", "clean_inputs_sha256",
+                  "clean_inputs_sha256_by_scope")
+# A resume restores preserved bytes in a few verified archives, never one provider check per file.
+RESTORE_BATCH_BYTES = 1024 ** 3
+RESTORE_BATCH_FILES = 50_000
 
 
 class LaunchWindowError(RuntimeError):
@@ -173,15 +183,29 @@ class FailedWindowLedger:
                 "failed_windows": failures, "remaining_failed_windows": FAILED_WINDOW_LIMIT - failures,
                 "unresolved_window": next((row for row in document["windows"] if row["status"] == "open"), None)}
 
-    def begin_window(self, window_id: str, *, config_sha256: str, execution_manifest_sha256: str,
-                     pass_root: str | Path) -> dict[str, Any]:
-        """Reserve before provider access, or recover exactly the same unresolved window."""
+    def _binding(self, window_id: str, config_sha256: str, execution_manifest_sha256: str,
+                 pass_root: str | Path) -> dict[str, str]:
         self._window_id(window_id)
         binding = {"window_id": window_id, "config_sha256": _sha256(config_sha256, "config_sha256"),
                    "execution_manifest_sha256": _sha256(execution_manifest_sha256, "execution_manifest_sha256"),
                    "pass_root": str(_path(pass_root, "pass_root"))}
         _require(self.path != Path(binding["pass_root"]) and Path(binding["pass_root"]) not in self.path.parents,
                  "The shared ledger must not live inside a pass directory.")
+        return binding
+
+    def holds_open(self, window_id: str, *, config_sha256: str, execution_manifest_sha256: str,
+                   pass_root: str | Path) -> bool:
+        """Read only: whether exactly this binding is the ledger's unresolved window."""
+        binding = self._binding(window_id, config_sha256, execution_manifest_sha256, pass_root)
+        with self._locked():
+            document = self._read()
+        return any(row["status"] == "open" and all(row[key] == value for key, value in binding.items())
+                   for row in document["windows"])
+
+    def begin_window(self, window_id: str, *, config_sha256: str, execution_manifest_sha256: str,
+                     pass_root: str | Path) -> dict[str, Any]:
+        """Reserve before provider access, or recover exactly the same unresolved window."""
+        binding = self._binding(window_id, config_sha256, execution_manifest_sha256, pass_root)
         with self._locked():
             document = self._read()
             for row in document["windows"]:
@@ -285,24 +309,133 @@ def validate_launch_authorization(config: Mapping[str, Any], config_path: Path,
     _require(preapproval.get("format") == PREAPPROVAL_FORMAT and preapproval.get("status") == "approved",
              "The session needs its reviewed numerical G3 preapproval before allocation.")
     phase3.require_same_scientific_identity(preapproval, source)
-    _require(preapproval.get("ceilings", {}).get("cost_usd") == ceiling,
-             "G3 preapproval and launch cost ceiling differ.")
+    carry, rows = preserved_g3(config, validate_resume(config, source), source)
+    carried = _allocation_totals(rows or {})
+    cost = preapproval.get("ceilings", {}).get("cost_usd")
+    if carry is None:
+        _require(cost == ceiling, "G3 preapproval and launch cost ceiling differ.")
+    else:
+        # Exact, as for a fresh launch: the reviewed G3 cost is the cumulative fold total, never a looser bound.
+        _require(type(cost) in (int, float) and math.isfinite(cost) and cost == carried["cost"] + ceiling,
+                 "A resumed fold's G3 preapproval cost must equal the cumulative cost: every carried-forward "
+                 "allocation's cost ceiling plus this launch ceiling.")
     ceilings = preapproval["ceilings"]
     _require(all(type(ceilings.get(key)) in (int, float) and math.isfinite(ceilings[key])
                  and ceilings[key] > 0 for key in ("gpu_seconds", "cpu_seconds", "cost_usd"))
              and type(config["runpod"].get("max_runtime_seconds")) in (int, float)
-             and 0 < config["runpod"]["max_runtime_seconds"] <= ceilings["gpu_seconds"],
-             "The controller allocation must fit the positive G3 preapproved ceilings before launch.")
+             and 0 < config["runpod"]["max_runtime_seconds"] <= ceilings["gpu_seconds"] - carried["gpu"]
+             and carried["cpu"] <= ceilings["cpu_seconds"],
+             "The controller allocation must fit the positive G3 preapproved ceilings before launch; "
+             "a resumed fold's ceilings must also cover every carried-forward allocation.")
     _require(request.get("fold", 0) == config.get("execution_fold", 0), "Reviewed configuration and requested fold differ.")
-    validate_resume(config, source)
     workstation.validate_phase4_plan(config, source, request, preapproval)
     return authorization
 
 
+def _allocation_totals(allocations: Mapping[str, Any]) -> dict[str, float]:
+    """Sum allocations in their stored order, with the row checks of phase4.verify_authority."""
+    totals = {"gpu": 0.0, "cpu": 0.0, "cost": 0.0}
+    for row in allocations.values():
+        _require(isinstance(row, dict) and row.get("resource") in ("gpu", "cpu")
+                 and all(type(row.get(key)) in (int, float) and math.isfinite(row[key]) for key in
+                         ("allocation_started_unix", "deadline_unix", "max_total_seconds", "cost_ceiling_usd"))
+                 and row["max_total_seconds"] > 0 and row["cost_ceiling_usd"] >= 0
+                 and 0 < row["deadline_unix"] - row["allocation_started_unix"] <= row["max_total_seconds"],
+                 "A carried-forward G3 allocation is malformed.")
+        totals[row["resource"]] += row["max_total_seconds"]
+        totals["cost"] += row["cost_ceiling_usd"]
+    return totals
+
+
+def _clean_scope(document: Mapping[str, Any]) -> tuple[set, dict]:
+    pins = document.get("clean_inputs_sha256_by_scope")
+    pins = dict(pins) if isinstance(pins, dict) else {"fold0_inner": document.get("clean_inputs_sha256")}
+    return set(document.get("clean_unit_ids") or ()), pins
+
+
+def _authenticated_g3(reference: Any, source: Mapping[str, Any], preapproval: Mapping[str, Any]) -> dict[str, Any]:
+    """Read a preserved earlier G3 authority only through its recorded digest, format, identity and family."""
+    from ec_clean30 import phase3
+
+    _require(isinstance(reference, dict) and {"path", "sha256"} <= set(reference) <= {"path", "sha256", "sessions"},
+             "A preserved G3 reference names exactly its path and digest.")
+    path = Path(reference["path"])
+    _require(path.is_absolute(), "A preserved G3 authority needs an absolute path.")
+    document = _record(path)
+    _require(_file_sha(path) == _sha256(reference["sha256"], "preserved G3 sha256"),
+             "The preserved prior G3 authority changed.")
+    _require(document.get("format") == G3_AUTHORITY_FORMAT and document.get("status") == "approved"
+             and isinstance(document.get("allocations"), dict) and bool(document["allocations"]),
+             "A preserved prior G3 must be an approved materialized v5 authority with its allocations.")
+    _sha256(document.get("preapproval_sha256"), "preserved G3 preapproval_sha256")
+    phase3.require_record_precedence(document, source)
+    (old_units, old_pins), (new_units, new_pins) = _clean_scope(document), _clean_scope(preapproval)
+    # A later session may add final CLEAN to the fold; it never drops or changes a CLEAN scope already bound.
+    _require(all(document.get(key) == preapproval.get(key) for key in G3_FAMILY_KEYS
+                 if key not in ("clean_unit_ids", "clean_inputs_sha256", "clean_inputs_sha256_by_scope"))
+             and old_units <= new_units and old_pins.items() <= new_pins.items(),
+             "A resumed fold's G3 preapproval must keep the prior G3 scope, inputs and caps; only its ceilings "
+             "and an added CLEAN scope may grow.")
+    _allocation_totals(document["allocations"])
+    return document
+
+
+def preserved_g3(config: Mapping[str, Any], resume: Mapping[str, Any] | None,
+                 source: Mapping[str, Any]) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    """The G3 allocations a resumed fold must carry forward, or (None, None) when there are none.
+
+    Only sessions already admitted to the preserved Phase-4 root are carried, because phase4._runtime
+    requires exactly those; before any admission the per-session cost equality stays unchanged.
+    The bound prior driver state names the digest of the G3 its session materialized (or inherited
+    at its own resume); its own G3 must lie in its state root and match every preserved Phase-4 unit
+    request of that session. Admitted work without any G3 stops for a decision. Returns the reference
+    {path, sha256, sessions} and the carried allocation rows in the G3's stored order.
+    """
+    fold = config.get("execution_fold", 0)
+    if resume is None or resume["config"].get("execution_fold", 0) != fold:
+        return None, None
+    state = resume["state"]
+    own, inherited = state.get("g3_authority"), state.get("resume_g3")
+    record = next((row for row in resume["inventories"]
+                   if row["execution_root"].endswith(f"/runs/fold{fold}/phase4")), None)
+    files = {entry["path"] for entry in record["files"]} if record else set()
+    admitted = (_record(Path(record["primary_root"]) / "execution_state.json").get("allocations", {})
+                if "execution_state.json" in files else {})
+    _require(isinstance(admitted, dict), "Preserved Phase-4 allocations must be an object.")
+    reference = own or inherited
+    if reference is None:
+        _require(not admitted, "Preserved Phase-4 work has no authenticated G3 authority; stop for a decision.")
+        return None, None
+    if not admitted:
+        return None, None
+    _, preapproval = _bound_record(config["phase4"], "preapproval")
+    document = _authenticated_g3(reference, source, preapproval)
+    if own:
+        _require(Path(own["path"]) == Path(resume["config"]["state_root"]) / "g3_v5.json",
+                 "The prior session's G3 must be the one materialized in its own state root.")
+        prefix = f"queue/{state['session_id']}/"
+        for name in sorted(files):
+            if name.startswith(prefix) and name.endswith(".json") and "/" not in name[len(prefix):]:
+                _require(_record(Path(record["primary_root"]) / name).get("g3_sha256") == own["sha256"],
+                         "A preserved Phase-4 request of the prior session names another G3 authority.")
+    for session_id, row in admitted.items():
+        recorded = document["allocations"].get(session_id, {})
+        _require(isinstance(row, dict) and recorded.get("allocation_started_unix") == row.get("started_unix")
+                 and recorded.get("max_total_seconds", 0) >= row.get("max_total_seconds", 0),
+                 "The preserved prior G3 omits a session already admitted to Phase 4.")
+    rows = {session_id: row for session_id, row in document["allocations"].items() if session_id in admitted}
+    return {"path": reference["path"], "sha256": reference["sha256"], "sessions": list(rows)}, rows
+
+
 def materialize_g3(preapproval: Mapping[str, Any], *, preapproval_sha256: str, freeze1c: Path,
                    out: Path, source: Mapping[str, Any], session: Mapping[str, Any],
-                   gross_ceiling_usd: float) -> dict[str, Any]:
-    """Bind an already approved numerical envelope to measured G2 and the existing allocation."""
+                   gross_ceiling_usd: float, prior: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Bind an already approved numerical envelope to measured G2 and the existing allocation.
+
+    prior is the reference (preserved_g3) to the G3 of earlier sessions of a resumed fold and the
+    sessions already admitted to its Phase-4 root. Exactly those allocations are carried forward
+    unchanged, so phase4._runtime still finds them, and the ceilings cover the cumulative total.
+    """
     from ec_clean30 import phase3, provenance
 
     _require(preapproval.get("format") == PREAPPROVAL_FORMAT and preapproval.get("status") == "approved",
@@ -316,23 +449,36 @@ def materialize_g3(preapproval: Mapping[str, Any], *, preapproval_sha256: str, f
     _require(all(type(ceilings.get(key)) in (int, float) and math.isfinite(ceilings[key])
                  and ceilings[key] > 0 for key in ("gpu_seconds", "cpu_seconds", "cost_usd")),
              "G3 ceilings must be explicit, positive and finite.")
-    _require(session["max_total_seconds"] <= ceilings["gpu_seconds"]
-             and gross_ceiling_usd <= ceilings["cost_usd"], "The owned session exceeds G3 preapproval.")
     _require(not {"allocations", "freeze1c_sha256", "git_head", "created_utc"}.intersection(preapproval),
              "G3 preapproval must not fabricate measured allocation or provenance fields.")
-    document = {**preapproval, "format": "deepmzyme_ec_clean30_g3_authority_v5",
+    carried = {}
+    if prior is not None:
+        earlier = _authenticated_g3(prior, source, preapproval)["allocations"]
+        sessions = prior.get("sessions")
+        _require(isinstance(sessions, list) and bool(sessions) and len(set(sessions)) == len(sessions)
+                 and all(isinstance(name, str) and name in earlier for name in sessions),
+                 "A resumed fold carries only the admitted sessions of its preserved G3.")
+        carried = {name: row for name, row in earlier.items() if name in sessions}
+    _require(session["session_id"] not in carried, "A resumed session needs its own new allocation identifier.")
+    allocations = {**carried, session["session_id"]: {"resource": "gpu",
+                   **{key: session[key] for key in ("allocation_started_unix", "deadline_unix", "max_total_seconds")},
+                   "cost_ceiling_usd": gross_ceiling_usd}}
+    # phase4.verify_authority sums every allocation, in the sorted order it reads them back, against these ceilings.
+    totals = _allocation_totals(dict(sorted(allocations.items())))
+    _require(totals["gpu"] <= ceilings["gpu_seconds"] and totals["cpu"] <= ceilings["cpu_seconds"]
+             and totals["cost"] <= ceilings["cost_usd"],
+             "The owned session exceeds G3 preapproval; a resumed fold's preapproval ceilings must cover every "
+             "carried-forward allocation plus this session.")
+    document = {**preapproval, "format": G3_AUTHORITY_FORMAT,
                 "preapproval_sha256": _sha256(preapproval_sha256, "preapproval_sha256"),
-                "freeze1c_sha256": _file_sha(freeze1c),
-                "allocations": {session["session_id"]: {"resource": "gpu",
-                    **{key: session[key] for key in ("allocation_started_unix", "deadline_unix", "max_total_seconds")},
-                    "cost_ceiling_usd": gross_ceiling_usd}},
+                "freeze1c_sha256": _file_sha(freeze1c), "allocations": allocations,
                 "git_head": source["git_head"]}
     if out.exists():
-        prior = _record(out)
-        _require(all(prior.get(key) == value for key, value in document.items()),
+        existing = _record(out)
+        _require(all(existing.get(key) == value for key, value in document.items()),
                  "The materialized G3 authority changed during recovery.")
-        phase3.require_record_precedence(prior, source)
-        return prior
+        phase3.require_record_precedence(existing, source)
+        return existing
     document["created_utc"] = provenance.utc_now()
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("x") as handle:
@@ -526,6 +672,8 @@ def restore_session(config, transport, state, state_path, source, check_session)
     if state.get("resume_restored"):
         _require(state["resume_restored"] == resume["preservation_sha256"], "Restored session binding changed.")
         return
+    # Authenticate the fold's earlier G3 before any upload; Phase-4 preparation carries it forward.
+    g3, _ = preserved_g3(config, resume, source)
     campaign_root = PurePosixPath(config["remote_campaign"])
     staged, attempts = {}, {}
     _, reviewed = _bound_record(config["phase4"], "request")
@@ -598,8 +746,7 @@ def restore_session(config, transport, state, state_path, source, check_session)
                 if not target.exists():
                     workstation._write(target, prior)
             add(target, remote / "execution_state.json", _file_sha(target))
-    _stage_pipeline_files({"remote_campaign": str(campaign_root), "stage_files": list(staged.values())},
-                          transport, check_session)
+    _restore_files(config, list(staged.values()), transport, check_session)
     prior = resume["state"]
     for key in ("completed", "g2_evidence", "pretrain_preparation"):
         if key in prior:
@@ -615,7 +762,7 @@ def restore_session(config, transport, state, state_path, source, check_session)
             state.setdefault("g2_evidence", {})[name] = {"local_path": str(path), "sha256": _file_sha(path),
                 "remote_path": str(PurePosixPath(g2["execution_root"]) / path.relative_to(g2["primary_root"]))}
     state["completed"] = [name for _, name in workstation.measurement_queue(source) if name in state.get("g2_evidence", {})]
-    state.update(resume_restored=resume["preservation_sha256"], resume_attempts=attempts)
+    state.update(resume_restored=resume["preservation_sha256"], resume_attempts=attempts, resume_g3=g3)
     workstation._write(state_path, state)
 
 def prepare_g2(config, transport, state, session, ready, manifest, probe, check_session):
@@ -664,9 +811,16 @@ def prepare_phase4(config, transport, state, session, ready, manifest, probe, ch
     phase3.require_same_scientific_identity(request, source)
     freeze = state["freeze1c"]
     g3 = Path(config["state_root"]) / "g3_v5.json"
+    _require(not config.get("resume") or "resume_g3" in state,
+             "A resumed session restores its preserved records before Phase 4.")
     materialize_g3(preapproval, preapproval_sha256=_file_sha(approval_path), freeze1c=Path(freeze["local"]),
                    out=g3, source=source, session=session,
-                   gross_ceiling_usd=config["runpod"]["gross_ceiling_usd"])
+                   gross_ceiling_usd=config["runpod"]["gross_ceiling_usd"],
+                   prior=state.get("resume_g3") if config.get("resume") else None)
+    # The bound driver state names this G3 for a later resume of the same fold.
+    reference = {"path": str(g3), "sha256": _file_sha(g3)}
+    _require(state.get("g3_authority", reference) == reference, "The session's G3 authority changed during recovery.")
+    state["g3_authority"] = reference
     remote_g3 = f"{config['remote_campaign']}/g2_requests/g3_v5.json"
     _require(request.get("execution_manifest") == config["execution_manifest"],
              "The reviewed Phase-4 request names another execution manifest.")
@@ -679,8 +833,16 @@ def prepare_phase4(config, transport, state, session, ready, manifest, probe, ch
         _require(not request.get("attempts") or request["attempts"] == state["resume_attempts"],
                  "Reviewed attempts conflict with preserved results.")
         request["attempts"] = state["resume_attempts"]
+        from ec_clean30 import phase4
+        # Inner CLEAN fits and the held-out sanity read the template farms: each must name the
+        # attempt holding its embedding producer's preserved result, as final farms do below.
+        template = dict(request["remote_request_template"])
+        root = PurePosixPath(template["execution_root"])
+        for unit in phase4.embedding_units({**request, "clean_scope": "inner"}):
+            template[f"{unit['kind']}_farm"] = str(root / "runs" / unit["unit_id"]
+                                                   / f"attempt{request['attempts'].get(unit['unit_id'], 1)}" / "farm")
+        request["remote_request_template"] = template
         if request.get("run_final_clean"):
-            from ec_clean30 import phase4
             request["final_clean_request"] = {**request["final_clean_request"],
                 "farms_by_unit": phase4.final_farms_by_unit({**request, "clean_scope": "final"})}
     template = dict(request["remote_request_template"])
@@ -717,6 +879,151 @@ def _stage_pipeline_files(request, transport, check_session):
             transport.remote(["mv", "--", partial, str(remote)])
             existing = transport.stat_file(str(remote))
         _require(existing == expected, "Existing Phase-4 staging bytes differ.")
+
+
+# One remote command per archive: check every member's size and digest against the reviewed listing
+# and every target's containment, refuse before any write if an existing file differs, then write
+# each missing file to a partial beside its own target (one filesystem, so the campaign's POSIX
+# aliases views/ and g2_requests/ on another disk are safe) and rename it into place.
+RESTORE_PROGRAM = """import hashlib,json,os,pathlib,sys,tarfile
+archive,root,expected,count,aliases=sys.argv[1:]
+archive,root,aliases=pathlib.Path(archive),pathlib.Path(root),json.loads(aliases)
+def allowed(name):
+    first=name.split('/',1)[0]; link=root/first
+    if first in aliases and link.is_symlink():
+        assert os.readlink(link)==aliases[first], 'A campaign storage alias differs from its declared target: '+first
+        return pathlib.Path(os.path.realpath(aliases[first]))
+    return pathlib.Path(os.path.realpath(root))
+def inside(name):
+    parent,base=pathlib.Path(os.path.realpath((root/name).parent)),allowed(name)
+    return parent==base or base in parent.parents
+partial=None
+try:
+    with tarfile.open(archive) as tar:
+        members=tar.getmembers()
+        names=[member.name for member in members]
+        assert all(member.isfile() for member in members) and names==sorted(set(names)) and len(names)==int(count), 'Unexpected restore archive members'
+        assert all(name and not name.startswith('/') and '..' not in name.split('/') and str(pathlib.PurePosixPath(name))==name and not any(ord(c)<32 for c in name) for name in names), 'Unsafe restore member name'
+        rows=[[member.name,member.size,hashlib.file_digest(tar.extractfile(member),'sha256').hexdigest()] for member in members]
+        assert hashlib.sha256(json.dumps(rows,separators=(',',':')).encode()).hexdigest()==expected, 'Restored bytes differ from the preserved inventory'
+        moves=[]
+        for member,(name,size,sha) in zip(members,rows):
+            assert inside(name), 'Restore target escapes the campaign root or its declared aliases: '+name
+            target=root/name
+            if os.path.lexists(target):
+                assert target.is_file() and not target.is_symlink() and target.stat().st_size==size, 'An existing remote file differs; a preserved result is never replaced: '+name
+                with target.open('rb') as handle:
+                    assert hashlib.file_digest(handle,'sha256').hexdigest()==sha, 'An existing remote file differs; a preserved result is never replaced: '+name
+            else:
+                moves.append((member,name,target,sha))
+        for member,name,target,sha in moves:
+            target.parent.mkdir(parents=True,exist_ok=True)
+            partial=target.with_name('.'+target.name+'.restore-partial')
+            if os.path.lexists(partial):
+                assert partial.is_file() and not partial.is_symlink(), 'Unexpected restore partial path: '+name
+                partial.unlink()
+            hashed=hashlib.sha256()
+            with tar.extractfile(member) as source, open(partial,'xb') as output:
+                while chunk:=source.read(8*1024*1024):
+                    hashed.update(chunk); output.write(chunk)
+                output.flush(); os.fsync(output.fileno())
+            os.chmod(partial,member.mode&0o755)
+            assert hashed.hexdigest()==sha and inside(name) and not os.path.lexists(target), 'A restore target changed during restore: '+name
+            os.replace(partial,target); partial=None
+    print(json.dumps({'restored':len(moves),'kept':len(rows)-len(moves)}))
+finally:
+    if partial is not None and partial.is_file() and not partial.is_symlink():
+        partial.unlink()
+    archive.unlink(missing_ok=True)
+"""
+
+
+class _HashingReader:
+    """Hash exactly the bytes tarfile copies into an archive member."""
+
+    def __init__(self, handle):
+        self.handle, self.hash, self.size = handle, hashlib.sha256(), 0
+
+    def read(self, size=-1):
+        data = self.handle.read(size)
+        self.hash.update(data)
+        self.size += len(data)
+        return data
+
+
+def _restore_archive(path: Path, batch: list[tuple[str, Mapping[str, Any]]]) -> tuple[str, int]:
+    """A deterministic archive of regular files whose archived bytes match the preserved digests."""
+    listing = []
+    with tarfile.open(path, "x", format=tarfile.PAX_FORMAT) as archive:
+        for name, row in batch:
+            with Path(row["local"]).open("rb") as handle:
+                info = os.fstat(handle.fileno())
+                _require(stat.S_ISREG(info.st_mode), "A preserved restore source is not a regular file.")
+                member = tarfile.TarInfo(name)
+                member.size, member.mode = info.st_size, 0o755 if info.st_mode & 0o111 else 0o644
+                reader = _HashingReader(handle)
+                archive.addfile(member, reader)
+            _require(reader.size == info.st_size and reader.hash.hexdigest() == row["sha256"],
+                     "A preserved file changed before it was archived for restore.")
+            listing.append([name, info.st_size, row["sha256"]])
+    return (hashlib.sha256(json.dumps(listing, separators=(",", ":")).encode()).hexdigest(),
+            sum(size for _, size, _ in listing))
+
+
+def _restore_files(config, rows, transport, check_session):
+    """Restore preserved files in a few bounded archives, never replacing a remote result.
+
+    Each archive costs one upload, one remote command and two session checks, whatever its file count.
+    """
+    from ec_clean30 import provenance, workstation
+
+    root = PurePosixPath(config["remote_campaign"])
+    # The only links a restore may follow: the POSIX storage aliases runpod_bootstrap.prepare_posix_storage makes.
+    posix = config.get("runpod", {}).get("posix_root")
+    aliases = {} if posix is None else {"views": str(PurePosixPath(posix) / "views"),
+                                        "g2_requests": str(PurePosixPath(posix) / "requests")}
+    members = []
+    for row in rows:
+        local, remote = Path(row["local"]), PurePosixPath(row["remote"])
+        provenance.refuse_test_paths([local, str(remote)], what="Resume restored files")
+        _require(remote.is_absolute() and ".." not in remote.parts and root in remote.parents
+                 and not any(c in str(remote) for c in "\n\r\0") and not local.is_symlink() and local.is_file(),
+                 "A preserved restore file has changed or lies outside its campaign.")
+        workstation._absolute(str(remote))  # The restricted identity/test guard of the per-file route.
+        _sha256(row["sha256"], "restored file sha256")
+        members.append((str(remote.relative_to(root)), row, local.stat().st_size))
+    members.sort(key=lambda item: item[0])
+    _require(len({name for name, _, _ in members}) == len(members), "A restored path is declared twice.")
+    batches, current, size = [], [], 0
+    for name, row, length in members:
+        if current and (size + length > RESTORE_BATCH_BYTES or len(current) >= RESTORE_BATCH_FILES):
+            batches.append(current)
+            current, size = [], 0
+        current.append((name, row))
+        size += length
+    if current:
+        batches.append(current)
+    scratch = Path(config["state_root"]) / "resume_restore"
+    scratch.mkdir(parents=True, exist_ok=True)
+    for index, batch in enumerate(batches):
+        check_session()
+        local = scratch / f"batch{index}.tar"
+        local.unlink(missing_ok=True)  # A partial archive from an interrupted restore is rebuilt.
+        try:
+            digest, length = _restore_archive(local, batch)
+            archive = f"{root}/g2_requests/resume_restore/{digest}.tar"
+            transport.upload(local, archive, timeout=workstation.INVENTORY_MIN_SECONDS
+                             + local.stat().st_size / workstation.INVENTORY_TRANSFER_BYTES_PER_SECOND)
+            check_session()
+            result = json.loads(transport.remote([config["bootstrap_python"], "-c", RESTORE_PROGRAM, archive,
+                str(root), digest, str(len(batch)), json.dumps(aliases, sort_keys=True)],
+                timeout=workstation.INVENTORY_MIN_SECONDS + len(batch) * workstation.INVENTORY_FILE_SECONDS
+                + 3 * length / workstation.INVENTORY_HASH_BYTES_PER_SECOND))
+            _require(isinstance(result, dict) and set(result) == {"restored", "kept"}
+                     and all(type(value) is int and value >= 0 for value in result.values())
+                     and result["restored"] + result["kept"] == len(batch), "The remote restore receipt is malformed.")
+        finally:
+            local.unlink(missing_ok=True)
 
 
 def run_phase4_pipeline(request, *, transport, check_session, record_progress):
@@ -789,6 +1096,18 @@ def run_v5(config: Mapping[str, Any], config_path: Path, *, authorization_path: 
     authorization_sha = _file_sha(authorization_path)
     ledger = FailedWindowLedger(authorization["failure_ledger"], authorization["failure_ledger_authorization_sha256"])
     reserved = False
+    state_path = Path(config["state_root"]) / "driver_state.json"
+    # Only the exact unresolved window may skip quote freshness, and only to reach the
+    # allocation it already owns; a window that never attempted a start, or a new
+    # window, needs a fresh quote before any create.
+    recovering = ledger.holds_open(window_id, config_sha256=_file_sha(config_path),
+                                   execution_manifest_sha256=source["execution_manifest_sha256"],
+                                   pass_root=Path(config["state_root"]))
+
+    def launch_binding(path):
+        return {"config_sha256": _file_sha(path), "execution_manifest_sha256": source["execution_manifest_sha256"],
+                "authorization_sha256": authorization_sha, "window_id": window_id,
+                "failure_ledger": str(ledger.path)}
 
     def before_allocation(current, path, ready):
         nonlocal reserved
@@ -798,29 +1117,38 @@ def run_v5(config: Mapping[str, Any], config_path: Path, *, authorization_path: 
                             execution_manifest_sha256=source["execution_manifest_sha256"],
                             pass_root=Path(config["state_root"]))
         reserved = True
-        return {"config_sha256": _file_sha(path), "execution_manifest_sha256": source["execution_manifest_sha256"],
-                "authorization_sha256": authorization_sha, "window_id": window_id,
-                "failure_ledger": str(ledger.path)}
+        return launch_binding(path)
 
+    def finish():
+        state = _record(state_path) if state_path.exists() else {}
+        terminal = verified_terminal_state(state)
+        if terminal is not None:
+            _require(state_path.is_file(), "A reserved launch window lacks its durable driver record.")
+            closeout = state.get("closeout", {})
+            preserved = bool(closeout.get("preservation_sha256")) and (
+                closeout.get("provider_absence_verified") is True or closeout.get("provider_stop_verified") is True)
+            outcome = ("completed" if (state.get("workload_admitted") or
+                        state.get("status") in {"phase4_complete", "stopped_futility"})
+                       and preserved and not state.get("preservation_error") else "failed")
+            ledger.finish_window(window_id, outcome=outcome, closeout_sha256=_file_sha(state_path),
+                                  provider_terminal=terminal)
+        return state, terminal
+
+    # A coordinator that died after writing its closed driver record but before recording it here
+    # left this window open; the re-run records that verified closeout instead of being refused.
+    if recovering and state_path.exists():
+        prior = _record(state_path)
+        if prior.get("closed") and prior.get("launch_binding") == launch_binding(config_path):
+            state, terminal = finish()
+            if terminal is not None:
+                return state
     try:
         return workstation._run_runpod_g2(config, config_path, transport=transport, controller=controller,
             pre_allocation=before_allocation, prepare_g2=prepare_g2, complete_g2=complete_g2,
-            prepare_phase4=prepare_phase4)
+            prepare_phase4=prepare_phase4, recover_window=recovering)
     finally:
         if reserved:
-            state_path = Path(config["state_root"]) / "driver_state.json"
-            state = _record(state_path) if state_path.exists() else {}
-            terminal = verified_terminal_state(state)
-            if terminal is not None:
-                _require(state_path.is_file(), "A reserved launch window lacks its durable driver record.")
-                closeout = state.get("closeout", {})
-                preserved = bool(closeout.get("preservation_sha256")) and (
-                    closeout.get("provider_absence_verified") is True or closeout.get("provider_stop_verified") is True)
-                outcome = ("completed" if (state.get("workload_admitted") or
-                            state.get("status") in {"phase4_complete", "stopped_futility"})
-                           and preserved and not state.get("preservation_error") else "failed")
-                ledger.finish_window(window_id, outcome=outcome, closeout_sha256=_file_sha(state_path),
-                                      provider_terminal=terminal)
+            finish()
 
 
 def verified_terminal_state(state: Mapping[str, Any]) -> str | None:

@@ -118,14 +118,138 @@ def test_runtime_rechecks_stop_before_any_fit_or_resume_enters_execution(tmp_pat
     assert calls == [kind in ("refit", "clean") or fold != 0]
 
 
+def _overlay_world(base, *, fold=0, overlay_id="ecc30-overlay-v1"):
+    """A synthetic campaign in the frozen layout <campaign>/overlay/<id>/identity/fold<K> and its bound view."""
+    from ec_clean30 import simulation
+
+    campaign_root = base / "campaign"
+    overlay = campaign_root / "overlay" / overlay_id
+    folder = overlay / "identity" / f"fold{fold}"
+    folder.mkdir(parents=True)
+    for name in simulation._calibration_file_names(fold):
+        (folder / name).write_text("synthetic\n")
+    (overlay / simulation.OVERLAY_MANIFEST).write_text("{}\n")
+    view = SimpleNamespace(fold=fold, campaign_root=campaign_root, overlay={"id": overlay_id})
+    root = campaign_root / f"runs/fold{fold}/phase4"
+    request = {"execution_root": str(root), "step_chain": str(root / "records/selection.jsonl"),
+               "campaign_root": str(campaign_root),
+               "scientific_inputs": {"components": str(folder), "futility_out": str(root / "records/futility.json")}}
+    return view, folder, request
+
+
 def test_scientific_request_accepts_paths_and_refuses_policy_override(tmp_path):
-    request = {"execution_root": str(tmp_path), "step_chain": str(tmp_path / "records/selection.jsonl"),
-               "scientific_inputs": {"components": str(tmp_path / "components.tsv"),
-                                     "futility_out": str(tmp_path / "records/futility.json")}}
-    assert phase4._science_paths(request, None) == request["scientific_inputs"]
+    view, _, request = _overlay_world(tmp_path)
+    assert phase4._science_paths(request, view) == request["scientific_inputs"]
     request["scientific_inputs"]["n_replicates"] = 1
     with pytest.raises(phase4.Phase4Error, match="paths only"):
-        phase4._science_paths(request, None)
+        phase4._science_paths(request, view)
+
+
+def test_frozen_overlay_components_reach_the_real_selector_argv(tmp_path, monkeypatch):
+    from ec_clean30 import selector
+
+    view, folder, request = _overlay_world(tmp_path)
+    assert phase4._science_paths(request, view)["components"] == str(folder)
+    assert selector.check_components_path(0, Path(str(folder)), smoke=False) == folder
+    monkeypatch.setattr(phase4, "_completed_fit_inputs", lambda *args: [])
+    monkeypatch.setattr(phase4, "_dispositions_for", lambda *args: [])
+    request.update(scientific_step="select_s1", python="/runtime/python", plan=str(tmp_path / "plan.json"))
+    request["scientific_inputs"]["clean_sanity_record"] = str(Path(request["execution_root"]) / "sanity.json")
+    source = {"freeze1_sha256": "f" * 64, "amendment_path": "docs/amendment.json",
+              "amendment_chain_receipt": str(tmp_path / "receipt.json")}
+    argv, _ = phase4._science_command(request, source, view, tmp_path / "attempt")
+    assert argv[argv.index("--components") + 1] == str(folder) and "--smoke" not in argv
+
+
+def _alias(view, folder, base):
+    alias = base / "alias_fold0"
+    alias.symlink_to(folder, target_is_directory=True)
+    return str(alias)
+
+
+def _linked_identity(view, folder, base):
+    other = base / "inner_real" / "fold0"
+    shutil.copytree(folder, other)
+    shutil.rmtree(folder.parent)
+    folder.parent.symlink_to(other.parent, target_is_directory=True)
+    return str(folder)
+
+
+def _capitalised(view, folder, base):
+    shutil.move(folder.parent, folder.parent.with_name("Identity"))
+    return str(folder.parent.with_name("Identity") / "fold0")
+
+
+def _other_fold(view, folder, base):
+    shutil.move(folder, folder.with_name("fold1"))
+    return str(folder.with_name("fold1"))
+
+
+def _campaign_identity(view, folder, base):
+    own = view.campaign_root / "identity" / "fold0"
+    shutil.copytree(folder, own)
+    shutil.copy(folder.parent.parent / "overlay_manifest.json", view.campaign_root / "overlay_manifest.json")
+    return str(own)
+
+
+def _foreign_overlay(view, folder, base):
+    foreign = view.campaign_root / "overlay" / "ecc30-overlay-v2"
+    shutil.copytree(folder.parent.parent, foreign)
+    return str(foreign / "identity" / "fold0")
+
+
+def _dotted(view, folder, base):
+    return str(folder.parent.parent / "identity" / ".." / "identity" / "fold0")
+
+
+def _no_manifest(view, folder, base):
+    (folder.parent.parent / "overlay_manifest.json").unlink()
+    return str(folder)
+
+
+@pytest.mark.parametrize("change", [_alias, _linked_identity, _capitalised, _other_fold, _campaign_identity,
+                                    _foreign_overlay, _dotted, _no_manifest])
+def test_components_outside_the_frozen_overlay_copy_are_refused(tmp_path, change):
+    view, folder, request = _overlay_world(tmp_path)
+    request["scientific_inputs"]["components"] = change(view, folder, tmp_path)
+    with pytest.raises(ValueError):
+        phase4._science_paths(request, view)
+
+
+def test_components_refuse_lists_test_names_and_views_without_overlay(tmp_path):
+    view, folder, request = _overlay_world(tmp_path)
+    request["scientific_inputs"]["components"] = [str(folder)]
+    with pytest.raises(phase4.Phase4Error, match="frozen data overlay"):
+        phase4._science_paths(request, view)
+    request["scientific_inputs"]["components"] = str(folder)
+    with pytest.raises(phase4.Phase4Error, match="frozen data overlay"):
+        phase4._science_paths(request, SimpleNamespace(fold=0, campaign_root=view.campaign_root, overlay=None))
+    named, named_folder, named_request = _overlay_world(tmp_path / "named", overlay_id="ecc30-overlay-test")
+    with pytest.raises(ValueError, match="test split"):
+        phase4._science_paths(named_request, named)
+
+
+@pytest.mark.parametrize("overlay_id", ["campaign_root", "../campaign", "overlay/nested", ".hidden", ""])
+def test_overlay_id_must_be_a_plain_name_before_any_path_is_built(tmp_path, overlay_id):
+    view, folder, request = _overlay_world(tmp_path)
+    if overlay_id == "campaign_root":
+        # An absolute id would make the expected copy the campaign's own identity folder.
+        overlay_id = str(view.campaign_root)
+        own = view.campaign_root / "identity" / "fold0"
+        shutil.copytree(folder, own)
+        request["scientific_inputs"]["components"] = str(own)
+    view.overlay = {"id": overlay_id}
+    with pytest.raises(phase4.Phase4Error, match="frozen data overlay"):
+        phase4._science_paths(request, view)
+
+
+@pytest.mark.parametrize("key", ["f6_corpus", "r1_inner_lists", "clean_sanity_dispositions"])
+def test_identity_paths_stay_refused_for_every_other_input(tmp_path, key):
+    view, folder, request = _overlay_world(tmp_path)
+    path = str(folder / "components_inner.tsv")
+    request["scientific_inputs"][key] = [path] if key != "f6_corpus" else path
+    with pytest.raises(phase4.Phase4Error, match="Restricted identity"):
+        phase4._science_paths(request, view)
 
 
 def test_sanity_runs_sample_export_check_in_order_before_worker_can_return(tmp_path, monkeypatch):

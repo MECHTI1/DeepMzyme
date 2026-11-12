@@ -41,7 +41,8 @@ def test_prepared_input_proof_has_a_closed_metadata_whitelist(tmp_path, monkeypa
     calls = []
     monkeypatch.setattr(ws, "_validate_runpod_structure", lambda c: None)
     monkeypatch.setattr(ws, "_local_storage", lambda c: None)
-    monkeypatch.setattr(runpod_controller, "validate_config", lambda c: {"status": "ready"})
+    monkeypatch.setattr(runpod_controller, "validate_config", lambda c, *, fresh: {"status": "ready"} if fresh
+                        else pytest.fail("a launch preflight relaxed quote freshness"))
     monkeypatch.setattr(phase3, "verify_execution_source", lambda *a, **kw: dict(source))
     monkeypatch.setattr(ws, "preflight", lambda *a, **kw: calls.append("full_input_check") or
                         {"status": "ready", "source": dict(source), "staging_peak_bytes": 1})

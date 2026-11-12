@@ -1,6 +1,8 @@
 """CPU regression checks for record routing, seed farms and preserved-unit recovery."""
 import json
 from pathlib import Path
+import subprocess
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -157,7 +159,7 @@ def preserved_session(tmp_path, monkeypatch):
                             "mirror_root": str(tmp_path / "old_phase4_mirror")})
     prior = {"hardware_profile": "runpod_rtx4090", "runtime_environments": {"pinned": True},
              "remote_repo": str(tmp_path / "pod/repo"), "remote_campaign": str(remote), "remote_python": "/runtime/python",
-             "embedding": {"pinned": True}, "state_root": str(tmp_path / "old_state"),
+             "bootstrap_python": sys.executable, "embedding": {"pinned": True}, "state_root": str(tmp_path / "old_state"),
              "runpod": {"gpu_id": "4090", "image": "sha256:fixed", "runtime_environment": {"TF32": "0"},
                         "state_root": str(tmp_path / "old_controller")},
              "execution_manifest": str(manifest), "durable_root": str(primary), "mirror_root": str(mirror),
@@ -186,17 +188,15 @@ def test_resume_authenticates_copies_and_restores_without_provider_work(preserve
     uploads = []
     class Transport:
         stop_controller = SimpleNamespace(register_output_roots=lambda outputs: None)
-        def stat_file(self, path):
-            path = Path(path)
-            return {"sha256": phase3._sha(path), "size_bytes": path.stat().st_size} if path.exists() else None
-        def upload(self, local, target):
+        def upload(self, local, target, *, timeout):
             target = Path(target)
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(Path(local).read_bytes())
             uploads.append(target)
-        def remote(self, argv):
-            assert argv[:2] == ["mv", "--"]
-            Path(argv[2]).rename(argv[3])
+        def remote(self, argv, *, timeout):
+            # The pod side of a batched restore runs here as the same program.
+            assert argv[:3] == [sys.executable, "-c", execution_v5.RESTORE_PROGRAM]
+            return subprocess.run(argv, check=True, capture_output=True, text=True).stdout
     state = {}
     state_path = Path(config["state_root"]) / "driver_state.json"
     execution_v5.restore_session(config, Transport(), state, state_path, source, lambda: None)
