@@ -1860,3 +1860,22 @@ The change is class (a) under A2-GOV-7: no scientific file, rule, unit or chain 
 and `phase4.replay_cpu_logits` keep their pinned hashes; the scientific identity stays `66705ae7…98533f4`. The
 maintainer also approved a second retry record with a fresh failed-window ledger; the first ledger is kept as
 history. G2 remains 0/12. Next: the re-pinned manifest and window `ec30v5-g2f0-w3`.
+
+## evc-042
+
+2026-11-12 — **Supervised caps passed on a provider host; two more windows failed on capacity and on an expired
+upstream certificate.** Under the second retry record, window `ec30v5-g2f0-w3` at `e4ec77b` ended before any pod:
+the create was refused for capacity seconds after a positive stock reading. Window `ec30v5-g2f0-w4` used the
+controller's bounded stock search and received a pod after two minutes. On that host the `cgroup_v1_readonly`
+backend passed `prepare` and both probes (one pinned core held four busy processes to 2.02 CPU-seconds in 2.03
+seconds; the supervised memory cap killed its test process), and the POSIX storage, runtime lock and early CUDA
+checks passed. Staging then stopped at the official ESM-1b weights: the host `dl.fbaipublicfiles.com` served a
+certificate that expired on 2026-11-11 23:59:59 GMT. The pod was deleted with absence verified after about five
+minutes of billing. No G2 unit or workload admission occurred; G2 remains 0/12.
+
+The maintainer approved an execution-only change to the bounded official download
+([expired certificate](execution_v5/README.md#official-weight-download-through-an-expired-certificate)): only when
+the single TLS error is an expired certificate, the download proceeds and the pinned size and SHA-256 decide. A
+local server with an expired certificate and the official host itself confirmed both outcomes: the pinned file is
+accepted and a wrong digest is refused. The maintainer also approved a third retry record with a fresh ledger; the
+earlier ledgers are kept as history. Next: the re-pinned manifest and window `ec30v5-g2f0-w5`.

@@ -52,6 +52,48 @@ OFFICIAL_ESM1B_WEIGHTS = {
     "https://dl.fbaipublicfiles.com/fair-esm/regression/esm1b_t33_650M_UR50S-contact-regression.pt": {
         "field": "contact_weights", "sha256": "77193a8814f0db0b36a03aebb1a311adc6b4745f463c04839defc15407bbb28a", "size_bytes": 3174},
 }
+OFFICIAL_WEIGHT_PROGRAM = """import hashlib,json,pathlib,signal,ssl,sys,urllib.error,urllib.request
+url,target,digest,size,bound=sys.argv[1:]
+target=pathlib.Path(target); size=int(size); bound=float(bound)
+def expired(signum,frame):
+    raise TimeoutError('Public weight download exceeded its wall-clock bound')
+def fetch(context):
+    hashed=hashlib.sha256(); count=0
+    with urllib.request.urlopen(url,timeout=min(30,bound),context=context) as response:
+        if response.geturl()!=url: raise ValueError('Unexpected public weight redirect')
+        with target.open('wb') as output:
+            while chunk:=response.read(8*1024*1024):
+                count+=len(chunk)
+                if count>size: raise ValueError('Public weight exceeds its pinned size')
+                output.write(chunk); hashed.update(chunk)
+    if count!=size or hashed.hexdigest()!=digest: raise ValueError('Public weight checksum or size differs')
+    return count
+signal.signal(signal.SIGALRM,expired)
+signal.setitimer(signal.ITIMER_REAL,bound)
+try:
+    target.parent.mkdir(parents=True,exist_ok=True)
+    if target.is_symlink(): raise ValueError('Weight partial cannot be a symlink')
+    tls='verified'
+    try:
+        count=fetch(None)
+    except (urllib.error.URLError,ssl.SSLCertVerificationError) as exc:
+        reason=getattr(exc,'reason',exc)
+        # Only an expired certificate: the pinned size and SHA-256 still decide whether the bytes are accepted.
+        if not (isinstance(reason,ssl.SSLCertVerificationError) and reason.verify_code==10): raise
+        context=ssl.create_default_context(); context.check_hostname=False; context.verify_mode=ssl.CERT_NONE
+        tls='expired_certificate_content_pinned'
+        count=fetch(context)
+    result={'terminal':True,'status':'verified','sha256':digest,'size_bytes':count,'tls':tls}
+except Exception as exc:
+    result={'terminal':True,'status':'failed','error':type(exc).__name__+': '+str(exc)}
+    try:
+        if not target.is_symlink(): target.unlink(missing_ok=True)
+    except OSError:
+        pass
+finally:
+    signal.setitimer(signal.ITIMER_REAL,0)
+print(json.dumps(result))
+"""
 QUEUE = tuple([("timing-unit", name) for name in ("F1", "F2", "F3", "F4", "F5", "C-G", "F4_L3",
                                                         "lane_serial_1", "lane_serial_2")]
               + [("lane-gate", "lane_batch"), ("embed-timing", "esmc"), ("embed-timing", "esm1b")])
@@ -277,32 +319,7 @@ class ControllerTransport:
         expected = OFFICIAL_ESM1B_WEIGHTS[url]
         timeout = self._bounded(600)
         _require(timeout > 5, "No allocation time remains for a bounded public weight download.")
-        program = """import hashlib,json,pathlib,signal,sys,urllib.request
-url,target,digest,size,bound=sys.argv[1:]
-target=pathlib.Path(target); size=int(size); bound=float(bound)
-def expired(signum,frame):
-    raise TimeoutError('Public weight download exceeded its wall-clock bound')
-signal.signal(signal.SIGALRM,expired)
-signal.setitimer(signal.ITIMER_REAL,bound)
-try:
-    target.parent.mkdir(parents=True,exist_ok=True)
-    if target.is_symlink(): raise ValueError('Weight partial cannot be a symlink')
-    hashed=hashlib.sha256(); count=0
-    with urllib.request.urlopen(url,timeout=min(30,bound)) as response:
-        if response.geturl()!=url: raise ValueError('Unexpected public weight redirect')
-        with target.open('wb') as output:
-            while chunk:=response.read(8*1024*1024):
-                count+=len(chunk)
-                if count>size: raise ValueError('Public weight exceeds its pinned size')
-                output.write(chunk); hashed.update(chunk)
-    if count!=size or hashed.hexdigest()!=digest: raise ValueError('Public weight checksum or size differs')
-    result={'terminal':True,'status':'verified','sha256':digest,'size_bytes':count}
-except Exception as exc:
-    result={'terminal':True,'status':'failed','error':type(exc).__name__+': '+str(exc)}
-finally:
-    signal.setitimer(signal.ITIMER_REAL,0)
-print(json.dumps(result))
-"""
+        program = OFFICIAL_WEIGHT_PROGRAM
         result = json.loads(self.remote([self.bootstrap_python, "-c", program, url, _absolute(partial),
                             expected["sha256"], str(expected["size_bytes"]), str(timeout - 3)], timeout=timeout))
         _require(result.get("terminal") is True and result.get("status") in {"verified", "failed"},
@@ -1066,6 +1083,9 @@ def _stage_file(config: Mapping[str, Any], transport: ControllerTransport, item:
             # The downloader has exited and closed its writer before returning this status.
             if result["status"] == "verified":
                 downloaded = transport.stat_file(partial)
+                _write(Path(config["state_root"]) / "staging_receipts" / f"official_{item['sha256']}.json",
+                       {"url": url, "sha256": item["sha256"], "size_bytes": expected["size_bytes"],
+                        "tls": result.get("tls", "verified"), "content_pinned": True})
             elif config.get("provider") == "runpod" and config.get("artifact_cache"):
                 raise WorkstationError("Official model download failed; a bulk workstation fallback is not enabled for the cached route.")
         if downloaded != expected:

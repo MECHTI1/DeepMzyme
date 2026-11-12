@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from contextlib import contextmanager, redirect_stdout
 import hashlib
 import io
+import os
 import json
 from pathlib import Path
 import shutil
@@ -563,8 +564,8 @@ def test_remote_download_has_total_alarm_and_terminal_writer_result(weight_stage
         def geturl(self):
             return item["remote_url"]
 
-    def open_url(url, *, timeout):
-        assert url == item["remote_url"] and timeout < 25
+    def open_url(url, *, timeout, context=None):
+        assert url == item["remote_url"] and timeout < 25 and context is None
         if outcome == "http_failure":
             raise urllib.error.URLError("synthetic HTTP failure")
         response = Response(Path(item["local"]).read_bytes() if outcome == "verified" else b"bad digest")
@@ -1216,3 +1217,73 @@ def test_lost_fallback_reply_uses_selected_ownership_only_to_close_safely(fallba
     with pytest.raises(ws.WorkstationError):
         ws.run_g2(cfg, path, transport=transport)
     assert len([call for call in transport.calls if call[0] == "fallback" and "--confirm" in call[1]]) == 1
+
+
+@pytest.fixture
+def tls_weight_server(tmp_path):
+    """A local HTTPS server with one self-signed certificate; expired or current."""
+    import http.server, ssl, threading
+    payload = b"pinned public weight bytes " * 4096
+    (tmp_path / "www").mkdir()
+    (tmp_path / "www" / "weight.pt").write_bytes(payload)
+    servers = []
+
+    def start(kind):
+        key, cert = tmp_path / f"{kind}.key", tmp_path / f"{kind}.pem"
+        validity = (["-not_before", "20200101000000Z", "-not_after", "20200102000000Z"] if kind == "expired" else ["-days", "2"])
+        made = subprocess.run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", str(key), "-out", str(cert),
+                               "-subj", "/CN=localhost", "-addext", "subjectAltName=DNS:localhost", *validity],
+                              capture_output=True, text=True)
+        if made.returncode:
+            pytest.skip("This OpenSSL cannot issue a certificate with explicit validity dates.")
+        handler = lambda *a, **kw: http.server.SimpleHTTPRequestHandler(*a, directory=str(tmp_path / "www"), **kw)
+        server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(cert, key)
+        server.socket = context.wrap_socket(server.socket, server_side=True)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        servers.append(server)
+        return f"https://localhost:{server.server_address[1]}/weight.pt", cert
+
+    yield start, payload
+    for server in servers:
+        server.shutdown()
+        server.server_close()
+
+
+def _official_download(url, target, payload, *, trust=None, digest=None):
+    env = {key: value for key, value in os.environ.items() if key not in {"SSL_CERT_FILE", "SSL_CERT_DIR"}}
+    if trust is not None:
+        env["SSL_CERT_FILE"] = str(trust)
+    done = subprocess.run([sys.executable, "-c", ws.OFFICIAL_WEIGHT_PROGRAM, url, str(target),
+                           digest or hashlib.sha256(payload).hexdigest(), str(len(payload)), "20"],
+                          capture_output=True, text=True, timeout=60, env=env)
+    assert done.returncode == 0, done.stderr
+    return json.loads(done.stdout.strip().splitlines()[-1])
+
+
+def test_official_weight_accepts_only_pinned_bytes_through_an_expired_certificate(tls_weight_server, tmp_path):
+    start, payload = tls_weight_server
+    url, cert = start("expired")
+    target = tmp_path / "out" / "weight.partial"
+    result = _official_download(url, target, payload, trust=cert)
+    assert result == {"terminal": True, "status": "verified", "sha256": hashlib.sha256(payload).hexdigest(),
+                      "size_bytes": len(payload), "tls": "expired_certificate_content_pinned"}
+    assert target.read_bytes() == payload
+    target.unlink()
+    refused = _official_download(url, target, payload, trust=cert, digest="0" * 64)
+    assert refused["status"] == "failed" and "checksum or size differs" in refused["error"] and not target.exists()
+
+
+def test_official_weight_never_relaxes_tls_for_any_other_certificate_failure(tls_weight_server, tmp_path):
+    start, payload = tls_weight_server
+    target = tmp_path / "out" / "weight.partial"
+    url, cert = start("current")
+    trusted = _official_download(url, target, payload, trust=cert)
+    assert trusted["status"] == "verified" and trusted["tls"] == "verified"
+    target.unlink()
+    untrusted = _official_download(url, target, payload)
+    assert untrusted["status"] == "failed" and "CERTIFICATE_VERIFY_FAILED" in untrusted["error"] and not target.exists()
+    expired_url, _ = start("expired")
+    unknown_expired = _official_download(expired_url, target, payload)
+    assert unknown_expired["status"] == "failed" and not target.exists()

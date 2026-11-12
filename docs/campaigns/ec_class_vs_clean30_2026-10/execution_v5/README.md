@@ -204,6 +204,17 @@ bandwidth quota, so G2 timings on such a host are measured on pinned cores. Ever
 backend. Hosts with writable cgroup v2 or v1 controls keep their previous backends unchanged. The change is
 execution-only (A2-GOV-7 class (a)): no scientific file, rule, unit, chain link or pinned function changes.
 
+## Official weight download through an expired certificate
+
+Window `ec30v5-g2f0-w4` was the first to pass the caps step, on the supervised backend, and then stopped in
+staging: the official ESM-1b weight host served a TLS certificate that had expired on 2026-11-11, so the pod's
+download failed and the cached route has no upload fallback ([evc-042](../log.md#evc-042)). The bounded download
+of the two approved ESM-1b files now retries without certificate verification in exactly one case: the only
+verification error is an expired certificate. Every other TLS failure still refuses. The approved URL, the redirect
+check, the pinned size and the pinned SHA-256 are unchanged and decide whether the bytes are accepted; a rejected
+partial file is removed. Each official download writes a staging receipt that states whether TLS was verified.
+The change is execution-only (A2-GOV-7 class (a)).
+
 ## Fold-0 ceiling (A2-D8)
 
 On 2026-11-12 the maintainer approved the fold-0 spending ceiling that A2-D8 requires before G2:
