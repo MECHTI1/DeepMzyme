@@ -47,7 +47,7 @@
     "src/ec_clean30/phase4.py": "f4d3d694dab946050c6f6c53cfc4c86ff8da6e35a2d7dfde9ba2ea922cbc3dde",
     "src/ec_clean30/runpod_bootstrap.py": "a22b3a1f21895f441ee950180ec40eea377b5962024b95bd076de3d756396460",
     "src/ec_clean30/runpod_controller.py": "692d5fb9764b0970be8a713c9b67aa74bfa2dd41548e15be1f147431456cc87c",
-    "src/ec_clean30/workstation.py": "575a11c1f8017a90f0e90093e91c90b3f3c646eba2728753a9d6c8e71439ff69"
+    "src/ec_clean30/workstation.py": "e179a2e0c54068fd3d9dc641478280827431c4872f7df6d0ae4df24434181309"
   },
   "timing_inputs_sha256": "ee368d99a5e88a6b5f84c3cd131b8d043432d41cea59c5266beb1d9fac48ff2f"
 }
