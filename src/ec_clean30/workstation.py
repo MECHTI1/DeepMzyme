@@ -128,6 +128,7 @@ class HostRejected(WorkstationError):
 
 
 HOST_REJECTION_PREFIX = "Remote command failed (125): container caps refused:"
+VM_PROBE_SECONDS = 1800
 # A new pass (recovery, retry or resume) re-proves its own roots locally; the staged inputs do not move.
 PASS_LOCAL_FIELDS = ("state_root", "durable_root", "mirror_root")
 PASS_LOCAL_RUNPOD_FIELDS = ("state_root", "pod_name")
@@ -1368,7 +1369,9 @@ def _runtime_preflight(config: Mapping[str, Any], transport: ControllerTransport
                           "--python", config["remote_python"], *chain_args]
         if runpod:
             arguments += ["--hardware-profile", profile, "--cap-probe", cap_probe]
-        transport.remote(arguments, cwd=repo, timeout=300)
+        # The probe verifies the view and runs two cold-cache preparation probes under the two-core cap;
+        # the same dry run took about ten minutes on the workstation.
+        transport.remote(arguments, cwd=repo, timeout=VM_PROBE_SECONDS)
     return manifest, probe
 
 

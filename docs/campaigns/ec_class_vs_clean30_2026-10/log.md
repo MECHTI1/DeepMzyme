@@ -1879,3 +1879,19 @@ the single TLS error is an expired certificate, the download proceeds and the pi
 local server with an expired certificate and the official host itself confirmed both outcomes: the pinned file is
 accepted and a wrong digest is refused. The maintainer also approved a third retry record with a fresh ledger; the
 earlier ledgers are kept as history. Next: the re-pinned manifest and window `ec30v5-g2f0-w5`.
+
+## evc-043
+
+2026-11-12 — **Fifth v5 window reached the last pre-admission step; the probe time limit was too short.** Under
+the third retry record, window `ec30v5-g2f0-w5` at `67a7f18` received a pod one minute into the bounded stock
+search. The supervised caps backend passed again. All staging completed: the three cached archives, the public
+ESMC cache and both official ESM-1b files, which downloaded through the expired certificate in under a minute and
+matched their pinned SHA-256 values. Both runtime locks, the CUDA checks and both model probes passed. The
+relocated dry-run probe then exceeded its fixed 300-second limit, and the pod was deleted with absence verified
+after about 17 minutes of billing. No workload admission or G2 unit occurred; G2 remains 0/12.
+
+The limit could not hold: the probe runs two cold-cache preparation probes under the two-core cap, and the
+workstation dry run of fold 0 recorded 285 and 293 seconds for them. The maintainer approved raising the limit to
+1,800 seconds ([probe time limit](execution_v5/README.md#probe-time-limit-before-admission)), an execution-only
+change under A2-GOV-7 class (a). Next: the re-pinned manifest and window `ec30v5-g2f0-w6`, the last under the
+third retry record.

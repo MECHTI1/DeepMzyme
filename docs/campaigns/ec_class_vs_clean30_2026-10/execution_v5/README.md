@@ -215,6 +215,16 @@ check, the pinned size and the pinned SHA-256 are unchanged and decide whether t
 partial file is removed. Each official download writes a staging receipt that states whether TLS was verified.
 The change is execution-only (A2-GOV-7 class (a)).
 
+## Probe time limit before admission
+
+Window `ec30v5-g2f0-w5` passed the caps step, all staging (both ESM-1b files through the expired certificate, with
+matching pinned hashes), the runtime locks, the CUDA checks and the model probes, and then stopped at the last
+step before workload admission: the relocated dry-run probe exceeded its fixed 300-second limit
+([evc-043](../log.md#evc-043)). That probe verifies the view and runs two cold-cache preparation probes under the
+two-core cap; the same two probes took 285 and 293 seconds in the workstation dry run of fold 0. The limit is now
+1,800 seconds (`VM_PROBE_SECONDS`). Nothing else changes; the session deadline still bounds every remote command.
+The change is execution-only (A2-GOV-7 class (a)).
+
 ## Fold-0 ceiling (A2-D8)
 
 On 2026-11-12 the maintainer approved the fold-0 spending ceiling that A2-D8 requires before G2:
