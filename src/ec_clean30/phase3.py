@@ -1663,6 +1663,23 @@ def pretrain_sequence_inputs(union_fasta: Path, out: Path) -> dict[str, Any]:
     return result
 
 
+# The ESM SDK casts the ESMC parameters and buffers to bfloat16 when it loads off CPU. The fp32 producer then casts
+# them to float32, which keeps the truncated values (a CUDA build differed from a CPU build by about 1e-3). The fp32
+# commands therefore replace the SDK loader inside their own process: a CPU load, which stays float32, followed by a
+# move to the requested device. Anything other than float32 after the load is refused.
+ESMC_FP32_LOAD = (
+    "import torch\n"
+    "from esm.models.esmc import ESMC as _ESMC\n"
+    "from esm.pretrained import load_local_model as _load_local_model\n"
+    "def _fp32_from_pretrained(model_name, device):\n"
+    "    model = _load_local_model(model_name, device=torch.device('cpu'))\n"
+    "    kinds = sorted({str(t.dtype) for t in [*model.parameters(), *model.buffers()] if t.is_floating_point()})\n"
+    "    if not isinstance(model, _ESMC) or kinds != ['torch.float32']:\n"
+    "        raise SystemExit('The float32 ESMC load found ' + str(kinds))\n"
+    "    return model.to(torch.device(device))\n"
+    "_ESMC.from_pretrained = staticmethod(_fp32_from_pretrained)\n")
+
+
 def pretrain_embedding_command(request: Mapping[str, Any], source: Mapping[str, Any], view: views.View, *,
                                fasta: Path, sequence_map: Path, sequence_map_sha256: str,
                                output: Path, device: str) -> tuple[list[str], dict[str, str]]:
@@ -1688,7 +1705,8 @@ def pretrain_embedding_command(request: Mapping[str, Any], source: Mapping[str, 
     # The fp32 producer itself records the precision policy after converting the loaded model.
     wrapper = ("import runpy,sys\nfrom training.access_guard import install_guard_from_environment\n"
                "if not install_guard_from_environment():\n    raise SystemExit('forbidden-read roots are required')\n"
-               "sys.argv=sys.argv[1:]\nrunpy.run_module('embed_helpers.esmc_chain_means',run_name='__main__')")
+               + ESMC_FP32_LOAD
+               + "sys.argv=sys.argv[1:]\nrunpy.run_module('embed_helpers.esmc_chain_means',run_name='__main__')")
     argv = [request["python"], "-c", wrapper, "esmc_chain_means", "sequences", "--fasta", str(fasta),
             "--sequence-map", str(sequence_map), "--sequence-map-sha256", sequence_map_sha256,
             "--out", str(output), "--layer-index", "26", "--device", device, "--forward-precision", "fp32"]
@@ -2113,7 +2131,7 @@ def embedding_command(request: Mapping[str, Any], source: Mapping[str, Any], vie
         fp32 = source.get("format") == EXECUTION_V5_FORMAT
         wrapper = ("import runpy,sys\nfrom training.access_guard import install_guard_from_environment\n"
                    "if not install_guard_from_environment():\n    raise SystemExit('forbidden-read roots are required')\n"
-                   + ("" if fp32 else runtime_precision.bootstrap_code(request["device"]))
+                   + (ESMC_FP32_LOAD if fp32 else runtime_precision.bootstrap_code(request["device"]))
                    + "sys.argv=sys.argv[1:]\nrunpy.run_module('embed_helpers.esmc_chain_means',run_name='__main__')")
         argv = [request["python"], "-c", wrapper, "esmc_chain_means", "sequences", "--fasta", str(inputs / "timing.fasta"),
                 "--sequence-map", str(inputs / "sequence_map.tsv"), "--sequence-map-sha256", receipt["files"]["sequence_map.tsv"],

@@ -277,6 +277,71 @@ def test_esmc_command_pins_offline_cache_and_uses_existing_producer(esmc_command
     assert env["NVIDIA_TF32_OVERRIDE"] == "0"
 
 
+def test_v5_esmc_timing_command_replaces_the_sdk_loader_for_the_fp32_forward(esmc_command_inputs, transfer_view):
+    request, source, output = esmc_command_inputs
+    historical, _env = phase3.embedding_command(request, source, transfer_view, output)
+    assert phase3.ESMC_FP32_LOAD not in historical[2] and "--forward-precision" not in historical
+    argv, _env = phase3.embedding_command(request, {**source, "format": phase3.EXECUTION_V5_FORMAT}, transfer_view, output)
+    assert argv[-2:] == ["--forward-precision", "fp32"] and "configure_and_record(" not in argv[2]
+    guard, loader, producer = (argv[2].index(text) for text in (
+        "install_guard_from_environment()", phase3.ESMC_FP32_LOAD, "runpy.run_module('embed_helpers.esmc_chain_means'"))
+    assert guard < loader < producer
+
+
+@pytest.mark.parametrize("command", ["timing", "pretrain"])
+def test_fp32_commands_run_guard_loader_and_producer_in_a_fresh_process(esmc_command_inputs, tmp_path, command):
+    """The composed wrapper as the pod runs it, with a stand-in SDK whose own loader truncates to bfloat16."""
+    request, source, output = esmc_command_inputs
+    request["device"] = "cpu"
+    root = tmp_path / "held-out"
+    root.mkdir()
+    fixture = tmp_path / "sdk-fixture"
+    for package in ("esm", "esm/models", "embed_helpers"):
+        (fixture / package).mkdir(parents=True)
+        (fixture / package / "__init__.py").write_text("")
+    (fixture / "esm/models/esmc.py").write_text(
+        "import torch\n"
+        "class ESMC(torch.nn.Module):\n"
+        "    def __init__(self):\n"
+        "        super().__init__()\n"
+        "        torch.manual_seed(0)\n"
+        "        self.layer = torch.nn.Linear(4, 4)\n"
+        "        self.register_buffer('inv_freq', torch.rand(8))\n"
+        "    @classmethod\n"
+        "    def from_pretrained(cls, model_name, device=None):\n"
+        "        return cls().to(torch.bfloat16)\n")
+    (fixture / "esm/pretrained.py").write_text(
+        "from esm.models.esmc import ESMC\n"
+        "LOADS = []\n"
+        "def load_local_model(model_name, device=None):\n"
+        "    LOADS.append((model_name, str(device)))\n"
+        "    return ESMC()\n")
+    (fixture / "embed_helpers/esmc_chain_means.py").write_text(
+        "import json, sys, torch\n"
+        "from esm.models.esmc import ESMC\n"
+        "from esm import pretrained\n"
+        "assert sys.argv[1] == 'sequences' and sys.argv[-2:] == ['--forward-precision', 'fp32']\n"
+        "model = ESMC.from_pretrained('esmc_300m', device=torch.device('cpu'))\n"
+        "model.to(torch.float32)\n"
+        "expected, loaded = ESMC().state_dict(), model.state_dict()\n"
+        "print(json.dumps({'loads': pretrained.LOADS, 'exact': all(torch.equal(loaded[k], expected[k]) for k in expected),\n"
+        "                  'dtypes': sorted({str(v.dtype) for v in loaded.values()})}))\n")
+    view = SimpleNamespace(forbidden_read_roots=[str(root)])
+    v5 = {**source, "format": phase3.EXECUTION_V5_FORMAT}
+    if command == "timing":
+        argv, env = phase3.embedding_command(request, v5, view, output)
+    else:
+        mapping = Path(request["timing_inputs"]) / "sequence_map.tsv"
+        argv, env = phase3.pretrain_embedding_command(
+            request, v5, view, fasta=Path(request["timing_inputs"]) / "timing.fasta", sequence_map=mapping,
+            sequence_map_sha256=_sha(mapping), output=output, device="cpu")
+    env["PYTHONPATH"] = str(fixture) + os.pathsep + env["PYTHONPATH"]
+    result = subprocess.run(argv, env=env, capture_output=True, text=True, timeout=120)
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout.splitlines()[-1]) == {
+        "loads": [["esmc_300m", "cpu"]], "exact": True, "dtypes": ["torch.float32"]}
+
+
 def test_esmc_launch_guard_blocks_each_forbidden_sentinel_in_fresh_process(esmc_command_inputs, tmp_path):
     request, source, output = esmc_command_inputs
     request["device"] = "cpu"

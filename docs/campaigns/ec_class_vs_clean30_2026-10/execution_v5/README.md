@@ -1,7 +1,7 @@
 # Execution v5 — Runpod G2 through Fold 0
 
 Status: published, 2026-11-12, with the [execution corrections](#execution-corrections-of-2026-11-12) of the
-same day, the [host replacement](#host-replacement-within-a-launch-window) that followed the first launch window and the [supervised caps](#supervised-caps-on-hosts-with-read-only-cgroup-controls) that followed the second; CPU implementation only. The [fold-0 ceiling](#fold-0-ceiling-a2-d8) is approved. Neither publication
+same day, the [host replacement](#host-replacement-within-a-launch-window) that followed the first launch window and the [supervised caps](#supervised-caps-on-hosts-with-read-only-cgroup-controls) that followed the second, and the [float32 ESMC load](#float32-esmc-load-for-the-fp32-producer) of 2026-11-13 that followed the sixth; CPU implementation only. The [fold-0 ceiling](#fold-0-ceiling-a2-d8) is approved. Neither publication
 nor the ceiling grants launch authorization: each launch needs its own explicit authorization. The previous
 G2-only limits and launch requests do not authorize v5.
 
@@ -224,6 +224,46 @@ step before workload admission: the relocated dry-run probe exceeded its fixed 3
 two-core cap; the same two probes took 285 and 293 seconds in the workstation dry run of fold 0. The limit is now
 1,800 seconds (`VM_PROBE_SECONDS`). Nothing else changes; the session deadline still bounds every remote command.
 The change is execution-only (A2-GOV-7 class (a)).
+
+## Float32 ESMC load for the fp32 producer
+
+Window `ec30v5-g2f0-w6` was the first to reach workload admission. Its first unit, the F6 preparation, built the
+sequence means on CUDA and was refused by the parity check C9 for all 602 compared structures
+([evc-044](../log.md#evc-044)). The limits of C9 were correct and stay as they are; the build was defective.
+
+The ESM SDK casts the ESMC parameters and buffers to bfloat16 whenever it loads the model off CPU. The fp32
+producer then casts them to float32, which changes the dtype and keeps the truncated values. The forward was
+therefore a float32 forward of bfloat16-truncated weights, although the runtime record correctly reported float32
+parameters, `ESMC.forward` and no autocast. Three measurements on a sample of 12 structures fix the cause:
+
+| Comparison (final layer) | Largest absolute difference |
+|---|---|
+| CPU fp32 forward against the view's stored chain means | 1.5e-7 |
+| CUDA build of window w6 against the view's stored chain means | 1.4e-3 |
+| CPU fp32 forward after the SDK's bfloat16 cast and the cast back, against the CUDA build of window w6 | 5.4e-7 |
+
+The two fp32 commands of `phase3.py` (`pretrain_embedding_command`, which also builds the sequence cache of the
+ESMC farm, and the v5 branch of `embedding_command`) now replace the SDK loader inside their own process, after the
+read guard and before the producer starts (`ESMC_FP32_LOAD`): the model is loaded on CPU, where the SDK keeps
+float32, and then moved to the requested device. A load that is not a float32 ESMC model is refused. On CPU the
+replaced loader gives the same values bit for bit as before. The producer `esmc_chain_means.py`, the corpus rules
+in `pretrain_corpus.py`, the C9 limits and the scientific identity are unchanged.
+
+Two limits of this correction, and its classification:
+
+- **Scope.** It holds only for builds started through these two commands. The producer run directly with
+  `--device cuda --forward-precision fp32` still loads through the SDK and still writes truncated values under a
+  runtime record that reads the same as a correct build.
+- **Memory.** The CPU-side load holds the model and its state dict in host memory before the move, a peak of about
+  3.1 GiB where the SDK's direct load on the device held neither. The F6 preparation and the timing unit run under
+  8 GiB. A cap profile for the ESMC farm of the comparator must allow for this peak.
+- **Classification.** Only an execution file changes and both pinned functions are unchanged, which is class (a)
+  of A2-GOV-7. A2-GOV-2 also says that execution files hold no model or embedding code, and this loader decides
+  the values of every CUDA fp32 embedding from an execution file. It changes no rule, limit or recipe and makes
+  the float32 policy of A2-GOV-3 hold on CUDA, where the unchanged check C9 then tests the result. On 2026-11-13
+  the maintainer decided to admit the correction as a class (a) execution change under A2-GOV-7 and approved its
+  publication with a re-pinned manifest. The alternative, the same two lines in the producer under a scientific
+  amendment, was not taken.
 
 ## Fold-0 ceiling (A2-D8)
 

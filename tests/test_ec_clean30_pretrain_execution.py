@@ -96,11 +96,82 @@ def test_pretrain_embedding_command_pins_fp32_offline_weights_and_scrubs_git(tmp
     assert argv[argv.index("--device") + 1] == device
     assert "--max-residue-tokens" not in argv  # F6 uses whole official sequences.
     assert "runtime_precision.bootstrap_code" not in argv[2]
+    guard, loader, producer = (argv[2].index(text) for text in (
+        "install_guard_from_environment()", phase3.ESMC_FP32_LOAD, "runpy.run_module('embed_helpers.esmc_chain_means'"))
+    assert guard < loader < producer  # the float32 loader is in place before the producer imports the SDK
     assert not any(name.startswith("GIT_") for name in env)
     assert "INFRA_PROVIDER" not in env
     assert env["NVIDIA_TF32_OVERRIDE"] == "0" and env["HF_HUB_OFFLINE"] == "1"
     if device == "cpu":
         assert env["CUDA_VISIBLE_DEVICES"] == ""
+
+
+def _fake_esm_sdk(monkeypatch, *, loaded_dtype=None, foreign=False):
+    """A stand-in SDK whose own loader truncates to bfloat16, as the real one does off CPU."""
+    import types
+
+    import torch
+
+    calls = []
+
+    class ESMC(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.layer = torch.nn.Linear(4, 4)
+            self.register_buffer("inv_freq", torch.rand(8))
+
+        @classmethod
+        def from_pretrained(cls, model_name, device=None):
+            return load_local_model(model_name).to(torch.bfloat16)
+
+    torch.manual_seed(0)
+    reference = ESMC()
+
+    def load_local_model(model_name, device=torch.device("cpu")):
+        calls.append((model_name, str(device)))
+        model = torch.nn.Linear(4, 4) if foreign else ESMC()
+        if not foreign:
+            model.load_state_dict(reference.state_dict())
+        return model if loaded_dtype is None else model.to(loaded_dtype)
+
+    for name, members in (("esm", {}), ("esm.models", {}), ("esm.models.esmc", {"ESMC": ESMC}),
+                          ("esm.pretrained", {"load_local_model": load_local_model})):
+        module = types.ModuleType(name)
+        module.__dict__.update(members)
+        monkeypatch.setitem(sys.modules, name, module)
+    return ESMC, reference, calls
+
+
+def test_fp32_loader_keeps_the_float32_values_that_the_sdk_loader_truncates(monkeypatch):
+    import torch
+
+    ESMC, reference, calls = _fake_esm_sdk(monkeypatch)
+    expected = reference.state_dict()
+    truncated = ESMC.from_pretrained("esmc_300m", device=torch.device("cpu")).to(torch.float32).state_dict()
+    assert all(str(value.dtype) == "torch.float32" for value in truncated.values())
+    assert not any(torch.equal(truncated[name], expected[name]) for name in expected)  # the cast back restores nothing
+    calls.clear()
+    exec(phase3.ESMC_FP32_LOAD, {})
+    model = ESMC.from_pretrained("esmc_300m", device=torch.device("cpu"))
+    assert calls == [("esmc_300m", "cpu")]
+    loaded = model.state_dict()
+    assert set(loaded) == set(expected) and all(torch.equal(loaded[name], expected[name]) for name in expected)
+    # Another device is reached by a move after the CPU load, never by a load on that device.
+    calls.clear()
+    moved = ESMC.from_pretrained("esmc_300m", device=torch.device("meta"))
+    assert calls == [("esmc_300m", "cpu")]
+    assert {(value.device.type, str(value.dtype)) for value in moved.state_dict().values()} == {("meta", "torch.float32")}
+
+
+@pytest.mark.parametrize("case", ["bfloat16", "foreign"])
+def test_fp32_loader_refuses_a_load_that_is_not_float32_esmc(monkeypatch, case):
+    import torch
+
+    ESMC, _reference, _calls = _fake_esm_sdk(
+        monkeypatch, loaded_dtype=torch.bfloat16 if case == "bfloat16" else None, foreign=case == "foreign")
+    exec(phase3.ESMC_FP32_LOAD, {})
+    with pytest.raises(SystemExit, match="float32 ESMC load"):
+        ESMC.from_pretrained("esmc_300m", device=torch.device("cpu"))
 
 
 def complete_record():

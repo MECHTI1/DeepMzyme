@@ -1895,3 +1895,32 @@ workstation dry run of fold 0 recorded 285 and 293 seconds for them. The maintai
 1,800 seconds ([probe time limit](execution_v5/README.md#probe-time-limit-before-admission)), an execution-only
 change under A2-GOV-7 class (a). Next: the re-pinned manifest and window `ec30v5-g2f0-w6`, the last under the
 third retry record.
+
+## evc-044
+
+2026-11-13 — **Sixth v5 window reached workload admission; its first unit, the F6 preparation, failed parity
+check C9 because the CUDA model had bfloat16-truncated weights.** Window `ec30v5-g2f0-w6` at `f456322` received a pod, passed the caps
+step, all staging, the runtime locks, the CUDA checks and the model probes, completed the relocated dry-run probe
+in about 14 minutes and was admitted, the first admission of v5. Unit `ecc30_pretrain_fold0_attempt1` built the
+F6 sequence means on CUDA for 10,202 sequences in 17 minutes under the supervised caps and was then refused:
+C9 failed for 602 of 602 compared structures. The cosine limit held for every pair (minimum 0.999978); the
+absolute-difference limit of 1e-4 failed for every pair (3.0e-4 to 3.7e-3). No G2 timing unit started, so no
+fold-0 data exist under A2-GOV-7; G2 remains 0/12.
+
+The cause is in the model load, not in the limits or the stored chain means. The ESM SDK casts the ESMC
+parameters and buffers to bfloat16 when it loads off CPU, and the fp32 producer's later cast to float32 keeps the
+truncated values. On a sample of 12 structures a CPU fp32 forward matches the stored chain means to 1.5e-7, and
+the same forward after the SDK's cast and the cast back matches the CUDA build of w6 to 5.4e-7. The dry runs had
+not met this defect because they use a stub for the pretraining input. The correction loads the model on CPU and
+then moves it to the device ([float32 ESMC load](execution_v5/README.md#float32-esmc-load-for-the-fp32-producer)).
+No scientific file, rule or limit changes. The correction meets class (a) of A2-GOV-7 by its files; because it
+puts model-loading text in an execution file, which A2-GOV-2 speaks against, its classification was the
+maintainer's to make. On 2026-11-13 the maintainer decided to admit it as a class (a) execution change under
+A2-GOV-7 and approved its publication with a re-pinned manifest.
+
+A second, smaller defect is open. On this failure path the closeout refused ("The F6 attachment snapshot is not a
+regular directory"), so the window closed as failed with the pod stopped instead of deleted. The pod's outputs
+(command log, embedding log and the refused CUDA cache) are preserved under the pass folder; the cache is kept as
+evidence only and is not used. On 2026-11-13 the maintainer approved deleting the stopped pod; it was deleted and
+no pod with an active GPU remained. The third retry record is exhausted (w5 and w6), and the maintainer approved
+a fourth. Next: the re-pinned manifest and window `ec30v5-g2f0-w7` under the fourth retry record.
