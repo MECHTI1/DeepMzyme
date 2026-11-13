@@ -30,11 +30,11 @@ or a chain below sequence 2 cannot authorize real work. Link 2 is published. Its
 chain receipt and the bound view-manifest digests. After the [execution corrections](#execution-corrections-of-2026-11-12),
 the published chain passed full verification at `0d4cc56`, including C7. The re-pinned [v5 manifest](manifest.json)
 pins all 11 closed execution files, the runtime locks and the existing timing-input closure. After the
-[probe time limit](#probe-time-limit-before-admission) it was rebuilt from a fresh published chain receipt at
-`31c10d5`; only the `workstation.py` pin changed. Its draft verification passed on that clean published source tree,
-and published-mode verification passed at `da30cd3` with a fresh chain receipt. It supersedes `205d1303…` (verified at
-`cc7daed`), `e023e955…` (verified at `1f4404a`), `81e18aec…` (verified at `f57effa`), `72a5dadf…` (verified at
-`bd016f2`) and the first v5 manifest (`bb8f50fd…`, verified at `2bff344`).
+[float32 ESMC load](#float32-esmc-load-for-the-fp32-producer) it was rebuilt from a fresh published chain receipt
+at `de99c51`; only the `phase3.py` pin changed. Its draft verification passed on that clean published source tree,
+and published-mode verification passed at `7b019c5` with a fresh chain receipt. It supersedes `fa5be2d0…` (verified at
+`da30cd3`), `205d1303…` (verified at `cc7daed`), `e023e955…` (verified at `1f4404a`), `81e18aec…` (verified at
+`f57effa`), `72a5dadf…` (verified at `bd016f2`) and the first v5 manifest (`bb8f50fd…`, verified at `2bff344`).
 [Verification](cpu_verification.json) records the private receipt, build and publication evidence hashes.
 No GPU completion time is measured yet; the approved ceiling is recorded [below](#fold-0-ceiling-a2-d8).
 
