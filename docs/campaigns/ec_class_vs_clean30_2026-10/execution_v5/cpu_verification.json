@@ -1,5 +1,5 @@
 {
-  "base_commit": "f456322924b55d81b2380d1b09de30d7b7c21a4a",
+  "base_commit": "b8d90fadc4ab5e873d98b82e4fc647106f7c7e31",
   "chain_interface": {
     "full_verifier_on_pod": false,
     "identity": [
@@ -15,14 +15,43 @@
     "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/cpu_verification.json",
     "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/manifest.json",
     "docs/campaigns/ec_class_vs_clean30_2026-10/log.md",
-    "src/ec_clean30/phase3.py",
-    "tests/test_ec_clean30_phase3.py",
-    "tests/test_ec_clean30_pretrain_execution.py"
+    "src/ec_clean30/workstation.py",
+    "tests/test_ec_clean30_workstation_ssh_reconnect.py"
   ],
   "checks": {
     "C7": {
       "scope": "Live tracked src/ and scripts/: partition, private names, fresh import isolation, analysis channels and static import closure",
       "status": "passed"
+    },
+    "bounded_ssh_reconnect_20261113": {
+      "classification": "Execution-only change under A2-GOV-7 class (a), approved by the maintainer on 2026-11-13",
+      "corrections": [
+        "ControllerTransport.remote repeats a command that SSH did not deliver (a failed connect, exit 255 with the 'ssh: connect to host' message) after 5, 10 and then 15 seconds, for at most 240 seconds and never into the reserve before the session deadline; the Runpod transport renews the SSH endpoint from the provider before each repeat",
+        "A single-file scp that ends with exit 255 is repeated once after a read that waits for the endpoint",
+        "The second charged rsync attempt of HostPull.sync_pending waits for the endpoint first; the closeout preservation transfer gets the same two charged attempts"
+      ],
+      "docs_contract": "0 strict failures, 11 warnings (unchanged)",
+      "duplicate_launch": "A failed connect delivers no command, and the unit launch keeps its fixed job path",
+      "limits": [
+        "A polling loop can pass its own bound by the reconnect time; the session deadline bounds every call",
+        "The reconnect does not restore a remote worker that died with the SSH service",
+        "The cause of the refused connections in window w8 is not known; the pod was deleted without inspection",
+        "No live SSH interruption has exercised the reconnect yet"
+      ],
+      "not_repeated": [
+        "a connection lost after the command was sent",
+        "a host-key refusal",
+        "any exit status of a remote command"
+      ],
+      "pinned_functions_unchanged": true,
+      "scientific_files_changed": false,
+      "targeted_run": {
+        "caps": "two CPU cores, 3 GB",
+        "failed": 0,
+        "passed": 886,
+        "scope": "phase 3, pretraining execution, phase 4, v5 follow-up, v5 resume, v5 launch recovery, execution v5, manifest v5, closeout inventory, Runpod controller, runtime, stock search and bootstrap, and all workstation tests, including the 11 new reconnect tests"
+      },
+      "trigger": "Window ec30v5-g2f0-w8 passed the F6 preparation and four G2 timing units; the pod's SSH port then refused connections during unit F4_raw, the read was repeated once and the session closed without a preservation receipt"
     },
     "cpu_smoke": {
       "entrypoint": "tests/smoke_checks.py",
@@ -1009,6 +1038,75 @@
     },
     "status": "execution_manifest_published_verified_launch_not_authorized"
   },
+  "historical_publication_20261113_7b019c5": {
+    "base_commit": "f456322924b55d81b2380d1b09de30d7b7c21a4a",
+    "changed_files": [
+      "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/README.md",
+      "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/cpu_verification.json",
+      "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/manifest.json",
+      "docs/campaigns/ec_class_vs_clean30_2026-10/log.md",
+      "src/ec_clean30/phase3.py",
+      "tests/test_ec_clean30_phase3.py",
+      "tests/test_ec_clean30_pretrain_execution.py"
+    ],
+    "manifest_build_verification": {
+      "amendment_chain": [
+        "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea",
+        "777130e4727768847e281a0aea593d44036c77107d2519ea8dddabe951ab682c"
+      ],
+      "build_evidence": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/execution_v5_build_de99c51.json",
+        "sha256": "ddecfccf3f605a5c5bbe88aecf6a85977e0e2edeb128902dda96be884fd49416"
+      },
+      "chain_receipt": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/chain_receipt_published_de99c51.json",
+        "sha256": "f32e42246023394a87486074648771fea06a73237cb103d743c4112256d2871d"
+      },
+      "execution_source_commit": "de99c515de5c9f80ea4099c9b5442d9a3fb9d41b",
+      "execution_source_published": true,
+      "gpu_or_provider_operations": 0,
+      "manifest": {
+        "path": "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/manifest.json",
+        "sha256": "4fb0cb5752aedfce3a5de876f651e054130d7e6e755d7246051bcf60b61844cc"
+      },
+      "manifest_published": false,
+      "manifest_source_pin_count": 11,
+      "manifest_verification": "passed with require_published=False on the clean published source tree before copying identical candidate bytes to the repository document",
+      "published_chain_verification": "passed, including C7 on the live execution tree",
+      "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4",
+      "supersedes_manifest_sha256": "fa5be2d06ddf1f10cf6d43b30020794e3ea4f8c593dfbaa5c3821340970376a2",
+      "timing_input_files_verified": true
+    },
+    "publication": "The float32 ESMC load and the re-pinned manifest v5 published; published-mode verification passed at 7b019c5.",
+    "publication_verification": {
+      "amendment_chain": [
+        "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea",
+        "777130e4727768847e281a0aea593d44036c77107d2519ea8dddabe951ab682c"
+      ],
+      "chain_receipt": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/chain_receipt_published_7b019c5.json",
+        "sha256": "cf0769b1dc9db865ee01cd53f75de50ad5c3efe98d45f59b82a8bf2a5ae1e24f"
+      },
+      "chain_verification": "passed, including C7 on the live tree",
+      "evidence": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/execution_v5_published_7b019c5.json",
+        "sha256": "bb0c4495e01a326dcdedcc524170dacfb9c2a50ab375a54d96a24eb951124431"
+      },
+      "execution_source_pin_count": 11,
+      "format": "deepmzyme_ec_clean30_execution_v5_publication_verification_v1",
+      "gpu_or_provider_operations": 0,
+      "launch_authorized": false,
+      "manifest": {
+        "path": "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/manifest.json",
+        "sha256": "4fb0cb5752aedfce3a5de876f651e054130d7e6e755d7246051bcf60b61844cc"
+      },
+      "manifest_published": true,
+      "manifest_verification": "passed with require_published=True",
+      "published_commit": "7b019c5b4fcc1576e741f019a221be1aebd03648",
+      "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4"
+    },
+    "status": "execution_manifest_published_verified_launch_not_authorized"
+  },
   "integration_science_sha256": {
     "scripts/run_ec_clean30_campaign.py": "190d968e2e3421e69e7f3472f01fdf9d82dd0ec58b679ced34bf6a0613010e46",
     "scripts/run_ec_clean30_clean_sanity.py": "01a68db20a237c90125603aa779b72ec66d40d9be3433e8fe2ac5b6d66829da5",
@@ -1075,26 +1173,26 @@
       "777130e4727768847e281a0aea593d44036c77107d2519ea8dddabe951ab682c"
     ],
     "build_evidence": {
-      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/execution_v5_build_de99c51.json",
-      "sha256": "ddecfccf3f605a5c5bbe88aecf6a85977e0e2edeb128902dda96be884fd49416"
+      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/execution_v5_build_4b65be6.json",
+      "sha256": "f92c3cb3d9dcff0afe6202465b5cf3c53d051adbde57e634f8b22b5f87cf47b1"
     },
     "chain_receipt": {
-      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/chain_receipt_published_de99c51.json",
-      "sha256": "f32e42246023394a87486074648771fea06a73237cb103d743c4112256d2871d"
+      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/chain_receipt_published_4b65be6.json",
+      "sha256": "a295c5fe18bd81d600b290bd41f071eee73044f185af9b54e7f4382ff39fa0b2"
     },
-    "execution_source_commit": "de99c515de5c9f80ea4099c9b5442d9a3fb9d41b",
+    "execution_source_commit": "4b65be6a0b1f43a06ddec0361eda16923d43de47",
     "execution_source_published": true,
     "gpu_or_provider_operations": 0,
     "manifest": {
       "path": "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/manifest.json",
-      "sha256": "4fb0cb5752aedfce3a5de876f651e054130d7e6e755d7246051bcf60b61844cc"
+      "sha256": "aedb8a224f3b11d58bc97b6186fb0736e6e8adee980820842ba400e5e3298a0b"
     },
     "manifest_published": false,
     "manifest_source_pin_count": 11,
     "manifest_verification": "passed with require_published=False on the clean published source tree before copying identical candidate bytes to the repository document",
     "published_chain_verification": "passed, including C7 on the live execution tree",
     "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4",
-    "supersedes_manifest_sha256": "fa5be2d06ddf1f10cf6d43b30020794e3ea4f8c593dfbaa5c3821340970376a2",
+    "supersedes_manifest_sha256": "4fb0cb5752aedfce3a5de876f651e054130d7e6e755d7246051bcf60b61844cc",
     "timing_input_files_verified": true
   },
   "pending": [
@@ -1108,33 +1206,13 @@
     "science_owned_source": "Unchanged except the delegated runtime_precision entry in scoring.SCORER_CODE_PATHS",
     "science_worktree": "Read-only; source_changes and science-owned chain verifier/tests were not edited"
   },
-  "publication": "The float32 ESMC load and the re-pinned manifest v5 published; published-mode verification passed at 7b019c5.",
+  "publication": "The bounded SSH reconnect and the re-pinned manifest v5 committed; published-mode verification follows in the next commit.",
   "publication_verification": {
-    "amendment_chain": [
-      "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea",
-      "777130e4727768847e281a0aea593d44036c77107d2519ea8dddabe951ab682c"
-    ],
-    "chain_receipt": {
-      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/chain_receipt_published_7b019c5.json",
-      "sha256": "cf0769b1dc9db865ee01cd53f75de50ad5c3efe98d45f59b82a8bf2a5ae1e24f"
-    },
-    "chain_verification": "passed, including C7 on the live tree",
-    "evidence": {
-      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/execution_v5_published_7b019c5.json",
-      "sha256": "bb0c4495e01a326dcdedcc524170dacfb9c2a50ab375a54d96a24eb951124431"
-    },
-    "execution_source_pin_count": 11,
-    "format": "deepmzyme_ec_clean30_execution_v5_publication_verification_v1",
-    "gpu_or_provider_operations": 0,
-    "launch_authorized": false,
     "manifest": {
       "path": "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/manifest.json",
-      "sha256": "4fb0cb5752aedfce3a5de876f651e054130d7e6e755d7246051bcf60b61844cc"
+      "sha256": "aedb8a224f3b11d58bc97b6186fb0736e6e8adee980820842ba400e5e3298a0b"
     },
-    "manifest_published": true,
-    "manifest_verification": "passed with require_published=True",
-    "published_commit": "7b019c5b4fcc1576e741f019a221be1aebd03648",
-    "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4"
+    "status": "pending"
   },
   "source_sha256": {
     "scripts/run_clean_split30_comparator.py": "5530b2801b41de02b6b83e25fdbefb8881f51c419a4ae214c88b46fef8a96402",
@@ -1146,7 +1224,7 @@
     "src/ec_clean30/runpod_controller.py": "692d5fb9764b0970be8a713c9b67aa74bfa2dd41548e15be1f147431456cc87c",
     "src/ec_clean30/runtime_precision.py": "db5a886deaba7fa8cf230ffc1a24f9020221572f6367133824e4b0d8db5ef57e",
     "src/ec_clean30/scoring.py": "69e979b25486abc7ebc5266ddff719bdb9bae70493bef43f9e6b2f23292d373c",
-    "src/ec_clean30/workstation.py": "14c0467f1c6a2b7dc78d4064ea5472516ca0fe7cbbe1b65d8731fd4408727d3a",
+    "src/ec_clean30/workstation.py": "f4a8b33a6bfeae933ca91eb799751c411f24948e2bff59d9362036b596a5978d",
     "tests/test_clean_split30_runner.py": "38846fbe102f1d229b89e77a2cfe572b5cdc6919966fb22d8ca3fa0ffe7faab8",
     "tests/test_ec_clean30_closeout_inventory.py": "1b2de360254549c933fd8f556dbf7fc8d91f3a139848d4beb19084b1f4d33891",
     "tests/test_ec_clean30_container_caps.py": "60c57c39752be087661a831aebec893f672c318906a0c501764a204577775762",
@@ -1176,5 +1254,5 @@
     "tests/test_ec_clean30_workstation_posix.py": "b0c4a681a10bfddaa3baa8c2fef46d27072bd6349694bf5fae1b85d0097f58cc",
     "tests/test_ec_clean30_workstation_v5_dispatch.py": "51cbade8fb18d188973e93f41fa184517fc8fbd235cc0924290d5be87484f63c"
   },
-  "status": "execution_manifest_published_verified_launch_not_authorized"
+  "status": "execution_manifest_rebuilt_publication_verification_pending"
 }
