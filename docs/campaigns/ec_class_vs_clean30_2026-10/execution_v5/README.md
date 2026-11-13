@@ -1,7 +1,7 @@
 # Execution v5 — Runpod G2 through Fold 0
 
 Status: published, 2026-11-12, with the [execution corrections](#execution-corrections-of-2026-11-12) of the
-same day, the [host replacement](#host-replacement-within-a-launch-window) that followed the first launch window and the [supervised caps](#supervised-caps-on-hosts-with-read-only-cgroup-controls) that followed the second, and the [float32 ESMC load](#float32-esmc-load-for-the-fp32-producer) of 2026-11-13 that followed the sixth; CPU implementation only. The [fold-0 ceiling](#fold-0-ceiling-a2-d8) is approved. Neither publication
+same day, the [host replacement](#host-replacement-within-a-launch-window) that followed the first launch window and the [supervised caps](#supervised-caps-on-hosts-with-read-only-cgroup-controls) that followed the second, the [float32 ESMC load](#float32-esmc-load-for-the-fp32-producer) of 2026-11-13 that followed the sixth, and the [bounded SSH reconnect](#bounded-ssh-reconnect) that followed the eighth; CPU implementation only. The [fold-0 ceiling](#fold-0-ceiling-a2-d8) is approved. Neither publication
 nor the ceiling grants launch authorization: each launch needs its own explicit authorization. The previous
 G2-only limits and launch requests do not authorize v5.
 
@@ -264,6 +264,37 @@ Two limits of this correction, and its classification:
   the maintainer decided to admit the correction as a class (a) execution change under A2-GOV-7 and approved its
   publication with a re-pinned manifest. The alternative, the same two lines in the producer under a scientific
   amendment, was not taken.
+
+## Bounded SSH reconnect
+
+Window `ec30v5-g2f0-w8` passed the F6 preparation and four G2 timing units and then ended when the pod's SSH port
+refused connections while the fifth unit was running ([evc-045](../log.md#evc-045)). The polling read was repeated
+once, immediately, and the session closed. The closeout's preservation also needs SSH and failed the same way,
+so the pod was stopped without a preservation receipt and that pass cannot be resumed.
+
+SSH reports a failed connect as `ssh: connect to host … port …: <reason>` before it delivers any command. A
+command that fails this way did not run, so repeating it cannot start remote work twice. The transport now uses
+this:
+
+- **Remote commands.** `ControllerTransport.remote` repeats an undelivered command after 5, 10 and then 15 seconds,
+  for at most 240 seconds after the first failure (`SSH_RECONNECT_SECONDS`) and never into the reserve before the
+  session deadline. Before each repeat the Runpod transport renews the SSH address and port from the provider's
+  record of the owned pod, because a restarted SSH service can return on another port. This covers the polling
+  read of a running unit, the reads of the verified transfer and the closeout inventory.
+- **Not repeated.** A connection lost after the command was sent, a host-key refusal and every exit status of a
+  remote command are raised as before. The fixed job path of a unit still decides whether it was launched.
+- **Single-file copies.** An `scp` that ends with the SSH transport's exit status 255 is repeated once, after a
+  read that waits for the endpoint. It writes the same bytes to the same path.
+- **Verified transfers.** The two attempts of the `rsync` in `HostPull.sync_pending` are still each charged to the
+  transfer budget in full; the second now waits for the endpoint first. The preservation transfer of the closeout
+  gets the same two charged attempts.
+
+Two limits. A polling loop can pass its own bound by the reconnect time; the session deadline still bounds every
+call. And the reconnect helps only while the remote worker survives: if the worker died with the SSH service, the
+unit still ends at its bound, but the closeout can then reach the pod and preserve what exists. Why the port
+refused connections in window w8 is not known; that pod was deleted without inspection.
+
+No remote command, rule, limit or scientific file changes. The change is execution-only (A2-GOV-7 class (a)).
 
 ## Fold-0 ceiling (A2-D8)
 

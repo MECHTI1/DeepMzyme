@@ -129,6 +129,10 @@ class HostRejected(WorkstationError):
 
 HOST_REJECTION_PREFIX = "Remote command failed (125): container caps refused:"
 VM_PROBE_SECONDS = 1800
+# SSH reports a failed connect in this form before it delivers any command, so the command did not run.
+SSH_CONNECT_FAILURE = re.compile(r"^ssh: connect to host \S+ port \d+: ", re.M)
+SSH_RECONNECT_DELAYS = (5, 10, 15)
+SSH_RECONNECT_SECONDS = 240
 # A new pass (recovery, retry or resume) re-proves its own roots locally; the staged inputs do not move.
 PASS_LOCAL_FIELDS = ("state_root", "durable_root", "mirror_root")
 PASS_LOCAL_RUNPOD_FIELDS = ("state_root", "pod_name")
@@ -266,6 +270,28 @@ class ControllerTransport:
         self.deadline_unix: float | None = None
         self.reserve_seconds = 30
 
+    def refresh(self) -> None:
+        """Renew the SSH endpoint before a reconnect; this controller's endpoint is fixed."""
+
+    def _reconnect(self, attempt: int, started: float) -> bool:
+        """Wait before repeating an undelivered SSH command; False once the reconnect bound is spent.
+
+        The waits are 5, 10 and then 15 seconds, for at most ``SSH_RECONNECT_SECONDS`` after the first
+        failure and never into the reserve before the session deadline. The endpoint is renewed before
+        each repeat, since a restarted SSH service can return on another port.
+        """
+        delay = SSH_RECONNECT_DELAYS[min(attempt, len(SSH_RECONNECT_DELAYS) - 1)]
+        if time.monotonic() + delay > started + SSH_RECONNECT_SECONDS:
+            return False
+        if self.deadline_unix is not None and time.time() + delay + self.reserve_seconds >= self.deadline_unix:
+            return False
+        time.sleep(delay)
+        try:
+            self.refresh()
+        except (OSError, subprocess.SubprocessError, RuntimeError):
+            pass  # The provider may not report an endpoint yet; the previous one is tried again.
+        return True
+
     def _bounded(self, timeout: float) -> float:
         if self.deadline_unix is not None:
             timeout = min(timeout, self.deadline_unix - time.time() - self.reserve_seconds)
@@ -286,11 +312,19 @@ class ControllerTransport:
         command = shlex.join([self.bootstrap_python, "-c", clean_exec, *[str(value) for value in argv]])
         if cwd:
             command = f"cd {shlex.quote(_absolute(cwd))} && {command}"
-        result = subprocess.run(["ssh", "-F", str(self.ssh_config), "-o", "BatchMode=yes", "-o",
-                                 "ConnectTimeout=20", "-o", "ServerAliveInterval=10", "-o",
-                                 "ServerAliveCountMax=2", self.ssh_alias, command],
-                                stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=self._bounded(timeout),
-                                env=phase3.clean_repository_environment())
+        attempt, started = 0, time.monotonic()
+        while True:
+            result = subprocess.run(["ssh", "-F", str(self.ssh_config), "-o", "BatchMode=yes", "-o",
+                                     "ConnectTimeout=20", "-o", "ServerAliveInterval=10", "-o",
+                                     "ServerAliveCountMax=2", self.ssh_alias, command],
+                                    stdin=subprocess.DEVNULL, capture_output=True, text=True,
+                                    timeout=self._bounded(timeout), env=phase3.clean_repository_environment())
+            # A refused or timed-out connect delivered nothing, so the repeat cannot start remote work twice.
+            # A connection lost after the command was sent is never repeated here.
+            if (result.returncode != 255 or not SSH_CONNECT_FAILURE.search(result.stderr)
+                    or not self._reconnect(attempt, started)):
+                break
+            attempt += 1
         _require(result.returncode == 0, f"Remote command failed ({result.returncode}): {result.stderr[-2000:]}")
         _require(len(result.stdout) <= 4 * 1024 * 1024, "Unexpectedly large remote control output.")
         return result.stdout
@@ -307,12 +341,27 @@ class ControllerTransport:
                    "if p.is_file() and not p.is_symlink() else None))")
         return json.loads(self.remote([self.bootstrap_python, "-c", program, _absolute(path)], timeout=600))
 
+    def _copy(self, argv: list[str], timeout: float) -> None:
+        """One scp of a single file; after an SSH transport failure (exit 255) it is repeated once.
+
+        The read between the two attempts waits for the endpoint through the bounded reconnect of
+        ``remote``. The repeat writes the same bytes to the same path.
+        """
+        for attempt in range(2):
+            try:
+                subprocess.run(["scp", "-q", "-F", str(self.ssh_config), "-o", "BatchMode=yes", *argv], check=True,
+                               timeout=self._bounded(timeout), stdin=subprocess.DEVNULL,
+                               env=phase3.clean_repository_environment())
+                return
+            except subprocess.CalledProcessError as exc:
+                if attempt or exc.returncode != 255:
+                    raise
+                self.remote([self.bootstrap_python, "-c", "print('ready')"], timeout=15)
+
     def upload(self, local: Path, remote: str, *, timeout: float = 600) -> None:
         remote = _absolute(remote)
         self.remote(["mkdir", "-p", str(PurePosixPath(remote).parent)])
-        subprocess.run(["scp", "-q", "-F", str(self.ssh_config), "-o", "BatchMode=yes",
-                       str(local), f"{self.ssh_alias}:{remote}"], check=True, timeout=self._bounded(timeout),
-                       stdin=subprocess.DEVNULL, env=phase3.clean_repository_environment())
+        self._copy([str(local), f"{self.ssh_alias}:{remote}"], timeout)
 
     def fetch_official_weight(self, url: str, partial: str) -> dict[str, Any]:
         """A terminal result permits upload fallback; an ambiguous SSH failure does not."""
@@ -329,9 +378,7 @@ class ControllerTransport:
 
     def download(self, remote: str, local: Path, *, timeout: float = 120) -> None:
         local.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(["scp", "-q", "-F", str(self.ssh_config), "-o", "BatchMode=yes",
-                        f"{self.ssh_alias}:{_absolute(remote)}", str(local)], check=True, timeout=self._bounded(timeout),
-                       stdin=subprocess.DEVNULL, env=phase3.clean_repository_environment())
+        self._copy([f"{self.ssh_alias}:{_absolute(remote)}", str(local)], timeout)
 
     def download_files(self, remote_root: str, local_root: Path, files: list[str], *, timeout: float) -> None:
         listing = local_root / ".pending_files"
@@ -439,6 +486,8 @@ class HostPull:
                 except (OSError, subprocess.SubprocessError, WorkstationError):
                     if attempt == 1:
                         raise
+                    # A read-only read waits for the endpoint (bounded reconnect) before the charged repeat.
+                    self.transport.read_json(f"{execution_root}/execution_state.json", optional=True)
         if ack_path.exists():
             previous = _json(ack_path)
             _require(previous.get("manifest_sha256") == pending["manifest_sha256"], "Existing host acknowledgment is foreign.")
@@ -501,7 +550,8 @@ def complete_remote_unit(transport: ControllerTransport, host: HostPull, request
             try:
                 result = transport.read_json(job + "/result.json", optional=True)
             except (OSError, subprocess.SubprocessError, WorkstationError):
-                # One bounded read-only reconnect; it cannot launch or restart a worker.
+                # One further read-only read; it cannot launch or restart a worker. A refused connect has
+                # already been repeated inside the transport for its bounded reconnect time.
                 result = transport.read_json(job + "/result.json", optional=True)
             if result is not None:
                 break
@@ -1644,6 +1694,10 @@ class RunpodTransport(ControllerTransport):
         self.stop_controller.heartbeat()
         return super()._bounded(timeout)
 
+    def refresh(self):
+        # The provider's current direct SSH address and port for the owned pod; ownership is checked first.
+        self.ssh_config = self.stop_controller.write_ssh_config()
+
     def remote(self, argv, *, cwd=None, timeout=60):
         # SSH does not necessarily retain container-level environment variables.
         # The detached launcher and every descendant inherit this fixed policy.
@@ -1726,8 +1780,16 @@ def _preserve_runpod_outputs(config, transport, controller, session, *, output=N
             missing.append(name)
             count += entry["size_bytes"]
     if missing:
-        host._reserve(count)
-        transport.download_files(root, host.root, missing, timeout=host._timeout())
+        for attempt in range(2):
+            host._reserve(count)  # Each attempt is charged in full, as in HostPull.sync_pending.
+            try:
+                transport.download_files(root, host.root, missing, timeout=host._timeout())
+                break
+            except (OSError, subprocess.SubprocessError, WorkstationError):
+                if attempt == 1:
+                    raise
+                # A read-only read waits for the endpoint (bounded reconnect) before the charged repeat.
+                transport.remote([config["bootstrap_python"], "-c", "print('ready')"], timeout=15)
     for entry in inventory["files"]:
         local = host.root / entry["path"]
         _require(local.stat().st_size == entry["size_bytes"] and _sha(local) == entry["sha256"],

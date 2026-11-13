@@ -1924,3 +1924,41 @@ regular directory"), so the window closed as failed with the pod stopped instead
 evidence only and is not used. On 2026-11-13 the maintainer approved deleting the stopped pod; it was deleted and
 no pod with an active GPU remained. The third retry record is exhausted (w5 and w6), and the maintainer approved
 a fourth. Next: the re-pinned manifest and window `ec30v5-g2f0-w7` under the fourth retry record.
+
+## evc-045
+
+2026-11-13 — **The float32 ESMC load is confirmed on CUDA; windows seven to nine ended for three operational
+reasons, and G2 stands at four passed timing units in a pass that cannot be resumed.** All three windows ran at
+`b8d90fa` under the fourth retry record.
+
+| Window | Reached | Ended by | Ledger | Provider cost |
+|---|---|---|---|---|
+| `ec30v5-g2f0-w7` | F6 preparation passed | chain check C12: the workstation checkout was changed during the session | completed; pod deleted, absence verified | about $1.05 |
+| `ec30v5-g2f0-w8` | F6 preparation and timing units `anchor`, `F5`, `F6`, `F3_raw` passed | the pod's SSH port refused connections during unit `F4_raw`, 3 h 33 min into the session | failed; pod stopped, no preservation receipt | about $3.27 |
+| `ec30v5-g2f0-w9` | stock found after eight polls | create admission: $5.50 of billing in the last 25 hours against the $5 prior-charge reserve | failed; no pod allocated | $0 |
+
+**Float32 load.** In window w7 the first host was refused at the caps step and replaced within the window. The
+F6 preparation then passed both of its checks: the CUDA build matched the CPU sample on 72 of 72 sequences, with a
+largest absolute difference of 4.8e-7 against the limit of 1e-4 and a smallest cosine of 0.9999999999993 against
+0.9999, and the attachment against the view's stored chain means passed for 7,933 rows. Window w8 passed the same
+preparation again. This closes the open CUDA check of [evc-044](#evc-044).
+
+**Window w7.** Two unrelated documents in the workstation checkout were changed 47 minutes into the session. The
+coordinator repeats the chain verification between units, and C12 requires a clean tree at the receipt's commit,
+so the session closed after the preparation. The checkout must stay unchanged, with no new commit, from the chain
+receipt until the coordinator exits.
+
+**Window w8.** The session was set to 14.5 hours. The four timing units passed in 22 to 29 minutes each and are
+preserved on the workstation. The coordinator then lost SSH ("Connection refused"), repeated the read once and
+closed; the preservation step failed for the same reason, so no closeout receipt exists and the resume check
+refuses this pass. The maintainer approved deleting the stopped pod without inspecting it, so the cause on the pod
+is not known. The transport now reconnects with a bound
+([bounded SSH reconnect](execution_v5/README.md#bounded-ssh-reconnect)), an execution-only change under A2-GOV-7
+class (a) that the maintainer approved with a re-pinned manifest.
+
+**Window w9.** The stock search admits a create only while the account's billing of the last 25 hours stays
+within `quote.prior_charge_usd`. Windows w7 and w8 had raised that billing above the reviewed $5. The next
+configuration sets the reserve from the live 25-hour billing before the launch.
+
+The fourth retry record is exhausted (w8 and w9), and the maintainer approved a fifth. Next: the re-pinned
+manifest and a fresh pass, window `ec30v5-g2f0-w10`, with a 24-hour session inside the $85 ceiling.
