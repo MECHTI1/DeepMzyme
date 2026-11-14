@@ -43,11 +43,11 @@
     "src/ec_clean30/container_caps.py": "49108e6787e343dc5fd3f2047329a06faf268a51f14df31e60d1eb8e2954b854",
     "src/ec_clean30/execution_v5.py": "a23f10e98588af9509dc9b5c213722350e3bf61deb638a6c4899d3a0f25e1ac4",
     "src/ec_clean30/hot_storage.py": "2a735e90e3089c913930c79b39471dec11904622182b88da15d6360faf335ab5",
-    "src/ec_clean30/phase3.py": "79f740d85246c9f57b969efcbcfd352ae8b4aa989e1f10d14b29dff025f5e72f",
-    "src/ec_clean30/phase4.py": "f4d3d694dab946050c6f6c53cfc4c86ff8da6e35a2d7dfde9ba2ea922cbc3dde",
+    "src/ec_clean30/phase3.py": "8490ed7d0f71649edba688fa0a797805dda237f97a2686b3490784abd89d57c5",
+    "src/ec_clean30/phase4.py": "d017f49f9683a2ae5897e155fff705492538be4f4e4f12108096a8766fa453c8",
     "src/ec_clean30/runpod_bootstrap.py": "a22b3a1f21895f441ee950180ec40eea377b5962024b95bd076de3d756396460",
     "src/ec_clean30/runpod_controller.py": "692d5fb9764b0970be8a713c9b67aa74bfa2dd41548e15be1f147431456cc87c",
-    "src/ec_clean30/workstation.py": "f4a8b33a6bfeae933ca91eb799751c411f24948e2bff59d9362036b596a5978d"
+    "src/ec_clean30/workstation.py": "b06dabbadcf40b4ed400564c7b17fc0353d58015ab30904383c4c1a4119efac9"
   },
   "timing_inputs_sha256": "ee368d99a5e88a6b5f84c3cd131b8d043432d41cea59c5266beb1d9fac48ff2f"
 }
