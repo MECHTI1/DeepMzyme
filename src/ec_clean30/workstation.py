@@ -1741,6 +1741,47 @@ def _remote_inventory(config, transport, session, root, program, state_root):
     return inventory
 
 
+# The execution record's own module is loaded by path: it needs only the standard library, and its package
+# would import the numerical runtime for a step that reads and writes two small files.
+SETTLE_PROGRAM = (
+    "import importlib.util,json,pathlib,sys; r=json.loads(sys.argv[1])\n"
+    "s=importlib.util.spec_from_file_location('pmm_execution',r['repo']+'/src/benchmarking/pmm_execution.py')\n"
+    "m=importlib.util.module_from_spec(s); sys.modules['pmm_execution']=m; s.loader.exec_module(m)\n"
+    "p=m.ExecutionPolicy(deadline_unix=r['deadline_unix'],max_total_seconds=r['max_total_seconds'],"
+    "allocation_started_unix=r['allocation_started_unix'],reserve_seconds=900,forecast_margin=1.25)\n"
+    "e=m.CampaignExecution(pathlib.Path(r['execution_root']),policy=p,session_id=r['session_id'],"
+    "durable_root=pathlib.Path(r['durable_root']),persistence_mode='host_pull')\n"
+    "try:\n with e: pass\nexcept m.ExecutionBlocked: pass\n"
+    "s=json.loads(e.state_path.read_text())\n"
+    "print(json.dumps({'pending_transfer':s.get('pending_transfer'),'pending_unit':s.get('pending_unit')}))")
+SETTLE_ROUNDS = 3
+
+
+def _settle_terminal_unit(config, transport, host, session, root) -> bool:
+    """Before the closeout inventory: let the pod record the host's acknowledgment of a unit that ended without it.
+
+    A failed or interrupted unit leaves its transfer pending because its worker never runs again to read the
+    acknowledgment. The host copies and verifies the manifest's bytes as for any unit; the pod's own execution
+    record then accepts the uploaded acknowledgment under its lock. Nothing is run, retried or replaced, and a
+    worker that still owns the directory blocks the step. Returns whether no unacknowledged work remains.
+    """
+    def unsettled(state):
+        unit = (state or {}).get("pending_unit")
+        return bool((state or {}).get("pending_transfer")) or bool(unit and unit.get("persisted") is not True)
+
+    state = transport.read_json(f"{root}/execution_state.json", optional=True)
+    for _ in range(SETTLE_ROUNDS):
+        if not unsettled(state):
+            return True
+        request = json.dumps({"repo": config["remote_repo"], "execution_root": root, "durable_root": str(host.root),
+                              **{key: session[key] for key in ("session_id", "deadline_unix", "max_total_seconds",
+                                                               "allocation_started_unix")}}, sort_keys=True)
+        host.sync_pending(root)  # Copies, verifies, mirrors and uploads the acknowledgment; never the reverse.
+        state = json.loads(transport.remote([config["remote_python"], "-B", "-c", SETTLE_PROGRAM, request],
+                                            cwd=config["remote_repo"], timeout=120))
+    return not unsettled(state)
+
+
 def _preserve_runpod_outputs(config, transport, controller, session, *, output=None, receipt_name="preservation_receipt.json",
                             max_download_bytes=PAYLOAD_CEILING_BYTES, host_state_root=None):
     """Read every output back twice before authorizing deletion of persistent storage."""
@@ -1765,12 +1806,16 @@ def _preserve_runpod_outputs(config, transport, controller, session, *, output=N
         "o=pathlib.Path(sys.argv[2]); o.parent.mkdir(parents=True,exist_ok=True); q=o.with_name(o.name+'.partial'); "
         "q.write_bytes(data); os.replace(q,o); "
         "print(json.dumps({'path':str(o),'sha256':hashlib.sha256(data).hexdigest(),'size_bytes':len(data)}))")
-    inventory = _remote_inventory(config, transport, session, root, program, host_state_root or config["state_root"])
-    identity = {"pod_id": session["pod_id"], "session_id": session["session_id"], "config_sha256": controller.config_sha}
-    inventory.update(format="deepmzyme_ec_clean30_runpod_remote_inventory_v1", **identity)
     host = HostPull(transport, Path(output["primary_root"]), Path(host_state_root or config["state_root"]),
                     max_download_bytes=max_download_bytes, deadline_unix=session["deadline_unix"],
                     mirror_root=Path(output["mirror_root"]))
+    try:
+        _settle_terminal_unit(config, transport, host, session, root)
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError, WorkstationError):
+        pass  # The inventory below records what is still unacknowledged, and closeout refuses it as before.
+    inventory = _remote_inventory(config, transport, session, root, program, host_state_root or config["state_root"])
+    identity = {"pod_id": session["pod_id"], "session_id": session["session_id"], "config_sha256": controller.config_sha}
+    inventory.update(format="deepmzyme_ec_clean30_runpod_remote_inventory_v1", **identity)
     missing, count = [], 0
     for entry in inventory["files"]:
         name = _relative(entry["path"])
@@ -2106,6 +2151,13 @@ def validate_phase4_plan(config: Mapping[str, Any], source: Mapping[str, Any],
              "G2 and Phase-4 preservation roots cannot overlap.")
     _require(Path(request["host_state_root"]) != Path(config["state_root"]),
              "G2 and Phase 4 need separate preservation-budget state roots.")
+    state_path = Path(config["state_root"]) / "driver_state.json"
+    started = state_path.is_file() and bool(_json(state_path).get("start_attempted"))
+    # Another pass's files in these roots would mix two sessions' attempts, budgets and acknowledgments.
+    _require(config.get("resume") is not None or started
+             or all(not root.exists() or (root.is_dir() and not any(root.iterdir()))
+                    for root in (*roots[2:], Path(request["host_state_root"]))),
+             "A fresh pass needs its own unused fold output and state roots; only a resume inherits earlier results.")
     facts = [_storage_facts(root) for root in roots]
     _require(facts[0][0] != facts[1][0] and facts[2][0] != facts[3][0],
              "G2 and Phase 4 require independent primary and mirror devices.")
@@ -2133,7 +2185,9 @@ def _continue_runpod_phase4(config, transport, state, state_path, session, ready
     check_session()
     request = dict(prepare_phase4(config, None, state, session, ready, manifest, probe, check_session))
     expected = {key: session[key] for key in ("pod_id", "session_id", "allocation_started_unix", "deadline_unix", "max_total_seconds")}
-    expected.update(provider="runpod", runpod_config_sha256=transport.stop_controller.config_sha)
+    # The qualified device is the session's: each remote unit checks its GPU against this profile.
+    expected.update(provider="runpod", runpod_config_sha256=transport.stop_controller.config_sha,
+                    hardware_profile=config["hardware_profile"])
     _require(all(key not in request or request[key] == value for key, value in expected.items()),
              "Prepared Phase 4 request changes the owned allocation.")
     request.update(expected)

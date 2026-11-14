@@ -138,7 +138,7 @@ def test_output_root_registration_rejects_alias_or_overlap(tmp_path, overlap):
                                       "freeze1c", "g3_authority", "g3_sha256", "execution_manifest", "durable_root"])
 def test_queue_overrides_cannot_change_execution_or_authority(owned, tmp_path, override):
     request, transport, _ = owned
-    config = {"execution_manifest": str(tmp_path / "manifest.json")}
+    config = {"execution_manifest": str(tmp_path / "manifest.json"), "hardware_profile": "runpod_rtx4090"}
     state = {"completed": [name for _, name in workstation.QUEUE]}
     def prepare(config, live_transport, *args):
         assert live_transport is None

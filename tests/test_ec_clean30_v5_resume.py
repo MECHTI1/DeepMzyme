@@ -19,6 +19,7 @@ from ec_clean30 import campaign, execution_v5 as v5, phase3, phase4, workstation
 
 IDENTITY = {"scientific_identity_sha256": "a" * 64, "fit_chain": ["b" * 64, "c" * 64]}
 SOURCE = {"format": phase3.EXECUTION_V5_FORMAT, "published": True, **IDENTITY, "git_head": "e" * 40,
+          "hardware_profiles": ["runpod_l4", "runpod_rtx4090"],
           "freeze1_sha256": "d" * 64, "execution_manifest_sha256": "9" * 64, "amendment_chain": IDENTITY["fit_chain"]}
 HOUR = 3600
 PLAN = "2" * 64
@@ -239,8 +240,9 @@ def runtime_request(world, prepared, monkeypatch):
                            manifest_sha256="5" * 64)
     monkeypatch.setattr(phase4, "_source_view", lambda request: (SOURCE, view))
     monkeypatch.setattr(phase4, "require_futility", lambda *args, **kwargs: None)
-    probe = write(world.tmp / "probe.json", {"source": IDENTITY, "status": "passed", "view_manifest_sha256": "5" * 64})
-    return {**{key: world.s2[key] for key in ("session_id", "allocation_started_unix", "deadline_unix",
+    probe = write(world.tmp / "probe.json", {"source": IDENTITY, "status": "passed", "view_manifest_sha256": "5" * 64,
+                                             "hardware_profile": "runpod_rtx4090"})
+    return {"hardware_profile": "runpod_rtx4090", **{key: world.s2[key] for key in ("session_id", "allocation_started_unix", "deadline_unix",
                                                "max_total_seconds")},
             "freeze1c": str(world.freeze), "g3_authority": prepared["g3_authority"], "g3_sha256": prepared["g3_sha256"],
             "provider": "runpod", "campaign_root": str(world.remote), "execution_root": str(world.root),

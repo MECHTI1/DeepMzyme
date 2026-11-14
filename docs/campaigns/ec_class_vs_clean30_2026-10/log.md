@@ -1962,3 +1962,47 @@ configuration sets the reserve from the live 25-hour billing before the launch.
 
 The fourth retry record is exhausted (w8 and w9), and the maintainer approved a fifth. Next: the re-pinned
 manifest and a fresh pass, window `ec30v5-g2f0-w10`, with a 24-hour session inside the $85 ceiling.
+
+## evc-046
+
+2026-11-14 — **Window ten completed G2 with all 12 units; the first fold-0 unit then failed its GPU check, and
+the session closed without a closeout receipt.** The window ran at `c28a295` under the fifth retry record, with a
+24-hour session.
+
+| Step | Result |
+|---|---|
+| F6 preparation | passed; the float32 load matched the CPU sample a third time (72 of 72 sequences, largest absolute difference 4.8e-7) |
+| G2 timing, lane and embedding units | 12 of 12 passed, 3 h 41 min after the launch |
+| Lane gate | failed on two resource peaks, so Freeze 1c v2 records one lane |
+| Freeze 1c v2 and G3 authority | written and approved for fold 0 steps S1 and S4 |
+| CLEAN base embedding (first fold-0 unit) | failed after two minutes at its CUDA preflight |
+| Closeout | G2 outputs preserved in two copies; the controller refused the closeout; pod stopped, deleted on 2026-11-14 |
+
+The session billed about 4 h 37 min, about $4.16. The fifth retry record holds one failed window (w10).
+
+**GPU check.** The ESM-1b embedding worker checks its device against the request's `hardware_profile` and assumed
+the GCP L4 when the field was absent. The fold-0 request did not carry the session's profile, so the check
+demanded an NVIDIA L4 on the RTX 4090. No embedding, CLEAN fit or DeepMzyme fold fit ran.
+
+**Lane gate.** The three parallel lanes agreed exactly with both serial repeats (balanced-accuracy difference
+0.0, top-1 agreement 1.0), the equal-work speedup was 2.45 and VRAM peaked at 1.88 GB. The batch sampled the
+whole machine and recorded 47.2 GB of RAM and 624.6% CPU against limits of 24 GiB and 600%. The pod is a
+container on a shared machine, so these peaks include other tenants' work. The provider bounds this container at
+46 GB of RAM and 6.8 cores.
+
+**Closeout.** The host had copied and acknowledged the failed unit's bytes, but the pod's execution record never
+read that acknowledgment, because a failed unit's worker does not run again. The closeout inventory showed a
+pending transfer, the controller refused it, and the resume check refuses a pass without a closeout receipt. The
+closeout also verified about 32,000 files again from the workstation's slow disk, which kept the pod running for
+about 45 minutes after the failure.
+
+**Corrections.** The maintainer approved four execution-only changes
+([fold-0 units after G2](execution_v5/README.md#fold-0-units-after-g2)), class (a) under A2-GOV-7, with a
+re-pinned manifest: the session's hardware profile reaches every fold unit; the lane batch measures its own
+container on Runpod; the closeout lets the pod record the acknowledgment of a unit that ended without one; and a
+fresh pass needs its own unused fold roots. `phase3.lane_gate` and `phase4.replay_cpu_logits` keep their pinned
+sources, and the scientific identity is unchanged.
+
+G2 must be repeated, because window ten cannot be resumed. Next: a fresh pass, window `ec30v5-g2f0-w11`, in the
+second slot of the fifth retry record, with a 24-hour session inside the $85 ceiling. The fold queue runs one
+unit at a time, and its forecast ceilings sum to about 50 hours, so one 24-hour session may not finish fold 0.

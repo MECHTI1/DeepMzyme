@@ -267,6 +267,13 @@ def _runtime(request, *, resource, kind=None):
         phase3.require_same_scientific_identity(probe.get("source", {}), source)
         _require(probe.get("status") == "passed" and probe.get("view_manifest_sha256") == view.manifest_sha256,
                  "S1 needs the matching relocated VM probe.")
+        if request.get("provider") == "runpod":
+            # Every GPU check of a unit names the session's qualified device; none falls back to another provider's.
+            profile = request.get("hardware_profile")
+            _require(isinstance(profile, str) and profile.startswith("runpod_")
+                     and probe.get("hardware_profile") == profile,
+                     "A remote unit needs the hardware profile that its session's probe qualified.")
+            phase3._approved_runtime_profile(source, profile)
         if request.get("provider") == "runpod" and request.get("clean_cap_profile") is not None:
             from ec_clean30 import container_caps
 

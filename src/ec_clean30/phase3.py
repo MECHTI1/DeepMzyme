@@ -1415,18 +1415,70 @@ def lane_gate(serial: Sequence[Mapping[str, Any]], parallel: Sequence[Mapping[st
             "timing_scope": "fit/export, verification, independent replay and active host transfer/readback"}
 
 
-def _host_sample() -> dict[str, float]:
+def _container_meter(root: Path) -> dict[str, Any]:
+    """Locate, once, the kernel accounting files that cover this container and nothing else on its host."""
+    from ec_clean30 import container_caps
+
+    root = container_caps.validate_root(Path(root))
+    if (root / "cgroup.type").exists():
+        _require(all((root / name).is_file() for name in ("memory.current", "memory.stat", "cpu.stat")),
+                 "The container cgroup exposes no memory or CPU accounting.")
+        return {"version": 2, "memory": root, "cpu": root}
+    mounts = container_caps._v1_roots(root, writable=False)  # Container-scoped mounts on a host without swap.
+    cpu = next((path for path in (mounts["cpu"], root / "cpuacct", root / "cpu,cpuacct")
+                if (path / "cpuacct.usage").is_file()), None)
+    _require(cpu is not None and all((mounts["memory"] / name).is_file()
+                                     for name in ("memory.usage_in_bytes", "memory.stat")),
+             "The container cgroup exposes no memory or CPU accounting.")
+    return {"version": 1, "memory": mounts["memory"], "cpu": cpu}
+
+
+def _container_usage(meter: Mapping[str, Any]) -> dict[str, float]:
+    """Memory in use without reclaimable file cache, swap, and cumulative CPU time, for the container alone."""
+    from ec_clean30.container_caps import _fields, _read
+
+    memory, cpu = Path(meter["memory"]), Path(meter["cpu"])
+    stat = _fields(memory / "memory.stat")
+    if meter["version"] == 2:
+        used, cache = int(_read(memory / "memory.current")), stat.get("inactive_file", 0)
+        swap = int(_read(memory / "memory.swap.current")) if (memory / "memory.swap.current").is_file() else None
+        busy = _fields(cpu / "cpu.stat")["usage_usec"] / 1e6
+    else:
+        used, cache = int(_read(memory / "memory.usage_in_bytes")), stat.get("total_inactive_file", 0)
+        swap = stat.get("total_swap", stat.get("swap"))
+        busy = int(_read(cpu / "cpuacct.usage")) / 1e9
+    return {"ram_bytes": max(0, used - cache), "swap_bytes": swap, "cpu_busy": busy, "cpu_span": time.monotonic()}
+
+
+def _host_sample(meter: Mapping[str, Any] | None = None) -> dict[str, float]:
+    """One resource sample for the lane batch: the whole machine, or this container when a meter is given.
+
+    A rented container shares its machine, so the machine-wide counters there include other tenants' work.
+    CPU is returned as busy time over a span of one core's time; their ratio is the percentage of one core.
+    """
     memory = {}
     for line in Path("/proc/meminfo").read_text().splitlines():
         key, value = line.split(":", 1)
         memory[key] = int(value.split()[0]) * 1024
-    cpu = [int(value) for value in Path("/proc/stat").read_text().splitlines()[0].split()[1:]]
     gpu = subprocess.check_output(["nvidia-smi", "--query-gpu=memory.used", "--format=csv,noheader,nounits"],
                                   text=True, timeout=5).splitlines()
     _require(len(gpu) == 1, "The lane gate expects one GPU.")
-    return {"ram_bytes": memory["MemTotal"]-memory["MemAvailable"],
-            "swap_bytes": memory["SwapTotal"]-memory["SwapFree"], "vram_bytes": float(gpu[0])*1024*1024,
-            "cpu_total": sum(cpu), "cpu_idle": cpu[3]+cpu[4]}
+    sample = {"swap_bytes": memory["SwapTotal"]-memory["SwapFree"], "vram_bytes": float(gpu[0])*1024*1024}
+    if meter is None:
+        cpu = [int(value) for value in Path("/proc/stat").read_text().splitlines()[0].split()[1:]]
+        return {**sample, "ram_bytes": memory["MemTotal"]-memory["MemAvailable"],
+                "cpu_busy": sum(cpu)-cpu[3]-cpu[4], "cpu_span": sum(cpu)/(os.cpu_count() or 1)}
+    usage = _container_usage(meter)
+    if usage["swap_bytes"] is None:  # No swap accounting for the container: the machine's own figure stands.
+        usage["swap_bytes"] = sample["swap_bytes"]
+    return {**sample, **usage}
+
+
+def _lane_meter(request: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Runpod sessions measure their own container; a whole dedicated machine is measured as before."""
+    if not str(request.get("hardware_profile", "gcp_l4")).startswith("runpod_"):
+        return None
+    return _container_meter(Path(_json(Path(request["vm_probe"]))["container_caps_probe"]["cgroup_root"]))
 
 
 def lane_worker(request: Mapping[str, Any]) -> dict[str, Any]:
@@ -1439,9 +1491,16 @@ def lane_worker(request: Mapping[str, Any]) -> dict[str, Any]:
     os.fstat(lock_fd)
     processes, logs = [], []
     started = time.monotonic()
-    previous = _host_sample()
+    meter, scope = None, {"scope": "host"}
+    try:
+        meter = _lane_meter(request)
+        scope = {"scope": "host" if meter is None else "container"}
+    except (OSError, ValueError, KeyError, RuntimeError) as exc:
+        # The batch is still measured, against the whole machine as before; the record says why.
+        scope["container_meter_error"] = f"{type(exc).__name__}: {exc}"
+    previous = _host_sample(meter)
     peaks = {"cpu_percent": 0.0, **{key: previous[key] for key in ("ram_bytes", "swap_bytes", "vram_bytes")},
-             "oom": False, "read_guard_breach": False}
+             "oom": False, "read_guard_breach": False, **scope}
     try:
         for index in (1, 2, 3):
             child = {**request, "recipe": f"lane_parallel_{index}"}
@@ -1455,11 +1514,10 @@ def lane_worker(request: Mapping[str, Any]) -> dict[str, Any]:
                                                pass_fds=(lock_fd,)))
         while any(process.poll() is None for process in processes):
             time.sleep(.5)
-            current = _host_sample()
-            total = current["cpu_total"]-previous["cpu_total"]
-            if total > 0:
-                busy = total-(current["cpu_idle"]-previous["cpu_idle"])
-                peaks["cpu_percent"] = max(peaks["cpu_percent"], 100*(os.cpu_count() or 1)*busy/total)
+            current = _host_sample(meter)
+            span = current["cpu_span"]-previous["cpu_span"]
+            if span > 0:
+                peaks["cpu_percent"] = max(peaks["cpu_percent"], 100*(current["cpu_busy"]-previous["cpu_busy"])/span)
             for name in ("ram_bytes", "swap_bytes", "vram_bytes"):
                 peaks[name] = max(peaks[name], current[name])
             previous = current

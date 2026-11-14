@@ -1,7 +1,7 @@
 # Execution v5 — Runpod G2 through Fold 0
 
 Status: published, 2026-11-12, with the [execution corrections](#execution-corrections-of-2026-11-12) of the
-same day, the [host replacement](#host-replacement-within-a-launch-window) that followed the first launch window and the [supervised caps](#supervised-caps-on-hosts-with-read-only-cgroup-controls) that followed the second, the [float32 ESMC load](#float32-esmc-load-for-the-fp32-producer) of 2026-11-13 that followed the sixth, and the [bounded SSH reconnect](#bounded-ssh-reconnect) that followed the eighth; CPU implementation only. The [fold-0 ceiling](#fold-0-ceiling-a2-d8) is approved. Neither publication
+same day, the [host replacement](#host-replacement-within-a-launch-window) that followed the first launch window and the [supervised caps](#supervised-caps-on-hosts-with-read-only-cgroup-controls) that followed the second, the [float32 ESMC load](#float32-esmc-load-for-the-fp32-producer) of 2026-11-13 that followed the sixth, the [bounded SSH reconnect](#bounded-ssh-reconnect) that followed the eighth, and the [fold-0 unit corrections](#fold-0-units-after-g2) of 2026-11-14 that followed the tenth; CPU implementation only. The [fold-0 ceiling](#fold-0-ceiling-a2-d8) is approved. Neither publication
 nor the ceiling grants launch authorization: each launch needs its own explicit authorization. The previous
 G2-only limits and launch requests do not authorize v5.
 
@@ -296,6 +296,47 @@ unit still ends at its bound, but the closeout can then reach the pod and preser
 refused connections in window w8 is not known; that pod was deleted without inspection.
 
 No remote command, rule, limit or scientific file changes. The change is execution-only (A2-GOV-7 class (a)).
+
+## Fold-0 units after G2
+
+Window `ec30v5-g2f0-w10` completed G2 with all 12 units and wrote Freeze 1c v2 and the G3 authority. The first
+fold-0 unit, the CLEAN base embedding, then failed after two minutes, and the session closed without a closeout
+receipt ([evc-046](../log.md#evc-046)). Four corrections follow.
+
+- **Device profile of each fold unit.** The ESM-1b embedding worker checks its GPU against the request's
+  `hardware_profile` and assumed the GCP L4 when the request had none. The G2 requests carried the session's
+  profile; the fold-0 request did not, so the check demanded an L4 on the RTX 4090. The coordinator now writes the
+  session's profile into the fold request and its worker template, and refuses a reviewed request that names
+  another. On the pod, the runtime gate of every remote unit requires the profile to be an approved Runpod profile
+  and to equal the one that the session's probe qualified. The later-fold F6 attachment reads the same field.
+- **Lane batch telemetry.** The lane batch sampled `/proc/meminfo` and `/proc/stat`. In a rented container these
+  describe the whole machine, including other tenants' work. In w10 the batch recorded 47.2 GB of RAM and 624.6%
+  CPU against limits of 24 GiB and 600%. VRAM peaked at 1.88 GB, the three lanes agreed exactly with both serial
+  repeats, and the equal-work speedup was 2.45. The frozen gate therefore recorded one lane. For Runpod profiles
+  the batch now samples the container's own cgroup: memory in use without inactive file cache, swap and CPU time,
+  from the unified hierarchy or from the container-scoped v1 controller mounts that the caps probe already
+  requires. VRAM is read as before, because the pod has one GPU of its own. The batch record names what it
+  measured in `observed.scope`. If the container cannot be metered, the batch is measured against the whole
+  machine and the record states the reason. A dedicated machine is measured as before.
+- **Acknowledgment of a unit that ended without one.** The host copied and acknowledged the failed unit's bytes.
+  The pod's execution record accepts an acknowledgment only when its worker runs again, and a failed unit's worker
+  does not. The closeout inventory then showed a pending transfer, the controller refused the closeout, and the
+  resume check refuses a pass without a closeout receipt. Before each closeout inventory the coordinator now
+  copies and verifies what is pending, uploads the acknowledgment, and has the pod's execution record accept it
+  under its own lock. An interrupted unit that never requested a transfer gets one first. Nothing is run, retried
+  or replaced. A worker that still owns the root blocks the step, and the closeout then refuses as before. The
+  preserved record keeps the unit's failed or interrupted status; a resume gives it the single identical retry of
+  the [existing rule](#resume-and-later-fold-dispatch).
+- **Own fold roots for a fresh pass.** The reviewed fold-0 request named the same primary root, mirror and state
+  root for every pass. A fresh pass is now refused before allocation when any of these holds files. A session
+  that recovers after its own start keeps its roots, and a resume inherits earlier results by design.
+
+Three limits. The acknowledgment needs a reachable pod and more than 30 seconds before the session deadline. No
+live session has exercised it, or a resume, yet. And the recorded lane count does not change dispatch in this
+version: the fold queue runs one unit at a time, so a passed lane gate is a recorded measurement only.
+
+`phase3.lane_gate`, its limits and comparisons, and `phase4.replay_cpu_logits` keep their pinned sources. No
+rule, unit or scientific file changes. The change is execution-only (A2-GOV-7 class (a)).
 
 ## Fold-0 ceiling (A2-D8)
 

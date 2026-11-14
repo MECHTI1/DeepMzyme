@@ -74,7 +74,7 @@ def case(tmp_path, monkeypatch):
                "official_split_dir", "identity_work", "hf_home", "esmc_weights")}
     options.update(cpu_cap_prefix=["cpu-cap", "--"], forecast_seconds=100, unit_timeout_seconds=90)
     transport = SimpleNamespace(stop_controller=SimpleNamespace(config_sha=sha("config")),
-                                read_json=lambda path: {"wall_seconds": 10})
+                                read_json=lambda path, optional=False: {"wall_seconds": 10})
     state = {"completed": []}
     events = []
     monkeypatch.setattr(ws.phase3, "require_record_precedence",
@@ -379,6 +379,32 @@ def test_final_clean_needs_separate_bound_inputs_and_farms(reviewed_phase4, monk
     case.request["final_clean_request"]["farms_by_unit"].pop(next(iter(final_ids)))
     with pytest.raises(ws.WorkstationError, match="per-seed producer"):
         ws.validate_phase4_plan(case.config, case.source, case.request, case.preapproval)
+
+
+@pytest.mark.parametrize("root", ["durable_root", "mirror_root", "host_state_root"])
+def test_fresh_pass_refuses_fold_roots_that_hold_another_pass(reviewed_phase4, root):
+    case = reviewed_phase4
+    used = Path(case.request[root])
+    (used / "runs/ecc30_clean_embed_base/attempt1").mkdir(parents=True)
+    (used / "runs/ecc30_clean_embed_base/attempt1/cuda_preflight.json").write_text("")
+    with pytest.raises(ws.WorkstationError, match="own unused fold output and state roots"):
+        ws.validate_phase4_plan(case.config, case.source, case.request, case.preapproval)
+    # The same pass, recovering after its own start, keeps its roots; so does a resume, which inherits by design.
+    state = Path(case.config["state_root"]) / "driver_state.json"
+    state.write_text(json.dumps({"start_attempted": True}))
+    assert ws.validate_phase4_plan(case.config, case.source, case.request, case.preapproval)["status"] == "passed"
+    state.write_text(json.dumps({"completed": []}))
+    with pytest.raises(ws.WorkstationError, match="own unused fold output and state roots"):
+        ws.validate_phase4_plan(case.config, case.source, case.request, case.preapproval)
+    assert ws.validate_phase4_plan({**case.config, "resume": {}}, case.source, case.request,
+                                   case.preapproval)["status"] == "passed"
+
+
+def test_fresh_pass_accepts_empty_or_absent_fold_roots(reviewed_phase4):
+    case = reviewed_phase4
+    Path(case.request["durable_root"]).mkdir(parents=True)
+    assert not Path(case.request["mirror_root"]).exists()
+    assert ws.validate_phase4_plan(case.config, case.source, case.request, case.preapproval)["status"] == "passed"
 
 
 @pytest.mark.parametrize("marker", ["pretrain_attachment.json", "scientific_outputs_pending.json"])
