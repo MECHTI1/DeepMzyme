@@ -2006,3 +2006,72 @@ sources, and the scientific identity is unchanged.
 G2 must be repeated, because window ten cannot be resumed. Next: a fresh pass, window `ec30v5-g2f0-w11`, in the
 second slot of the fifth retry record, with a 24-hour session inside the $85 ceiling. The fold queue runs one
 unit at a time, and its forecast ceilings sum to about 50 hours, so one 24-hour session may not finish fold 0.
+
+## evc-047
+
+2026-11-16 — **Window eleven completed G2 with all 12 units and five fold-0 units. A checkout check between
+units then closed the session, and both copies were preserved.** The window ran at `908ab09` in the second slot
+of the fifth retry record, with a 24-hour session inside the $85 ceiling.
+
+| Step | Result |
+|---|---|
+| F6 preparation, G2 timing, lane and embedding units | 12 of 12 passed |
+| Lane gate | failed on its CPU peak alone (744.3% against 600%). The equal-work speedup was 1.84, all six prediction comparisons were identical, RAM peaked at 7.7 GB and VRAM at 1.9 GB, with no swap. Freeze 1c v2 records one lane |
+| Freeze 1c v2 and G3 authority | written; approved for fold 0 steps S1 and S4 |
+| CLEAN base and masked embeddings | passed (8,115 and 20,120 sequences) |
+| CLEAN inner fits | 3 of 8 passed (seed 42): R1 and R2 of inner fold 0, and R1 of inner fold 1 |
+| Session end | the chain-receipt check between units refused a changed checkout |
+| Closeout | both copies preserved (G2: 31,878 files; phase 4: 137,102 files). Pod stopped at 02:08 UTC and deleted at 03:06 UTC on 2026-11-15; its absence was verified |
+
+The session billed about 12.4 hours, about $11.2. The fifth retry record holds window ten (failed) and window
+eleven (completed), so one failed window remains.
+
+**Checkout.** During the session, another tool wrote a batch of documentation into the main checkout. The batch
+included the pinned scientific file `src/metal_release/README.md`. The chain receipt is checked again between
+every fold unit. After the fifth unit's acknowledgment, the check found the tree changed and stopped the session.
+The changes were set aside unchanged. From now on the checkout stays unchanged from the input check until the
+coordinator exits. Other work belongs in separate worktrees.
+
+**Workstation suspend.** The workstation suspended for 3 h 01 min (18:34-21:36 UTC). The pod had already
+published the outputs of the R1 fit of inner fold 0, and waited 2 h 14 min with the GPU idle (about $2).
+The transfer itself took 6 minutes. The workstation must stay awake during a session.
+
+**Transfer and per-file work.**
+- An R1 CLEAN unit holds about 51,500 files. 99.9% of them are copies of embedding files already preserved
+  with the two embedding units.
+- The host transfer and the verification of both copies took about 7 minutes per R1 unit.
+- Most per-file time is spent elsewhere:
+  - on the pod: restore, hashing and seal, about 60 minutes per R1 unit;
+  - at closeout: 98.5 billed minutes (about $1.46) to re-check every preserved file.
+
+**Lane gate.** Each lane child's fit and replay already run with two threads, in their own cgroup capped at two
+cores. The meter reads the whole container over half-second windows, so it also counts uncapped parent work.
+Thread limits would not change the reading, and no remaining step runs a lane gate.
+
+**Account.** On 2026-11-15 the maintainer approved deleting two exited probe pods from November 3,
+`uahs9wg1dmohv1` and `vzi08j1ntuijvn`. Neither held a volume or data, and their absence was verified. The
+balance was $16.27 and the rolling 25-hour billing $4.70 (2026-11-15, 21:14 UTC).
+
+**Next.** Window `ec30v5-g2f0-w12` resumes fold 0 from the preserved records (decision A2-D6). G2 and the five
+finished units are reused, and the first new unit is the R2 fit of inner fold 1. Before that window, the
+maintainer approved execution-only corrections, class (a) under A2-GOV-7, with a re-pinned manifest
+([resume from a preserved fold-0 session](execution_v5/README.md#resume-from-a-preserved-fold-0-session)):
+- G2 runner records count as attempts, and both attempt histories are checked before any provider call;
+- the full read of both preserved copies runs after the quote check, and the restore plan is checked before a
+  window is reserved;
+- an unbilled pre-stage copies the inherited files into the new pass's two copies;
+- the closeout skips the billed hash and copy of a file whose two copies were witnessed unchanged in this boot;
+- a new fold unit starts only with time left for a closeout reserve of 7,200 seconds;
+- a closeout interrupted after the stop can be finished, and a refused two-copy gate after the stop gets one
+  repair from bytes that match the receipts.
+
+`phase3.lane_gate` and `phase4.replay_cpu_logits` keep their pinned sources. The scientific identity is unchanged.
+
+**Envelope of window twelve.** The maintainer approved a 48-hour session (172,800 seconds) with a $60 gross
+ceiling. The G3 preapproval carries window eleven at its ceilings, so its cost is $145 ($85 + $60) and its GPU
+time 259,200 seconds. The quote's prior-charge reserve is $5, against a rolling 25-hour billing of $0.05. The
+[A2-D8 text](execution_v5/README.md#fold-0-ceiling-a2-d8) says that a later session counts the reconciled charges
+of earlier fold-0 sessions as prior charges. Those charges are about $21.6 (windows one to eleven, 2026-11-12 to
+2026-11-15), and with them a $60 ceiling covers about 34 hours. On 2026-11-16 the maintainer kept the $5 reserve
+and the 48 hours. The session's own envelope is then at most $55, so the fold-0 gross stays bounded at about
+$76.6, below the $85 ceiling.

@@ -1,7 +1,7 @@
 # Execution v5 — Runpod G2 through Fold 0
 
 Status: published, 2026-11-12, with the [execution corrections](#execution-corrections-of-2026-11-12) of the
-same day, the [host replacement](#host-replacement-within-a-launch-window) that followed the first launch window and the [supervised caps](#supervised-caps-on-hosts-with-read-only-cgroup-controls) that followed the second, the [float32 ESMC load](#float32-esmc-load-for-the-fp32-producer) of 2026-11-13 that followed the sixth, the [bounded SSH reconnect](#bounded-ssh-reconnect) that followed the eighth, and the [fold-0 unit corrections](#fold-0-units-after-g2) of 2026-11-14 that followed the tenth; CPU implementation only. The [fold-0 ceiling](#fold-0-ceiling-a2-d8) is approved. Neither publication
+same day, the [host replacement](#host-replacement-within-a-launch-window) that followed the first launch window and the [supervised caps](#supervised-caps-on-hosts-with-read-only-cgroup-controls) that followed the second, the [float32 ESMC load](#float32-esmc-load-for-the-fp32-producer) of 2026-11-13 that followed the sixth, the [bounded SSH reconnect](#bounded-ssh-reconnect) that followed the eighth, the [fold-0 unit corrections](#fold-0-units-after-g2) of 2026-11-14 that followed the tenth, and the [resume corrections](#resume-from-a-preserved-fold-0-session) of 2026-11-16 that followed the eleventh; CPU implementation only. The [fold-0 ceiling](#fold-0-ceiling-a2-d8) is approved. Neither publication
 nor the ceiling grants launch authorization: each launch needs its own explicit authorization. The previous
 G2-only limits and launch requests do not authorize v5.
 
@@ -337,6 +337,78 @@ version: the fold queue runs one unit at a time, so a passed lane gate is a reco
 
 `phase3.lane_gate`, its limits and comparisons, and `phase4.replay_cpu_logits` keep their pinned sources. No
 rule, unit or scientific file changes. The change is execution-only (A2-GOV-7 class (a)).
+
+## Resume from a preserved fold-0 session
+
+Window `ec30v5-g2f0-w11` completed G2 and five fold-0 units. The chain-receipt check between units then closed
+it, with both copies preserved ([evc-047](../log.md#evc-047)). The next window resumes that pass under A2-D6.
+A CPU review of the resume path against the preserved records found three defects, each of which would end the
+resumed window. It also found that the closeout read every inherited file again while the pod was billed. The
+corrections are:
+
+- **G2 retry records.** A retried G2 unit leaves a runner record `<unit>_attempt<n>.runner.json` beside its run
+  directory. The resume's attempt history refused this name, and only after allocation. The record now counts as
+  that attempt, and the attempt histories of both preserved roots are checked before any provider call.
+- **Order of the launch checks.** Reading every preserved member of both copies (about 169,000 files, 48 minutes
+  on the slower disk) ran before the 15-minute quote-age check, so a resumed launch could never pass that check.
+  `validate_resume` now has two modes: `files="records"` keeps every check except reading the members, and
+  `files="full"` adds the size and SHA-256 of every member in both copies. The launch gate runs the full mode
+  after the quote check and before it reserves a window. Every other caller uses the records mode.
+- **Dry restore plan.** `plan_restore` builds the complete local restore plan without a provider call or a write.
+  The launch gate runs it before it reserves a window, so every local restore refusal comes before provider
+  access. The restore reads each receipt's mirror copy, on the faster device. Every staged byte is hashed against
+  its preserved digest when it is archived and again on the pod. One archive's remote command is bounded by
+  0.1 seconds per file (`RESTORE_FILE_SECONDS`).
+- **Pre-stage (`--prepare-resume`).** This is an unbilled step before the launch, with no provider or pod access.
+  It copies the inherited files from each earlier mirror copy into the new pass's two copies, in batches of at
+  most 2,000 files or 1 GiB. Each batch is hashed against the receipt, synced, read back and journaled with the
+  boot identity and the fingerprints of both copies.
+  - A run first removes any earlier proof, and writes a new proof only when it finishes. The proof binds the
+    preservation set, every receipt by path and digest, the boot and the journal.
+  - A repeated run keeps a file without reading it only while a witness from the current boot still matches both
+    copies. Any other existing copy is hashed again. A copy that differs is refused and never replaced.
+  - At launch, before any window is reserved, the proof must still bind and every pre-staged member must still
+    match its fingerprints. Otherwise the launch stops and asks for the pre-stage to be run again. After a
+    workstation restart, the pre-stage must be run again.
+- **Closeout witnesses.** HostPull, the closeout readback and the pre-stage each record, in
+  `verified_copies.jsonl`, a file whose two local copies they have just verified. They write after every
+  filesystem is synced. A record carries the boot identity and, for each copy, its device, inode, size,
+  modification time and change time. The closeout skips its billed hash and copy for a file only when all of
+  these hold:
+  - exactly one digest was ever witnessed for the path, and it is the pod's own digest;
+  - the witness is from the current boot;
+  - both copies still have exactly the recorded fingerprints.
+
+  A rewrite through a normal writer changes the change time, a replaced file gets a new inode, and a remount
+  changes the device. Each of these voids the witness, and the file then takes the full path while the pod still
+  runs.
+- **Time for the closeout.** Before a new fold unit is uploaded, the time left before the session deadline must
+  cover 1.25 times the unit's forecast, 900 seconds, and a closeout reserve of 7,200 seconds
+  (`CLOSEOUT_RESERVE_SECONDS`). Otherwise the queue stops before the upload, and the session closes out. The unit
+  keeps its first attempt for a later session. A unit already launched or finished on the pod is recovered as
+  before.
+- **Closeout after the stop.** The coordinator records the pending closeout before it stops the pod. If the
+  coordinator is interrupted after the stop, the window stays open. Running the identical `--run-v5` command with
+  the same window identity finishes the closeout, with no new work and no new pod. The preservation set must be
+  byte-identical to the one bound before the stop.
+- **Repair after the stop.** If the controller's two-copy gate refuses after the stop, one local repair runs and
+  then the same gate runs once more. A copy is replaced only by bytes that hash to its receipt digest. Those bytes
+  come from the other copy of this pass or, for an inherited file, from a preserved copy of the bound earlier
+  receipt. Earlier copies are only read, and no receipt changes. If nothing can be repaired, the original refusal
+  stands and is recorded as before.
+- **Timing records.** The restore and the closeout write `restore_timings.json` and `closeout_timings.json` in
+  the pass's state root, so that later windows can be sized from measurements.
+
+A file whose witness holds is not read again before the stop. The only changes this misses are those that keep
+all five fingerprint fields, such as raw writes to the block device or media decay. The repair after the stop
+covers these, as does the unchanged gate before deletion: deletion still requires the full two-copy check in
+`RunpodController._verify_preservation`.
+
+No live session has yet run the pre-stage, a resume, the witnesses or the closeout after the stop. The restore
+and closeout times remain estimates until the timing records exist.
+
+`phase3.lane_gate` and `phase4.replay_cpu_logits` keep their pinned sources. No rule, unit or scientific file
+changes. The change is execution-only (A2-GOV-7 class (a)).
 
 ## Fold-0 ceiling (A2-D8)
 

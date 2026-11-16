@@ -27,6 +27,8 @@ SCOPE = "fold0_s1_clean_inner"
 V5_SCOPE = "amendment2_fold_execution_v5"
 RESERVE_BYTES = 5 * 1024**3
 MAX_DISTANCE_BYTES = 4_500_000_000
+# Billed time kept free after the last admitted unit for the session closeout (inventory, readback, copies).
+CLOSEOUT_RESERVE_SECONDS = 7200
 CLEAN_TRAIN_MEMORY_BYTES = 3 * 1024**3
 CLEAN_MAP_MEMORY_BYTES = 4_500_000_000
 _require, _sha, _json, _write = phase3._require, phase3._sha, phase3._json, phase3._write
@@ -1277,9 +1279,23 @@ def _run_remote_queue(request, units, *, action, next_gate, transport=None, chec
                 _require(all(current.get(key) == request.get(key) for key in
                              ("provider", "pod_id", "runpod_config_sha256")),
                          "Remote request changes the Runpod provider or pod binding.")
+            remote_request = f"{current['execution_root']}/queue/{request['session_id']}/{name}_attempt{current['attempt']}.json"
+            forecast = current.get("forecast_seconds")
+            _require(not source.get("scientific_identity_sha256")
+                     or (type(forecast) in (int, float) and math.isfinite(forecast) and forecast > 0),
+                     "Every queued unit needs a positive forecast.")
+            if (source.get("scientific_identity_sha256")
+                    and request["deadline_unix"] - time.time() < 1.25 * forecast + 900 + CLOSEOUT_RESERVE_SECONDS):
+                # A new unit is refused before any upload, so it keeps its first attempt for a later session;
+                # a unit already launched or finished on this pod is recovered as before.
+                _require(transport.stat_file(f"{current['execution_root']}/runs/{name}/complete.json") is not None
+                         or transport.stat_file(remote_request + ".job/command.json") is not None,
+                         "Too little allocation time remains for this unit and the session closeout; "
+                         "the unit is left for a later session.")
+            if request.get("provider") == "runpod":
                 transport.stop_controller.admit_output_root(current["execution_root"])
             result = complete_remote_unit(transport, host, current, runner=request["remote_runner"], action=action,
-                remote_request=f"{current['execution_root']}/queue/{request['session_id']}/{name}_attempt{current['attempt']}.json",
+                remote_request=remote_request,
                 completed_relative=f"runs/{name}/complete.json", timeout=current["unit_timeout_seconds"]+60)
             _require(result.get("status") == "passed" and result.get("unit_id") == name,
                      "Queue stops at an incomplete terminal unit.")

@@ -44,6 +44,10 @@ INVENTORY_MIN_SECONDS = 120
 INVENTORY_FILE_SECONDS = 0.02
 INVENTORY_HASH_BYTES_PER_SECOND = 32 * 1024 ** 2
 INVENTORY_TRANSFER_BYTES_PER_SECOND = 1024 ** 2
+# HostPull's record of files whose two local copies it verified (one JSON line per verified set).
+VERIFIED_COPIES = "verified_copies.jsonl"
+# A witness binds the boot that synced its copies; after a restart every witness is void.
+BOOT_ID_PATH = "/proc/sys/kernel/random/boot_id"
 PUBLISHED_RUNTIME_LOCKS_PATH = "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v3/runtime_locks_v2.json"
 PUBLISHED_RUNTIME_LOCKS_SHA256 = "dbbf3cd47be2062f444d4648a57b54c4aa83e717437e139dd3e20a2e261c0483"
 OFFICIAL_ESM1B_WEIGHTS = {
@@ -411,6 +415,56 @@ class ControllerTransport:
                      _absolute(cwd), worker])
 
 
+def boot_id() -> str | None:
+    """This boot's identity, or None when it cannot be read (then no witness is written or trusted)."""
+    try:
+        value = Path(BOOT_ID_PATH).read_text().strip()
+    except OSError:
+        return None
+    return value if re.fullmatch(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}", value) else None
+
+
+def copy_fingerprint(path: Path) -> list[int] | None:
+    """[device, inode, size, mtime_ns, ctime_ns] of a regular file (never followed), else None.
+
+    Any rewrite through a normal writer changes the change time, and a replaced file has another inode.
+    """
+    try:
+        info = os.lstat(path)
+    except OSError:
+        return None
+    if not stat.S_ISREG(info.st_mode):
+        return None
+    return [info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns]
+
+
+def witness_items(primary_root: Path, mirror_root: Path, entries) -> list[list[Any]]:
+    """Durable witness items [path, size, digest, primary fingerprint, mirror fingerprint] for verified copies.
+
+    Every filesystem is synced first, so the bytes and directory entries a witness vouches for are on
+    their devices before its line is written. A copy that is no longer a regular file of its size gets no item.
+    """
+    os.sync()
+    items = []
+    for entry in entries:
+        prints = [copy_fingerprint(Path(root) / entry["path"]) for root in (primary_root, mirror_root)]
+        if all(value is not None and value[2] == entry["size_bytes"] for value in prints):
+            items.append([entry["path"], entry["size_bytes"], entry["sha256"], *prints])
+    return items
+
+
+def witness_item(item: Any) -> tuple[str, int, str, tuple[int, ...], tuple[int, ...]] | None:
+    """A well-formed witness item as (path, size, digest, primary print, mirror print), else None."""
+    if not (isinstance(item, list) and len(item) == 5 and isinstance(item[0], str) and type(item[1]) is int
+            and isinstance(item[2], str)):
+        return None
+    prints = item[3:]
+    if not all(isinstance(value, list) and len(value) == 5 and all(type(part) is int for part in value)
+               for value in prints):
+        return None
+    return item[0], item[1], item[2], tuple(prints[0]), tuple(prints[1])
+
+
 class HostPull:
     """Independent readback; conservative transfer reservation survives retries and restarts."""
 
@@ -442,6 +496,26 @@ class HostPull:
             os.fsync(writer.fileno())
         _require(_sha(temporary) == _sha(source), "NVMe mirror readback differs from independent HostPull.")
         temporary.replace(target)
+
+    def journal(self, execution_root: str, entries: list[Mapping[str, Any]]) -> None:
+        """Record files whose two local copies were just verified, for closeout's witness check.
+
+        Called only after both copies read back as these digests. Both copies are synced to their
+        devices first, and each row carries this boot and the stat fingerprint of both copies, so a
+        witness holds only for unchanged files of the same boot. A missing or torn line only means
+        closeout takes its full path for those files.
+        """
+        if self.mirror_root is None or not entries:
+            return
+        current = boot_id()
+        if current is None:
+            return
+        row = {"execution_root": execution_root, "primary_root": str(self.root), "mirror_root": str(self.mirror_root),
+               "boot_id": current, "files": witness_items(self.root, self.mirror_root, entries)}
+        with (self.state_root / VERIFIED_COPIES).open("a") as handle:
+            handle.write(json.dumps(row, sort_keys=True, allow_nan=False) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
 
     def _reserve(self, count: int) -> None:
         state = _json(self.budget_path) if self.budget_path.exists() else {"reserved_payload_bytes": 0}
@@ -503,6 +577,12 @@ class HostPull:
             self._mirror(entry["path"])
         self._mirror(relative)
         self._mirror(ack_relative)
+        self.journal(execution_root, [*({"path": _relative(entry["path"]), "size_bytes": entry["size_bytes"],
+                                         "sha256": entry["sha256"]} for entry in manifest["files"]),
+                                      {"path": relative, "size_bytes": manifest_path.stat().st_size,
+                                       "sha256": pending["manifest_sha256"]},
+                                      {"path": ack_relative, "size_bytes": ack_path.stat().st_size,
+                                       "sha256": _sha(ack_path)}])
         self.transport.upload(ack_path, f"{execution_root}/{ack_relative}", timeout=self._timeout())
         return True
 
@@ -516,6 +596,8 @@ class HostPull:
         self.transport.download(remote, local, timeout=self._timeout())
         _require(_sha(local) == expected["sha256"], "Completed receipt changed in transit.")
         self._mirror(relative)
+        self.journal(execution_root, [{"path": relative, "size_bytes": local.stat().st_size,
+                                       "sha256": expected["sha256"]}])
         return _json(local)
 
 
@@ -1707,7 +1789,7 @@ class RunpodTransport(ControllerTransport):
         raise WorkstationError("GCP lifecycle commands cannot operate a Runpod allocation.")
 
 
-def _remote_inventory(config, transport, session, root, program, state_root):
+def _remote_inventory(config, transport, session, root, program, state_root, timings=None):
     """The closeout inventory as a hashed control file outside its root, downloaded and verified before use.
 
     SSH output carries only a work estimate and the file's digest. Hashing time scales with the files and bytes
@@ -1720,13 +1802,18 @@ def _remote_inventory(config, transport, session, root, program, state_root):
     scan = ("import json,pathlib,sys; p=pathlib.Path(sys.argv[1]); n=b=0"
             "\nif p.exists():\n for f in p.rglob('*'):\n  if not f.is_symlink() and f.is_file(): n+=1; b+=f.stat().st_size\n"
             "print(json.dumps({'files':n,'bytes':b}))")
+    timings = {} if timings is None else timings
+    started = time.monotonic()
     work = json.loads(transport.remote([config["bootstrap_python"], "-c", scan, root], timeout=INVENTORY_SCAN_SECONDS))
+    timings["scan_seconds"] = time.monotonic() - started
     _require(isinstance(work, dict) and all(type(work.get(key)) is int and work[key] >= 0 for key in ("files", "bytes")),
              "The remote inventory work estimate is malformed.")
     timeout = (INVENTORY_MIN_SECONDS + work["files"] * INVENTORY_FILE_SECONDS
                + work["bytes"] / INVENTORY_HASH_BYTES_PER_SECOND)
+    started = time.monotonic()
     pointer = json.loads(transport.remote([config["bootstrap_python"], "-c", program, root, control,
                                            str(INVENTORY_LIMIT_BYTES)], timeout=timeout))
+    timings.update(inventory_seconds=time.monotonic() - started, remote_files=work["files"], remote_bytes=work["bytes"])
     _require(isinstance(pointer, dict) and pointer.get("path") == control and type(pointer.get("size_bytes")) is int
              and 0 < pointer["size_bytes"] <= INVENTORY_LIMIT_BYTES
              and re.fullmatch(r"[0-9a-f]{64}", str(pointer.get("sha256"))),
@@ -1782,6 +1869,74 @@ def _settle_terminal_unit(config, transport, host, session, root) -> bool:
     return not unsettled(state)
 
 
+def _copy_witnesses(config, host, execution_root):
+    """member -> (every witnessed (size, digest), every witnessed pair of copy fingerprints) for this root pair.
+
+    Sources: the bound pre-stage proof of a resume and HostPull's verified-copy journal. Lines for
+    another root pair or another boot, and malformed or torn lines, are ignored.
+    """
+    witnesses: dict[str, tuple[set[tuple[int, str]], set[tuple[tuple[int, ...], tuple[int, ...]]]]] = {}
+    current = boot_id()
+    if host.mirror_root is None or current is None:
+        return witnesses
+
+    def add(item):
+        parsed = witness_item(item)
+        if parsed is not None:
+            digests, prints = witnesses.setdefault(parsed[0], (set(), set()))
+            digests.add(parsed[1:3])
+            prints.add(parsed[3:])
+
+    from ec_clean30 import execution_v5
+
+    for item in execution_v5.prestaged_witnesses(config, execution_root, host.root, host.mirror_root):
+        add(item)
+    journal = host.state_root / VERIFIED_COPIES
+    if journal.is_file():
+        for line in journal.read_bytes().splitlines():
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if not (isinstance(row, dict) and row.get("execution_root") == execution_root
+                    and row.get("primary_root") == str(host.root) and row.get("mirror_root") == str(host.mirror_root)
+                    and row.get("boot_id") == current and isinstance(row.get("files"), list)):
+                continue
+            for item in row["files"]:
+                add(item)
+    return witnesses
+
+
+def _witnessed(host, name, entry, witnesses) -> bool:
+    """True only if the single witnessed digest is the pod's and both copies are unchanged since a witness.
+
+    Both copies must still have the exact device, inode, size, modification and change times
+    recorded when they were verified; anything else takes the full path.
+    """
+    digests, prints = witnesses.get(name, (set(), set()))
+    if digests != {(entry["size_bytes"], entry["sha256"])}:
+        return False
+    current = []
+    for base in (host.root, host.mirror_root):
+        path = base / name
+        value = copy_fingerprint(path)
+        if value is None or value[2] != entry["size_bytes"] or base not in path.resolve().parents:
+            return False
+        current.append(tuple(value))
+    return tuple(current) in prints
+
+
+def _closeout_timing(config, timings) -> None:
+    """Host-side closeout timings per root, for sizing the closeout reserve; never stops a closeout."""
+    path = Path(config["state_root"]) / "closeout_timings.json"
+    try:
+        document = _json(path) if path.is_file() else {}
+        document[timings["execution_root"]] = timings
+        _write(path, document)
+    except (OSError, ValueError, TypeError):
+        pass
+
+
 def _preserve_runpod_outputs(config, transport, controller, session, *, output=None, receipt_name="preservation_receipt.json",
                             max_download_bytes=PAYLOAD_CEILING_BYTES, host_state_root=None):
     """Read every output back twice before authorizing deletion of persistent storage."""
@@ -1809,21 +1964,33 @@ def _preserve_runpod_outputs(config, transport, controller, session, *, output=N
     host = HostPull(transport, Path(output["primary_root"]), Path(host_state_root or config["state_root"]),
                     max_download_bytes=max_download_bytes, deadline_unix=session["deadline_unix"],
                     mirror_root=Path(output["mirror_root"]))
+    timings = {"execution_root": root}
+    started = time.monotonic()
     try:
         _settle_terminal_unit(config, transport, host, session, root)
     except (OSError, ValueError, KeyError, subprocess.SubprocessError, WorkstationError):
         pass  # The inventory below records what is still unacknowledged, and closeout refuses it as before.
-    inventory = _remote_inventory(config, transport, session, root, program, host_state_root or config["state_root"])
+    timings["settle_seconds"] = time.monotonic() - started
+    inventory = _remote_inventory(config, transport, session, root, program, host_state_root or config["state_root"],
+                                  timings)
     identity = {"pod_id": session["pod_id"], "session_id": session["session_id"], "config_sha256": controller.config_sha}
     inventory.update(format="deepmzyme_ec_clean30_runpod_remote_inventory_v1", **identity)
-    missing, count = [], 0
+    started = time.monotonic()
+    witnesses = _copy_witnesses(config, host, root)
+    missing, count, covered = [], 0, set()
     for entry in inventory["files"]:
         name = _relative(entry["path"])
         local = host.root / name
         _require(host.root in local.resolve().parents and not local.is_symlink(), "Unsafe closeout member.")
+        if _witnessed(host, name, entry, witnesses):
+            covered.add(entry["path"])
+            continue
         if not local.is_file() or local.stat().st_size != entry["size_bytes"] or _sha(local) != entry["sha256"]:
             missing.append(name)
             count += entry["size_bytes"]
+    timings.update(precheck_seconds=time.monotonic() - started, files=len(inventory["files"]), covered=len(covered),
+                   uncovered=len(inventory["files"]) - len(covered), download_files=len(missing), download_bytes=count)
+    started = time.monotonic()
     if missing:
         for attempt in range(2):
             host._reserve(count)  # Each attempt is charged in full, as in HostPull.sync_pending.
@@ -1835,11 +2002,20 @@ def _preserve_runpod_outputs(config, transport, controller, session, *, output=N
                     raise
                 # A read-only read waits for the endpoint (bounded reconnect) before the charged repeat.
                 transport.remote([config["bootstrap_python"], "-c", "print('ready')"], timeout=15)
+    timings["download_seconds"] = time.monotonic() - started
+    started = time.monotonic()
+    verified = []
     for entry in inventory["files"]:
+        if entry["path"] in covered:
+            continue  # Both copies were verified as exactly this digest when they were written.
         local = host.root / entry["path"]
         _require(local.stat().st_size == entry["size_bytes"] and _sha(local) == entry["sha256"],
                  "Closeout output readback differs from the remote inventory.")
         host._mirror(entry["path"])
+        verified.append(entry)
+    host.journal(root, verified)
+    timings["readback_and_mirror_seconds"] = time.monotonic() - started
+    _closeout_timing(config, timings)
     relative = "closeout/remote_inventory.json"
     _write(host.root / relative, inventory)
     host._mirror(relative)
@@ -1918,6 +2094,19 @@ def _overlay_stage(config: Mapping[str, Any], components: PurePosixPath, fold: i
                 files.add(name)
     _require(manifest in files and any(name.startswith(folder + "/") for name in files),
              "The staged overlay needs this fold's identity copy and the overlay manifest.")
+
+
+def preservation_storage(config: Mapping[str, Any], source: Mapping[str, Any],
+                         request: Mapping[str, Any]) -> list[tuple[int, int, int]]:
+    """(device, free bytes, required bytes) for the G2 and Phase-4 copies: 5 GiB plus every allowance per device."""
+    roots = [Path(config[key]) for key in ("durable_root", "mirror_root")]
+    roots += [Path(request[key]) for key in ("durable_root", "mirror_root")]
+    facts = [_storage_facts(root) for root in roots]
+    required_by_device = {}
+    for (device, _free), allowance in zip(facts, [_g2_download_limit(config, source)] * 2
+                                          + [request["max_download_bytes"]] * 2):
+        required_by_device[device] = required_by_device.get(device, 5 * GIB) + allowance
+    return [(device, free, required_by_device[device]) for device, free in facts]
 
 
 def validate_phase4_plan(config: Mapping[str, Any], source: Mapping[str, Any],
@@ -2161,10 +2350,7 @@ def validate_phase4_plan(config: Mapping[str, Any], source: Mapping[str, Any],
     facts = [_storage_facts(root) for root in roots]
     _require(facts[0][0] != facts[1][0] and facts[2][0] != facts[3][0],
              "G2 and Phase 4 require independent primary and mirror devices.")
-    required_by_device = {}
-    for (device, _free), allowance in zip(facts, [_g2_download_limit(config, source)] * 2 + [limit] * 2):
-        required_by_device[device] = required_by_device.get(device, 5 * GIB) + allowance
-    _require(all(free >= required_by_device[device] for device, free in facts),
+    _require(all(free >= required for _device, free, required in preservation_storage(config, source, request)),
              "Independent storage cannot hold the combined G2 and Phase-4 allowances plus reserve.")
     return {"status": "passed", "plan_sha256": plan["plan_sha256"], "largest_unit_forecast_seconds": max(forecasts),
             "max_download_bytes": limit}
@@ -2649,16 +2835,169 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None, pre_
                             preservation = _preserve_runpod_session_outputs(config, transport, controller, session, state)
                         except Exception as exc:
                             state["preservation_error"] = f"{type(exc).__name__}: {exc}"
+                    if preservation:
+                        # Bound before the stop: an interrupted post-stop closeout is finished by the
+                        # identical re-run, never recorded as a failed window (finish_pending_closeout).
+                        state["closeout_pending"] = {"path": str(Path(preservation).resolve()),
+                                                     "sha256": _sha(Path(preservation))}
+                        _write(state_path, state)
                     stopped = controller.stop()
                     state.update(closed=True, provider_stop_verified=True, stop_status=stopped)
+                    _write(state_path, state)
                     if preservation:
-                        state["closeout"] = controller.closeout(preservation)
+                        try:
+                            state["closeout"] = _closeout_with_repair(config, controller, preservation)
+                        except Exception as exc:
+                            state["preservation_error"] = f"closeout: {type(exc).__name__}: {exc}"
+                            raise
+                        state.pop("closeout_pending", None)
                 finally:
                     try:
                         if heartbeat_context is not None:
                             heartbeat_context.__exit__(None, None, None)
                     finally:
                         _write(state_path, state)
+        return state
+
+
+def _copy_matches(root: Path, path: Path, entry: Mapping[str, Any]) -> bool:
+    """One local copy is a regular file inside its root with the receipt's size and digest."""
+    try:
+        return (root in path.resolve().parents and not path.is_symlink() and path.is_file()
+                and path.stat().st_size == entry["size_bytes"] and _sha(path) == entry["sha256"])
+    except OSError:
+        return False
+
+
+def _replace_copy(source: Path, target: Path, entry: Mapping[str, Any]) -> None:
+    """Replace one local copy with verified bytes: write, sync, hash, rename, then sync its directory."""
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_name("." + target.name + ".repair-partial")
+    _require(not temporary.is_symlink(), "Unexpected repair partial path.")
+    temporary.unlink(missing_ok=True)
+    try:
+        with source.open("rb") as reader, temporary.open("xb") as writer:
+            shutil.copyfileobj(reader, writer, 8 * 1024 * 1024)
+            writer.flush()
+            os.fsync(writer.fileno())
+        _require(temporary.stat().st_size == entry["size_bytes"] and _sha(temporary) == entry["sha256"],
+                 "A repaired copy does not read back as its receipt digest.")
+        os.replace(temporary, target)
+    finally:
+        temporary.unlink(missing_ok=True)
+    descriptor = os.open(target.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def repair_preserved_copies(config: Mapping[str, Any], preservation_path: Path) -> int:
+    """After the stop, before the controller's gate runs again: replace local copies that no longer match.
+
+    A copy is replaced only by bytes that hash as its receipt's digest: the other copy of this pass
+    or, for an inherited file, a preserved copy of the bound earlier receipt, which is only read.
+    Receipts are never changed, so the gate checks the same bound set. Returns the copies replaced.
+    """
+    from ec_clean30 import execution_v5
+
+    path = Path(preservation_path)
+    proof = _json(path)
+    if proof.get("format") == "deepmzyme_ec_clean30_runpod_preservation_set_v1":
+        children = proof.get("receipts")
+        _require(isinstance(children, list) and children, "The preservation set has no receipts to repair.")
+        receipts = []
+        for child in children:
+            _require(_sha(Path(child["path"])) == child["sha256"], "A preservation-set receipt changed; nothing is repaired.")
+            receipts.append(_json(Path(child["path"])))
+    else:
+        receipts = [proof]
+    sources, earlier = {}, []
+    for record in execution_v5.inherited_receipts(config):
+        roots = [Path(record["primary_root"]), Path(record["mirror_root"])]
+        earlier += roots
+        for entry in record["files"]:
+            sources[(record["execution_root"], entry["path"])] = (entry, roots)
+    repaired = 0
+    for record in receipts:
+        roots = [Path(record["primary_root"]), Path(record["mirror_root"])]
+        _require(all(root.is_absolute() and root.resolve() == root for root in roots)
+                 and not any(root == old or old in root.parents or root in old.parents for root in roots for old in earlier),
+                 "A repair writes only this pass's own preservation roots.")
+        for entry in record["files"]:
+            name = _relative(entry["path"])
+            copies = [root / name for root in roots]
+            good = [_copy_matches(root, copy, entry) for root, copy in zip(roots, copies)]
+            if all(good):
+                continue
+            candidates = [copy for copy, ok in zip(copies, good) if ok]
+            prior = sources.get((record["execution_root"], name))
+            if not candidates and prior and (prior[0]["size_bytes"], prior[0]["sha256"]) == (
+                    entry["size_bytes"], entry["sha256"]):
+                candidates = [root / name for root in prior[1] if _copy_matches(root, root / name, entry)]
+            if not candidates:
+                continue  # Nothing verified to copy from; the gate refuses this member.
+            for root, copy, ok in zip(roots, copies, good):
+                if not ok:
+                    _require(root in copy.resolve().parents, "A repaired copy escapes its root.")
+                    _replace_copy(candidates[0], copy, entry)
+                    repaired += 1
+    return repaired
+
+
+def _closeout_with_repair(config, controller, preservation):
+    """The controller's gated closeout; after a refusal, one local repair and one repeat of the same gate.
+
+    Nothing is repaired before the gate has refused, so a passing closeout reads every copy once.
+    """
+    try:
+        return controller.closeout(preservation)
+    except Exception:
+        try:
+            repaired = repair_preserved_copies(config, Path(preservation))
+        except (OSError, ValueError, KeyError, TypeError, WorkstationError):
+            repaired = 0
+        if not repaired:
+            raise
+    return controller.closeout(preservation)
+
+
+def closeout_interrupted(state: Mapping[str, Any]) -> bool:
+    """A verified stop whose post-stop closeout neither finished nor failed (interrupted or killed)."""
+    return (bool(state.get("closeout_pending")) and state.get("closed") is True and "closeout" not in state
+            and not state.get("preservation_error"))
+
+
+def finish_pending_closeout(config, config_path, state_path, *, controller=None) -> dict[str, Any]:
+    """Finish the bound post-stop closeout of a stopped allocation; no new work and no new pod.
+
+    The preservation set must be byte-identical to the one bound before the stop. A real
+    verification failure is recorded as a preservation error; an interruption leaves the record open.
+    """
+    from ec_clean30 import runpod_controller
+
+    state_root = Path(config["state_root"])
+    with (state_root / "driver.lock").open("a+") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        state = _json(state_path)
+        _require(state.get("config_sha256") == _sha(config_path), "Runpod configuration changed.")
+        if not closeout_interrupted(state):
+            return state
+        pending = state["closeout_pending"]
+        path = Path(pending["path"])
+        _require(path.is_file() and not path.is_symlink() and _sha(path) == pending["sha256"],
+                 "The bound preservation set changed after the stop; closeout stops for a decision.")
+        host_try = state.get("host_try", 1)
+        controller = controller or runpod_controller.RunpodController(config, config_path, host_try=host_try)
+        try:
+            state["closeout"] = _closeout_with_repair(config, controller, path)
+        except Exception as exc:
+            state["preservation_error"] = f"closeout: {type(exc).__name__}: {exc}"
+            raise
+        finally:
+            if "closeout" in state:
+                state.pop("closeout_pending", None)
+            _write(state_path, state)
         return state
 
 
@@ -2753,6 +3092,9 @@ def main(argv: list[str] | None = None) -> int:
     actions.add_argument("--run", action="store_true", help="Deliberately start once, or recover this still-active owned allocation.")
     actions.add_argument("--run-v5", action="store_true", help="Run the published v5 dispatcher under explicit reviewed launch authority.")
     actions.add_argument("--seed-cache", action="store_true", help="Verify and seed the configured private artifact cache without allocating a GPU.")
+    actions.add_argument("--prepare-resume", action="store_true",
+                         help="Before a resumed launch, copy the inherited preserved files into this pass's two "
+                              "copies; no provider or pod access.")
     actions.add_argument('--operator', choices=('retry-qualification', 'closeout'),
                          help='Send one private control to this still-active Runpod operator hold.')
     parser.add_argument("--authorization", type=Path, help="External reviewed launch-authorization record; --run-v5 only.")
@@ -2775,6 +3117,14 @@ def main(argv: list[str] | None = None) -> int:
                 result = run_v5(config, args.config, authorization_path=args.authorization, window_id=args.window_id)
             else:
                 result = run_g2(config, args.config)
+        elif args.prepare_resume:
+            from ec_clean30 import execution_v5
+            _require(config.get("execution_scope") in {"g2_then_fold0_v5", "fold_execution_v5"} and config.get("resume"),
+                     "--prepare-resume needs a resumed execution v5 configuration.")
+            prepare_session_chain_receipt(config)  # The same write-once receipt the launch verifies.
+            # The quote may be aged: nothing here allocates, and the launch gate checks it again.
+            ready = _prepared_preflight(config, args.config, published=True, fresh=False)
+            result = execution_v5.prestage_resume(config, args.config, source=ready["source"])
         elif args.seed_cache:
             from ec_clean30 import runpod_bootstrap
             ready = _prepared_preflight(config, args.config, published=True)

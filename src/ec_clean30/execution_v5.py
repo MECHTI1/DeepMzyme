@@ -35,6 +35,15 @@ G3_FAMILY_KEYS = ("campaign_id", "scope", "allowed_folds", "plan_sha256_by_fold"
 # A resume restores preserved bytes in a few verified archives, never one provider check per file.
 RESTORE_BATCH_BYTES = 1024 ** 3
 RESTORE_BATCH_FILES = 50_000
+# The pod writes, syncs and renames every restored file; this allowance bounds one archive's remote command.
+RESTORE_FILE_SECONDS = 0.1
+# An unbilled copy of the inherited files into the new pass's roots (--prepare-resume), journaled per batch.
+PRESTAGE_FORMAT = "deepmzyme_ec_clean30_resume_prestage_v1"
+PRESTAGE_PROOF = "resume_prestage.json"
+PRESTAGE_JOURNAL = "resume_prestage_journal.jsonl"
+PRESTAGE_BATCH_FILES = 2000
+PRESTAGE_BATCH_BYTES = 1024 ** 3
+RESUME_FILE_CHECKS = ("full", "records")
 
 
 class LaunchWindowError(RuntimeError):
@@ -269,8 +278,13 @@ def _bound_record(config: Mapping[str, Any], name: str) -> tuple[Path, dict[str,
 
 
 def validate_launch_authorization(config: Mapping[str, Any], config_path: Path,
-                                  authorization_path: Path, source: Mapping[str, Any]) -> dict[str, Any]:
-    """Read an explicit maintainer authorization; never create or infer one."""
+                                  authorization_path: Path, source: Mapping[str, Any], *,
+                                  resume_files: str = "full") -> dict[str, Any]:
+    """Read an explicit maintainer authorization; never create or infer one.
+
+    resume_files selects the depth of the preserved-copy check (validate_resume). The launch gate
+    runs the full two-copy check right before it reserves a window; earlier calls check the records.
+    """
     from ec_clean30 import phase3, workstation
 
     authorization = _record(authorization_path)
@@ -309,7 +323,7 @@ def validate_launch_authorization(config: Mapping[str, Any], config_path: Path,
     _require(preapproval.get("format") == PREAPPROVAL_FORMAT and preapproval.get("status") == "approved",
              "The session needs its reviewed numerical G3 preapproval before allocation.")
     phase3.require_same_scientific_identity(preapproval, source)
-    carry, rows = preserved_g3(config, validate_resume(config, source), source)
+    carry, rows = preserved_g3(config, validate_resume(config, source, files=resume_files), source)
     carried = _allocation_totals(rows or {})
     cost = preapproval.get("ceilings", {}).get("cost_usd")
     if carry is None:
@@ -487,10 +501,18 @@ def materialize_g3(preapproval: Mapping[str, Any], *, preapproval_sha256: str, f
     return document
 
 
-def validate_resume(config, source):
-    """Authenticate a terminal session and both preserved copies before any allocation."""
+def validate_resume(config, source, *, files="full"):
+    """Authenticate a terminal session and both preserved copies before any allocation.
+
+    files="full" also reads every preserved member in both copies (size and SHA-256); the launch
+    gate runs it right before it reserves a window. files="records" keeps every other check:
+    receipts, identity, roots, devices, member names, the remote inventory, the small G2 and
+    preparation records and the attempt histories. The result carries the attempt maps of the
+    preserved G2 and Phase-4 roots, so an unsupported history is refused before any provider call.
+    """
     from ec_clean30 import phase3
 
+    _require(files in RESUME_FILE_CHECKS, "Resume validation checks either the full copies or the records.")
     spec = config.get("resume")
     if spec is None:
         _require(config.get("execution_fold", 0) == 0, "Later folds require preserved fold-0 records.")
@@ -553,7 +575,7 @@ def validate_resume(config, source):
             _require(not relative.is_absolute() and ".." not in relative.parts and str(relative) not in seen,
                      "Unsafe or duplicate preserved member.")
             seen.add(str(relative))
-            for root in roots:
+            for root in roots if files == "full" else ():
                 file = root / str(relative)
                 _require(file.resolve() == file and file.is_file() and file.stat().st_size == entry["size_bytes"]
                          and _file_sha(file) == entry["sha256"], "A preserved result is missing or changed; never replace it.")
@@ -565,8 +587,15 @@ def validate_resume(config, source):
                  and (not inventory.get("pending_unit") or inventory["pending_unit"].get("persisted") is True),
                  "Resume refuses unacknowledged work.")
         inventories.append(record)
+    fold = config.get("execution_fold", 0)
+    g2 = next((record for record in inventories if record["execution_root"].endswith("/fold0/g2")), None)
+    phase = next((record for record in inventories
+                  if record["execution_root"].endswith(f"/runs/fold{fold}/phase4")), None)
+    # Directory listings of the preserved primary copies, as the restore has always read them.
     return {"config": prior, "state": state, "inventories": inventories,
-            "preservation_sha256": spec["preservation_sha256"]}
+            "preservation_sha256": spec["preservation_sha256"],
+            "g2_attempts": None if g2 is None else g2_resume_attempts(Path(g2["primary_root"]), source),
+            "attempts": {} if phase is None else resume_attempts(Path(phase["primary_root"]))}
 
 
 def g2_unit_paths(action, name):
@@ -589,7 +618,9 @@ def g2_resume_attempts(root, source):
         numbers = set()
         for base in (Path(root) / "runs", Path(root) / "commands"):
             for path in base.glob(prefix + "_attempt*"):
-                match = re.fullmatch(re.escape(prefix) + r"_attempt([12])(?:\.json|\.log)?", path.name)
+                # The runner record a G2 unit leaves beside its run directory counts as that attempt.
+                match = re.fullmatch(re.escape(prefix) + r"_attempt([12])(?:\.json|\.log|\.runner\.json)?",
+                                     path.name)
                 _require(match is not None, "G2 resume has an unsupported retry history.")
                 numbers.add(int(match[1]))
         terminal = [n for n in sorted(numbers) if any((Path(root) / "runs" / f"{prefix}_attempt{n}" / file).is_file()
@@ -662,20 +693,14 @@ def resume_attempts(root):
     return attempts
 
 
-def restore_session(config, transport, state, state_path, source, check_session):
-    """Restore authenticated bytes at their original paths, without replacing a result."""
-    from ec_clean30 import phase3, phase4, workstation
+def _state_document_sha(document: Mapping[str, Any]) -> str:
+    """The digest of the bytes workstation._write gives this document."""
+    text = json.dumps(document, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    return hashlib.sha256(text.encode()).hexdigest()
 
-    resume = validate_resume(config, source)
-    if resume is None:
-        return
-    if state.get("resume_restored"):
-        _require(state["resume_restored"] == resume["preservation_sha256"], "Restored session binding changed.")
-        return
-    # Authenticate the fold's earlier G3 before any upload; Phase-4 preparation carries it forward.
-    g3, _ = preserved_g3(config, resume, source)
-    campaign_root = PurePosixPath(config["remote_campaign"])
-    staged, attempts = {}, {}
+
+def _resume_outputs(config, resume):
+    """The new pass's preservation roots: G2, this fold's Phase 4 and one pair per other preserved root."""
     _, reviewed = _bound_record(config["phase4"], "request")
     outputs = [{"execution_root": f"{config['remote_campaign']}/runs/fold0/g2",
                 "primary_root": config["durable_root"], "mirror_root": config["mirror_root"]},
@@ -688,21 +713,25 @@ def restore_session(config, transport, state, state_path, source, check_session)
         suffix = "_preserved_" + PurePosixPath(remote).parent.name
         outputs.append({"execution_root": remote, "primary_root": reviewed["durable_root"] + suffix,
                         "mirror_root": reviewed["mirror_root"] + suffix})
-    state["resume_output_roots"] = outputs
-    state["phase4"] = {"preservation_roots": outputs, "max_download_bytes": reviewed["max_download_bytes"],
-                       "host_state_root": reviewed["host_state_root"]}
-    transport.stop_controller.register_output_roots(outputs)
-    workstation._write(state_path, state)
-    previous_fold = resume["config"].get("execution_fold", 0)
-    if config.get("execution_fold", 0) != previous_fold:
-        old = resume["config"]
-        view = f"{config['remote_campaign']}/views/fold{previous_fold}"
-        if transport.read_json(f"{view}/view_manifest.json", optional=True) is None:
-            item = next(item for item in old["stage"] if item["remote"] == old["view_archive"])
-            workstation._stage_file(config, transport, item)
-            transport.remote([config["remote_python"], f"{config['remote_repo']}/scripts/run_ec_clean30_phase3.py",
-                "unpack-view", "--archive", old["view_archive"], "--sha256", old["view_archive_sha256"],
-                "--destination", view, "--fold", str(previous_fold)], timeout=300)
+    return outputs, reviewed
+
+
+def plan_restore(config, resume, source):
+    """The complete local restore plan of an authenticated resume; no transport call and no write.
+
+    Archived bytes, pointer snapshots, execution states and markers are read from each receipt's
+    mirror copy; every staged byte is hashed against its preserved digest again when archived and
+    once more on the pod. The launch gate runs this plan before it reserves a window, so every
+    local restore refusal comes before any provider access.
+    """
+    from ec_clean30 import phase3, phase4, workstation
+
+    # Authenticate the fold's earlier G3 before any upload; Phase-4 preparation carries it forward.
+    g3, _ = preserved_g3(config, resume, source)
+    campaign_root = PurePosixPath(config["remote_campaign"])
+    staged, active = {}, []
+    outputs, reviewed = _resume_outputs(config, resume)
+
     def add(local, remote, digest):
         path = PurePosixPath(remote)
         _require(campaign_root in path.parents and ".." not in path.parts, "Resume output escapes the campaign.")
@@ -711,8 +740,9 @@ def restore_session(config, transport, state, state_path, source, check_session)
         staged[str(path)] = {"local": str(local), "remote": str(path), "sha256": digest}
 
     for record in resume["inventories"]:
-        local = Path(record["primary_root"])
+        local = Path(record["mirror_root"])
         remote = PurePosixPath(record["execution_root"])
+        members = {entry["path"]: entry for entry in record["files"]}
         for entry in record["files"]:
             if entry["path"] == "execution_state.json" or entry["path"].startswith("closeout/"):
                 continue  # New allocation bookkeeping; the original stays in the immutable inventory.
@@ -732,38 +762,431 @@ def restore_session(config, transport, state, state_path, source, check_session)
                 for file in marker["files"]:
                     if file["exists"] and remote not in PurePosixPath(file["path"]).parents:
                         add((local / entry["path"]).parent / file["snapshot"], file["path"], file["sha256"])
-        if str(remote).endswith(f"/runs/fold{config.get('execution_fold', 0)}/phase4"):
-            attempts = resume_attempts(local)
         execution = local / "execution_state.json"
         if execution.exists():
+            preserved = members.get("execution_state.json")
+            _require(preserved is not None and _file_sha(execution) == preserved["sha256"],
+                     "A preserved execution state differs from its receipt.")
             prior = _record(execution)
             _require(not prior.get("pending_transfer"), "Resume cannot discard a pending transfer.")
-            target = execution
+            target, digest = execution, preserved["sha256"]
             if prior.get("active_child"):
                 # The bound terminal provider receipt proves that this old child cannot still run.
                 prior.update(owner=None, active_child=None)
                 target = Path(config["state_root"]) / ("resume_" + hashlib.sha256(str(remote).encode()).hexdigest() + ".json")
-                if not target.exists():
-                    workstation._write(target, prior)
-            add(target, remote / "execution_state.json", _file_sha(target))
-    _restore_files(config, list(staged.values()), transport, check_session)
+                digest = _file_sha(target) if target.exists() else _state_document_sha(prior)
+                active.append((target, prior, digest))
+            add(target, remote / "execution_state.json", digest)
+    g2 = next((record for record in resume["inventories"] if record["execution_root"].endswith("/fold0/g2")), None)
+    _require(g2 is not None and resume.get("g2_attempts") is not None, "Resume preservation lacks its G2 root.")
+    evidence = {}
+    members = {entry["path"]: entry for entry in g2["files"]}
+    for action, name in workstation.measurement_queue(source):
+        prefix, terminal = g2_unit_paths(action, name)
+        relative = f"runs/{prefix}_attempt{resume['g2_attempts'].get(name, 1)}/{terminal}"
+        path = Path(g2["primary_root"]) / relative
+        if path.is_file():
+            copy = Path(g2["mirror_root"]) / relative
+            digest = _file_sha(copy)
+            _require(members.get(relative, {}).get("sha256") == digest,
+                     "Preserved G2 evidence differs from its receipt.")
+            phase3.require_record_precedence(_record(copy), source)
+            # The recorded path stays the primary copy, as earlier sessions recorded it.
+            evidence[name] = {"local_path": str(path), "sha256": digest,
+                              "remote_path": str(PurePosixPath(g2["execution_root"]) / relative)}
+    # The per-row checks of the restore itself; a released execution state is written by the restore.
+    released = {str(target) for target, _, _ in active}
+    _restore_batches(config, [row for row in staged.values() if row["local"] not in released])
+    return {"outputs": outputs, "reviewed": reviewed, "rows": list(staged.values()), "g3": g3,
+            "attempts": resume["attempts"], "g2_attempts": resume["g2_attempts"],
+            "active_child_states": active, "g2_evidence": evidence}
+
+
+def restore_session(config, transport, state, state_path, source, check_session):
+    """Restore authenticated bytes at their original paths, without replacing a result."""
+    from ec_clean30 import workstation
+
+    resume = validate_resume(config, source, files="records")
+    if resume is None:
+        return
+    if state.get("resume_restored"):
+        _require(state["resume_restored"] == resume["preservation_sha256"], "Restored session binding changed.")
+        return
+    plan = plan_restore(config, resume, source)
+    outputs, reviewed = plan["outputs"], plan["reviewed"]
+    state["resume_output_roots"] = outputs
+    state["phase4"] = {"preservation_roots": outputs, "max_download_bytes": reviewed["max_download_bytes"],
+                       "host_state_root": reviewed["host_state_root"]}
+    transport.stop_controller.register_output_roots(outputs)
+    workstation._write(state_path, state)
+    for target, document, digest in plan["active_child_states"]:
+        if not target.exists():
+            workstation._write(target, document)
+        _require(_file_sha(target) == digest, "A released execution state changed during restore.")
+    previous_fold = resume["config"].get("execution_fold", 0)
+    if config.get("execution_fold", 0) != previous_fold:
+        old = resume["config"]
+        view = f"{config['remote_campaign']}/views/fold{previous_fold}"
+        if transport.read_json(f"{view}/view_manifest.json", optional=True) is None:
+            item = next(item for item in old["stage"] if item["remote"] == old["view_archive"])
+            workstation._stage_file(config, transport, item)
+            transport.remote([config["remote_python"], f"{config['remote_repo']}/scripts/run_ec_clean30_phase3.py",
+                "unpack-view", "--archive", old["view_archive"], "--sha256", old["view_archive_sha256"],
+                "--destination", view, "--fold", str(previous_fold)], timeout=300)
+    _restore_files(config, plan["rows"], transport, check_session)
     prior = resume["state"]
     for key in ("completed", "g2_evidence", "pretrain_preparation"):
         if key in prior:
             state[key] = prior[key]
-    g2 = next(record for record in resume["inventories"] if record["execution_root"].endswith("/fold0/g2"))
-    state["resume_g2_attempts"] = g2_resume_attempts(Path(g2["primary_root"]), source)
-    for action, name in workstation.measurement_queue(source):
-        prefix, terminal = g2_unit_paths(action, name)
-        attempt = state["resume_g2_attempts"].get(name, 1)
-        path = Path(g2["primary_root"]) / "runs" / f"{prefix}_attempt{attempt}" / terminal
-        if path.is_file():
-            phase3.require_record_precedence(_record(path), source)
-            state.setdefault("g2_evidence", {})[name] = {"local_path": str(path), "sha256": _file_sha(path),
-                "remote_path": str(PurePosixPath(g2["execution_root"]) / path.relative_to(g2["primary_root"]))}
+    state["resume_g2_attempts"] = plan["g2_attempts"]
+    for name, row in plan["g2_evidence"].items():
+        state.setdefault("g2_evidence", {})[name] = row
     state["completed"] = [name for _, name in workstation.measurement_queue(source) if name in state.get("g2_evidence", {})]
-    state.update(resume_restored=resume["preservation_sha256"], resume_attempts=attempts, resume_g3=g3)
+    state.update(resume_restored=resume["preservation_sha256"], resume_attempts=plan["attempts"], resume_g3=plan["g3"])
     workstation._write(state_path, state)
+
+def _resume_receipts(spec):
+    """The bound preservation receipts in their stored order, as validate_resume reads them."""
+    _, proof = _bound_record(spec, "preservation")
+    rows = proof.get("receipts") if proof.get("format") == "deepmzyme_ec_clean30_runpod_preservation_set_v1" else [
+        {"path": spec["preservation_path"], "sha256": spec["preservation_sha256"]}]
+    _require(isinstance(rows, list) and rows and all(isinstance(row, dict) and {"path", "sha256"} <= set(row)
+                                                     for row in rows), "Resume preservation has no inventories.")
+    return rows
+
+
+def _prestaged_member(name):
+    """Members a pre-stage copies: exactly those the restore puts back from each root's own inventory."""
+    return name != "execution_state.json" and not name.startswith("closeout/")
+
+
+def _prestage_journal(path, preservation_sha256):
+    """(execution root, primary root, mirror root, member) -> (size, digest, primary print, mirror print).
+
+    Only rows of this boot count: a witness from before a restart is void, and its files are checked
+    again. A torn last line from an interrupted pre-stage is ignored likewise; a later row wins.
+    """
+    from ec_clean30 import workstation
+
+    done = {}
+    current = workstation.boot_id()
+    if current is None or not path.is_file():
+        return done
+    for line in path.read_bytes().splitlines():
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        if not (isinstance(row, dict) and row.get("format") == PRESTAGE_FORMAT
+                and row.get("preservation_sha256") == preservation_sha256 and row.get("boot_id") == current
+                and isinstance(row.get("files"), list)):
+            continue
+        for item in row["files"]:
+            parsed = workstation.witness_item(item)
+            if parsed is not None:
+                done[(row.get("execution_root"), row.get("primary_root"), row.get("mirror_root"), parsed[0])] = parsed[1:]
+    return done
+
+
+def _append_line(path, row):
+    with path.open("a") as handle:
+        handle.write(json.dumps(row, sort_keys=True, allow_nan=False) + "\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def _sync_directory(path):
+    descriptor = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def _prestage_target(root, name):
+    target = root / name
+    _require(root in target.resolve().parents and not target.is_symlink(), "A pre-stage target escapes its root.")
+    return target
+
+
+def _unchanged_since(witness, paths, entry):
+    """Both copies still carry the fingerprints recorded when this boot verified them as this digest."""
+    from ec_clean30 import workstation
+
+    if witness is None or witness[:2] != (entry["size_bytes"], entry["sha256"]):
+        return False
+    current = [workstation.copy_fingerprint(path) for path in paths]
+    return all(value is not None for value in current) and tuple(tuple(value) for value in current) == witness[2:]
+
+
+def _prestage_copy(source, targets, entry):
+    """Copy one preserved member into both new copies; an existing file is kept only if it is identical."""
+    existing = [target for target in targets if os.path.lexists(target)]
+    for target in existing:
+        _require(target.is_file() and not target.is_symlink() and target.stat().st_size == entry["size_bytes"]
+                 and _file_sha(target) == entry["sha256"],
+                 "An existing pre-staged file differs from its preserved digest; it is never replaced.")
+    missing = [target for target in targets if target not in existing]
+    if not missing:
+        return False
+    partials = []
+    try:
+        for target in missing:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            partial = target.with_name("." + target.name + ".prestage-partial")
+            _require(not partial.is_symlink(), "Unexpected pre-stage partial path.")
+            partial.unlink(missing_ok=True)
+            partials.append(partial)
+        digest, size = hashlib.sha256(), 0
+        handles = [partial.open("xb") for partial in partials]
+        try:
+            with source.open("rb") as reader:
+                _require(stat.S_ISREG(os.fstat(reader.fileno()).st_mode), "A preserved source is not a regular file.")
+                for chunk in iter(lambda: reader.read(8 * 1024 * 1024), b""):
+                    digest.update(chunk)
+                    size += len(chunk)
+                    for handle in handles:
+                        handle.write(chunk)
+            for handle in handles:
+                handle.flush()
+                os.fsync(handle.fileno())
+        finally:
+            for handle in handles:
+                handle.close()
+        _require(size == entry["size_bytes"] and digest.hexdigest() == entry["sha256"],
+                 "A preserved source differs from its receipt; nothing is pre-staged from it.")
+        for partial, target in zip(partials, missing):
+            _require(not os.path.lexists(target), "A pre-stage target appeared during the copy.")
+            os.replace(partial, target)
+        partials = []
+    finally:
+        for partial in partials:
+            partial.unlink(missing_ok=True)
+    return True
+
+
+def prestage_resume(config, config_path, *, source):
+    """Before any launch: copy the inherited preserved files into the new pass's two copies.
+
+    Bytes are read from each receipt's mirror copy, hashed against the receipt, written to both new
+    copies and, per batch, synced and read back before the batch is journaled with this boot and the
+    stat fingerprint of both copies. A file is kept without reading it again only while a witness of
+    this boot still matches both copies; any other existing copy is hashed again. The earlier roots
+    are only read. An earlier proof is removed first, so only a finished run leaves one; it binds the
+    preservation set, every receipt and the journal. Closeout skips its billed hash and copy only for
+    a file whose single witnessed digest is the pod's own and whose copies are unchanged since, and
+    the full two-copy check before deletion is unchanged.
+    """
+    from ec_clean30 import workstation
+
+    spec = config.get("resume")
+    _require(spec is not None, "Pre-staging needs a resume configuration.")
+    _require(source.get("published") is True, "Pre-staging needs the published execution source.")
+    _require(_record(config_path) == dict(config), "The in-memory configuration differs from its reviewed file.")
+    state_root = Path(config["state_root"])
+    state_root.mkdir(parents=True, exist_ok=True)
+    with (state_root / "driver.lock").open("a+") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError as exc:
+            raise LaunchWindowError("Another process holds this pass's driver lock.") from exc
+        state_path = state_root / "driver_state.json"
+        _require(not (state_path.exists() and _record(state_path).get("start_attempted")),
+                 "Pre-staging runs only before this pass attempts a start.")
+        # A refused or interrupted run must not leave an earlier proof binding its files.
+        (state_root / PRESTAGE_PROOF).unlink(missing_ok=True)
+        _sync_directory(state_root)
+        boot = workstation.boot_id()
+        _require(boot is not None, "Pre-staging needs this machine's boot identity.")
+        resume = validate_resume(config, source, files="records")
+        receipts = _resume_receipts(spec)
+        _require(len(receipts) == len(resume["inventories"]), "Resume receipts and inventories differ.")
+        outputs, request = _resume_outputs(config, resume)
+        by_root = {row["execution_root"]: row for row in outputs}
+        journal = state_root / PRESTAGE_JOURNAL
+        done = _prestage_journal(journal, spec["preservation_sha256"])
+        plan, pending = [], {}
+        for receipt, record in zip(receipts, resume["inventories"]):
+            output = by_root[record["execution_root"]]
+            targets = [Path(output["primary_root"]), Path(output["mirror_root"])]
+            for root in targets:
+                _require(root.is_absolute() and root.resolve() == root, "Pre-stage roots must be canonical.")
+                root.mkdir(parents=True, exist_ok=True)
+            _require(targets[0].stat().st_dev != targets[1].stat().st_dev,
+                     "Pre-staging needs the new pass's two independent devices.")
+            members = [entry for entry in record["files"] if _prestaged_member(entry["path"])]
+            plan.append((receipt, record, output, targets, members))
+            for entry in members:
+                for root in targets:
+                    if not os.path.lexists(root / entry["path"]):
+                        device = root.stat().st_dev
+                        pending[device] = pending.get(device, 0) + entry["size_bytes"]
+        # The launch gate's own storage rule must still hold once every remaining byte is staged.
+        for device, free, required in workstation.preservation_storage(config, source, request):
+            _require(free - pending.get(device, 0) >= required,
+                     "Pre-staging would leave too little space for the launch's preservation allowances.")
+        timings = {"started_unix": time.time(), "roots": []}
+        rows = []
+        for receipt, record, output, targets, members in plan:
+            source_root = Path(record["mirror_root"])
+            copied = kept = 0
+            started = time.monotonic()
+            batch, size = [], 0
+
+            def flush(batch):
+                os.sync()
+                items = []
+                for entry in batch:
+                    paths = [root / entry["path"] for root in targets]
+                    before = [workstation.copy_fingerprint(path) for path in paths]
+                    for path in paths:
+                        _require(path.stat().st_size == entry["size_bytes"] and _file_sha(path) == entry["sha256"],
+                                 "A pre-staged copy does not read back as its preserved digest.")
+                    # A copy that changed while it was read back gets no witness and is never kept unread.
+                    _require(all(value is not None for value in before)
+                             and before == [workstation.copy_fingerprint(path) for path in paths],
+                             "A pre-staged copy changed while it was read back.")
+                    items.append([entry["path"], entry["size_bytes"], entry["sha256"], *before])
+                _append_line(journal, {"format": PRESTAGE_FORMAT, "preservation_sha256": spec["preservation_sha256"],
+                                       "execution_root": record["execution_root"], "primary_root": str(targets[0]),
+                                       "mirror_root": str(targets[1]), "boot_id": boot, "files": items})
+
+            for entry in members:
+                paths = [_prestage_target(root, entry["path"]) for root in targets]
+                key = (record["execution_root"], str(targets[0]), str(targets[1]), entry["path"])
+                if _unchanged_since(done.get(key), paths, entry):
+                    kept += 1
+                    continue
+                if _prestage_copy(_prestage_target(source_root, entry["path"]), paths, entry):
+                    copied += 1
+                else:
+                    kept += 1
+                batch.append(entry)
+                size += entry["size_bytes"]
+                if len(batch) >= PRESTAGE_BATCH_FILES or size >= PRESTAGE_BATCH_BYTES:
+                    flush(batch)
+                    batch, size = [], 0
+            if batch:
+                flush(batch)
+            timings["roots"].append({"execution_root": record["execution_root"], "files": len(members),
+                                     "copied": copied, "kept": kept, "seconds": time.monotonic() - started})
+            rows.append({"execution_root": record["execution_root"], "receipt_path": receipt["path"],
+                         "receipt_sha256": receipt["sha256"], "primary_root": str(targets[0]),
+                         "mirror_root": str(targets[1]), "files": len(members),
+                         "bytes": sum(entry["size_bytes"] for entry in members)})
+        proof = {"format": PRESTAGE_FORMAT, "preservation_path": spec["preservation_path"],
+                 "preservation_sha256": spec["preservation_sha256"], "roots": rows, "boot_id": boot,
+                 "journal_sha256": _file_sha(journal) if journal.is_file() else None}
+        workstation._write(state_root / PRESTAGE_PROOF, proof)
+        _sync_directory(state_root)
+        _timing_record(state_root / "prestage_timings.json", "prestage", timings)
+        return {"status": "prestaged", "proof": str(state_root / PRESTAGE_PROOF),
+                "proof_sha256": _file_sha(state_root / PRESTAGE_PROOF), "roots": rows}
+
+
+def _bound_prestage(config):
+    """(proof, journal witnesses) when the pass's pre-stage proof binds exactly, else None.
+
+    Binding: the format, this boot, the preservation set, every receipt by path and digest, and the
+    journal by its digest at the end of the finished run.
+    """
+    from ec_clean30 import workstation
+
+    spec = config.get("resume")
+    if not spec:
+        return None
+    path = Path(config["state_root"]) / PRESTAGE_PROOF
+    if not path.is_file():
+        return None
+    try:
+        proof = _record(path)
+        journal = Path(config["state_root"]) / PRESTAGE_JOURNAL
+        if (proof.get("format") != PRESTAGE_FORMAT or proof.get("preservation_sha256") != spec["preservation_sha256"]
+                or proof.get("boot_id") is None or proof.get("boot_id") != workstation.boot_id()
+                or not journal.is_file() or _file_sha(journal) != proof.get("journal_sha256")):
+            return None
+        bound = {(row["path"], row["sha256"]) for row in _resume_receipts(spec)}
+        roots = proof.get("roots")
+        if not (isinstance(roots, list) and roots and all(
+                isinstance(row, dict) and (row.get("receipt_path"), row.get("receipt_sha256")) in bound
+                and _file_sha(Path(row["receipt_path"])) == row["receipt_sha256"] for row in roots)):
+            return None
+        return proof, _prestage_journal(journal, spec["preservation_sha256"])
+    except (OSError, ValueError, KeyError, TypeError, LaunchWindowError):
+        return None
+
+
+def prestaged_witnesses(config, execution_root, primary_root, mirror_root):
+    """Witness items [member, size, digest, primary print, mirror print] the bound pre-stage covers.
+
+    Only receipt members with a journal witness of this boot and of this exact root pair are
+    returned; anything that does not bind (another preservation set, receipt, journal, boot or root
+    pair) yields none, and closeout then takes its full path. Closeout still compares both prints
+    with the copies before it skips a file.
+    """
+    bound = _bound_prestage(config)
+    if bound is None:
+        return []
+    proof, done = bound
+    try:
+        for row in proof["roots"]:
+            if (row.get("execution_root") == execution_root and row.get("primary_root") == str(primary_root)
+                    and row.get("mirror_root") == str(mirror_root)):
+                record = _record(row["receipt_path"])
+                if record.get("execution_root") != execution_root:
+                    return []
+                items = []
+                for entry in record["files"]:
+                    witness = done.get((execution_root, str(primary_root), str(mirror_root), entry["path"]))
+                    if (_prestaged_member(entry["path"]) and witness is not None
+                            and witness[:2] == (entry["size_bytes"], entry["sha256"])):
+                        items.append([entry["path"], *witness[:2], list(witness[2]), list(witness[3])])
+                return items
+    except (OSError, ValueError, KeyError, TypeError, LaunchWindowError):
+        return []
+    return []
+
+
+def verify_prestage(config):
+    """Unbilled launch check: a pre-stage proof, if present, still covers unchanged copies of this boot.
+
+    Without a proof nothing is checked (closeout then takes its full path). With one, every pre-staged
+    member's two new copies must still match their fingerprints; otherwise the launch stops before any
+    window is reserved, so the pre-stage is run again rather than repaired in billed time.
+    """
+    spec = config.get("resume")
+    if not spec or not (Path(config["state_root"]) / PRESTAGE_PROOF).is_file():
+        return None
+    bound = _bound_prestage(config)
+    _require(bound is not None, "The pre-stage proof no longer binds this pass, boot or journal; "
+                                "run --prepare-resume again before the launch.")
+    proof, done = bound
+    checked = 0
+    for row in proof["roots"]:
+        roots = [Path(row["primary_root"]), Path(row["mirror_root"])]
+        record = _record(row["receipt_path"])
+        for entry in record["files"]:
+            if not _prestaged_member(entry["path"]):
+                continue
+            key = (row["execution_root"], str(roots[0]), str(roots[1]), entry["path"])
+            _require(_unchanged_since(done.get(key), [root / entry["path"] for root in roots], entry),
+                     "A pre-staged copy changed since the pre-stage; run --prepare-resume again before the launch.")
+            checked += 1
+    return {"status": "prestaged_unchanged", "files": checked}
+
+
+def inherited_receipts(config):
+    """The bound earlier preservation receipts of a resume, each checked against its digest; none without one."""
+    spec = config.get("resume")
+    if not spec:
+        return []
+    records = []
+    for row in _resume_receipts(spec):
+        path = Path(row["path"])
+        _require(_file_sha(path) == row["sha256"], "Prior preservation receipt changed.")
+        records.append(_record(path))
+    return records
+
 
 def prepare_g2(config, transport, state, session, ready, manifest, probe, check_session):
     """Return reviewed preparation metadata; this callback never accesses a pod."""
@@ -970,11 +1393,8 @@ def _restore_archive(path: Path, batch: list[tuple[str, Mapping[str, Any]]]) -> 
             sum(size for _, size, _ in listing))
 
 
-def _restore_files(config, rows, transport, check_session):
-    """Restore preserved files in a few bounded archives, never replacing a remote result.
-
-    Each archive costs one upload, one remote command and two session checks, whatever its file count.
-    """
+def _restore_batches(config, rows):
+    """Check every restore row and split the rows into bounded archives; no transport call and no write."""
     from ec_clean30 import provenance, workstation
 
     root = PurePosixPath(config["remote_campaign"])
@@ -1003,27 +1423,61 @@ def _restore_files(config, rows, transport, check_session):
         size += length
     if current:
         batches.append(current)
+    return root, aliases, batches, len(members)
+
+
+def _restore_files(config, rows, transport, check_session):
+    """Restore preserved files in a few bounded archives, never replacing a remote result.
+
+    Each archive costs one upload, one remote command and two session checks, whatever its file count.
+    """
+    from ec_clean30 import workstation
+
+    root, aliases, batches, count = _restore_batches(config, rows)
     scratch = Path(config["state_root"]) / "resume_restore"
     scratch.mkdir(parents=True, exist_ok=True)
+    timings = {"files": count, "batches": []}
     for index, batch in enumerate(batches):
         check_session()
         local = scratch / f"batch{index}.tar"
         local.unlink(missing_ok=True)  # A partial archive from an interrupted restore is rebuilt.
+        row = {"index": index, "files": len(batch)}
+        timings["batches"].append(row)
         try:
+            started = time.monotonic()
             digest, length = _restore_archive(local, batch)
+            row.update(bytes=length, archive_seconds=time.monotonic() - started)
             archive = f"{root}/g2_requests/resume_restore/{digest}.tar"
+            started = time.monotonic()
             transport.upload(local, archive, timeout=workstation.INVENTORY_MIN_SECONDS
                              + local.stat().st_size / workstation.INVENTORY_TRANSFER_BYTES_PER_SECOND)
+            row["upload_seconds"] = time.monotonic() - started
             check_session()
+            started = time.monotonic()
             result = json.loads(transport.remote([config["bootstrap_python"], "-c", RESTORE_PROGRAM, archive,
                 str(root), digest, str(len(batch)), json.dumps(aliases, sort_keys=True)],
-                timeout=workstation.INVENTORY_MIN_SECONDS + len(batch) * workstation.INVENTORY_FILE_SECONDS
+                timeout=workstation.INVENTORY_MIN_SECONDS + len(batch) * RESTORE_FILE_SECONDS
                 + 3 * length / workstation.INVENTORY_HASH_BYTES_PER_SECOND))
+            row["remote_seconds"] = time.monotonic() - started
             _require(isinstance(result, dict) and set(result) == {"restored", "kept"}
                      and all(type(value) is int and value >= 0 for value in result.values())
                      and result["restored"] + result["kept"] == len(batch), "The remote restore receipt is malformed.")
+            row.update(result)
         finally:
             local.unlink(missing_ok=True)
+            _timing_record(Path(config["state_root"]) / "restore_timings.json", "restore", timings)
+
+
+def _timing_record(path: Path, key: str, value: Any) -> None:
+    """Host-side timings for sizing later reserves; a failed write never stops the session."""
+    from ec_clean30 import workstation
+
+    try:
+        document = _record(path) if path.is_file() else {}
+        document[key] = value
+        workstation._write(path, document)
+    except (OSError, ValueError, TypeError, LaunchWindowError):
+        pass
 
 
 def run_phase4_pipeline(request, *, transport, check_session, record_progress):
@@ -1092,7 +1546,10 @@ def run_v5(config: Mapping[str, Any], config_path: Path, *, authorization_path: 
     source = phase3.verify_execution_source(Path(config["execution_manifest"]),
         chain_receipt_path=workstation.session_chain_receipt_path(config),
         expected_chain=_record(Path(config["execution_manifest"]))["amendment_chain"])
-    authorization = validate_launch_authorization(config, config_path, authorization_path, source)
+    # The records only: the full two-copy check runs in the launch gate below, after the quote check
+    # and before any window is reserved, so a long check cannot age the quote it relies on.
+    authorization = validate_launch_authorization(config, config_path, authorization_path, source,
+                                                  resume_files="records")
     authorization_sha = _file_sha(authorization_path)
     ledger = FailedWindowLedger(authorization["failure_ledger"], authorization["failure_ledger_authorization_sha256"])
     reserved = False
@@ -1112,7 +1569,13 @@ def run_v5(config: Mapping[str, Any], config_path: Path, *, authorization_path: 
     def before_allocation(current, path, ready):
         nonlocal reserved
         _require(_file_sha(authorization_path) == authorization_sha, "Launch authorization changed.")
-        validate_launch_authorization(current, path, authorization_path, ready["source"])
+        validate_launch_authorization(current, path, authorization_path, ready["source"], resume_files="full")
+        # Every local restore refusal comes here, before any window is reserved or provider access begins.
+        resume = validate_resume(current, ready["source"], files="records")
+        if resume is not None:
+            plan_restore(current, resume, ready["source"])
+            # The new copies a pre-stage made are unchanged since it verified them (unbilled stat check).
+            verify_prestage(current)
         ledger.begin_window(window_id, config_sha256=_file_sha(path),
                             execution_manifest_sha256=source["execution_manifest_sha256"],
                             pass_root=Path(config["state_root"]))
@@ -1122,6 +1585,9 @@ def run_v5(config: Mapping[str, Any], config_path: Path, *, authorization_path: 
     def finish():
         state = _record(state_path) if state_path.exists() else {}
         terminal = verified_terminal_state(state)
+        if workstation.closeout_interrupted(state):
+            # The pod is stopped and its preservation set bound; the identical re-run finishes the closeout.
+            return state, None
         if terminal is not None:
             _require(state_path.is_file(), "A reserved launch window lacks its durable driver record.")
             closeout = state.get("closeout", {})
@@ -1139,6 +1605,12 @@ def run_v5(config: Mapping[str, Any], config_path: Path, *, authorization_path: 
     if recovering and state_path.exists():
         prior = _record(state_path)
         if prior.get("closed") and prior.get("launch_binding") == launch_binding(config_path):
+            if workstation.closeout_interrupted(prior):
+                try:
+                    workstation.finish_pending_closeout(config, config_path, state_path, controller=controller)
+                except Exception:
+                    finish()  # A real verification failure is recorded; the window closes as failed.
+                    raise
             state, terminal = finish()
             if terminal is not None:
                 return state

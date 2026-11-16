@@ -11,6 +11,7 @@ import os
 from pathlib import Path, PurePosixPath
 import subprocess
 import sys
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -409,7 +410,9 @@ def test_retried_embedding_unit_moves_inner_clean_fits_to_the_retry_farm(build, 
     farm = lambda unit, attempt: str(PurePosixPath(world.root) / "runs" / unit / f"attempt{attempt}" / "farm")
     assert (template["base_farm"], template["masked_farm"]) == (farm(BASE, 1), farm(MASKED, 2))
     # Dispatch the eight inner CLEAN fits through the real remote queue on an owned session.
-    owned = {**world.s2, "provider": "runpod", "runpod_config_sha256": world.transport.stop_controller.config_sha}
+    # A live deadline: the queue keeps billed time for each unit plus the session closeout.
+    owned = {**world.s2, "provider": "runpod", "runpod_config_sha256": world.transport.stop_controller.config_sha,
+             "deadline_unix": time.time() + 72 * HOUR}
     request.update(owned, remote_runner="/pod/repo/scripts/run_ec_clean30_phase4.py",
                    clean_forecasts={unit["unit_id"]: 100 for unit in phase4.clean_units()},
                    clean_timeouts={unit["unit_id"]: 90 for unit in phase4.clean_units()})
