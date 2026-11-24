@@ -1481,7 +1481,6 @@
     "supersedes_manifest_sha256": "3f2488497e75fade45127caf17802810695f2891f2580c31bf051b05905bc891"
   },
   "pending": [
-    "Verify the updated manifest in published mode after publication.",
     "A separately approved fold-0 window must stop before S4 for either futility decision."
   ],
   "preserved": {
@@ -1491,13 +1490,31 @@
     "science_owned_source": "Unchanged except the delegated runtime_precision entry in scoring.SCORER_CODE_PATHS",
     "science_worktree": "Read-only; source_changes and science-owned chain verifier/tests were not edited"
   },
-  "publication": "The fold-0 futility boundary is published at d05632b. Published-mode verification of the updated manifest is pending.",
+  "publication": "Published-mode verification passed at 4347ec3 for the manifest binding the fold-0 futility boundary.",
   "publication_verification": {
+    "amendment_chain": [
+      "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea",
+      "777130e4727768847e281a0aea593d44036c77107d2519ea8dddabe951ab682c"
+    ],
+    "chain_receipt": {
+      "sha256": "1a98738e442d48080b7fd6cc84dc5da49fbe0ecbc2693cc69571b247f062dbb2"
+    },
+    "chain_verification": "Passed with a fresh published-chain receipt.",
+    "evidence": {
+      "sha256": "f8fe78a6c111d6532af857972aa45c03590fa2256849b9133be576c1952ba0f0"
+    },
+    "execution_source_pin_count": 11,
+    "format": "deepmzyme_ec_clean30_execution_v5_publication_verification_v1",
+    "gpu_or_provider_operations": 0,
+    "launch_authorized": false,
     "manifest": {
       "path": "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/manifest.json",
       "sha256": "2aa2d22380a31c4c5d65771b904a15cd3818a864b4c96f9aea41c5abdb5c75a6"
     },
-    "status": "pending"
+    "manifest_published": true,
+    "manifest_verification": "passed with require_published=True",
+    "published_commit": "4347ec3ce208a921d75ec3bd7685652b5e45dc4d",
+    "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4"
   },
   "source_sha256": {
     "scripts/run_clean_split30_comparator.py": "5530b2801b41de02b6b83e25fdbefb8881f51c419a4ae214c88b46fef8a96402",
@@ -1540,5 +1557,5 @@
     "tests/test_ec_clean30_workstation_posix.py": "b0c4a681a10bfddaa3baa8c2fef46d27072bd6349694bf5fae1b85d0097f58cc",
     "tests/test_ec_clean30_workstation_v5_dispatch.py": "1e5542b66a7596ca6af25270cb2906498d920346085e90d4d66b6ccd31bd9c1b"
   },
-  "status": "execution_manifest_rebuilt_publication_verification_pending"
+  "status": "execution_manifest_published_verified_launch_not_authorized"
 }

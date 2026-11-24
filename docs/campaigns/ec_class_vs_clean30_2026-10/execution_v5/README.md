@@ -470,9 +470,10 @@ dispatch:
 The G3 authority with its `allowed_steps` (`S1`, `S4`), the scientific forecasts and the fold plan are unchanged.
 A resumed fold must keep its earlier G3, and the boundary lies in the dispatch, not in these records.
 
-No live session has yet run the boundary ([evc-048](../log.md#evc-048)). Until the manifest is re-pinned, the
-published [v5 manifest](manifest.json) still pins the earlier `execution_v5.py` and `workstation.py`, and it must be
-re-pinned before any launch. Only `execution_v5.py` and `workstation.py` change.
+Published-mode verification passed at `4347ec3` for the [v5 manifest](manifest.json) built from `d05632b`.
+Only the `execution_v5.py` and `workstation.py` pins changed. The [verification record](cpu_verification.json)
+binds all 11 execution files to the published source. The boundary still awaits its first live fold-0 session
+([evc-048](../log.md#evc-048)).
 `phase3.lane_gate` and `phase4.replay_cpu_logits` keep their pinned sources. No rule, unit or scientific file
 changes. The change is execution-only (A2-GOV-7 class (a)).
 
