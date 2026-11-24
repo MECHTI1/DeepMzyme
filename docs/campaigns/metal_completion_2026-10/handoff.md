@@ -1,47 +1,21 @@
-# Continuation checklist
+# Independent metal evaluation
 
-This checklist covers the next working session on this campaign. It authorizes reading and CPU work only. It does
-not authorize a GPU session, spending, training, candidate-test collection, a test-side read or held-out evaluation.
-Optimization is complete ([log](log.md)) and the Stage 6B source is designated
-([evidence](evidence.md#stage-6b-source-and-compatibility-2026-10-16)); do not rerun either.
+Optimization is complete. The retained B direct-four configuration uses the v3 late-fusion refit `a0007846…`. Its [Stage 6B compatibility record](evidence.md#stage-6b-source-and-compatibility-2026-10-16) passed all 25 checks. Keep the designated architecture and feature set fixed. Adding an atom-level encoder or surrounding-atom inputs would change the model. Structural-context, symmetry and trunk-LR investigations are closed. EC remains deferred pending repair and verification of [TECH-030](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-030--discovered-ec-cache-files-can-bypass-the-training-path-guard).
 
-Work in `<repo-root>`. The maintainer's priority is the independent evaluation of the selected metal model. The
-completion campaign retained the unchanged B four-class configuration (the v3 late-fusion direct-four recipe), and the
-v3 full non-test refit `a0007846…` is its verified, designated Stage 7 source. Keep its features and architecture
-unchanged: no atom-level encoder and no extra surrounding-atom inputs. EC stays deferred.
+## Stage 7 decisions
 
-First read the maintainer's local development guidelines (not published), `EXPERIMENT_STATUS.md`, the campaign
-README, `evaluation.md`, the relevant `Plan.md` sections, `docs/DATASETS.md` and the documentation owner table. Verify
-the prescribed project interpreter before Python commands. Read the maintainer's private GPU-use policy (not
-published) before any compute planning; reading it grants no spending authority. Inspect the worktree and index.
+Only reading and CPU preparation are authorized. GPU use, spending, training, candidate-test collection, test-side reads and held-out scoring require separate approval.
 
-Evidence lives on the secondary drive in `DeepMzyme_Data/campaigns/metal_completion_2026-10/preparation_20261014T164111Z/evidence/`:
-- `execution_closeout.json`: the campaign fits;
-- `stage6b_source_20261016/`: the compatibility record, 25 of 25 checks passed;
-- `evaluation_prep_20261016/`: training-side prior-use release dates, obsolete entries and the blocked template.
+1. Confirm the primary evaluation route. The proposed temporal PDB cohort must be disjoint from training, previously opened tests and their near-copies. The refit has already had one secondary held-out pass. Its use for a primary Stage 7 report requires an explicit exception to the one-shot rule or a Plan amendment.
+2. Once approved, complete the [prior-use inventory](evaluation.md#remaining-blockers) using its record allowlist. Obtain separate approval for the network request and record the read in [DATASETS](../../DATASETS.md#test-use-ledger).
+3. Resolve the remaining protocol decisions in their listed order. Each requires approval. Campaign closure remains a separate decision.
 
-Reuse this evidence. Repeat a check only when source, inputs or environment changed. The completion package has no
-NVMe or off-site copy yet (backup state is recorded privately, outside this repository).
+## Existing records
 
-Work through the [remaining blockers](evaluation.md#remaining-blockers) in order. Act only on what the maintainer
-explicitly approves; this checklist implies no approval:
+Under `DeepMzyme_Data/campaigns/metal_completion_2026-10/preparation_20261014T164111Z/evidence/`:
 
-1. **Route and one-shot rule (blocker 1):** the maintainer decides whether to confirm an external temporal PDB cohort
-   as the primary route, disjoint from the training cohort, every opened test and their near-copies, and whether to
-   approve an explicit exception to Plan's one-shot Stage 7 rule (or a Plan amendment) for this refit, which already
-   had one secondary held-out pass. The source designation depends on both.
-2. **Prior-use completion (blocker 2, with the maintainer's approval):** carry out exactly what blocker 2 lists,
-   including its record allowlist and its separate network request, and record the read in DATASETS.
-3. **Later blockers:** each needs its own approval, in the listed order.
+- `execution_closeout.json` records the completed fits.
+- `stage6b_source_20261016/` contains the source compatibility checks.
+- `evaluation_prep_20261016/` contains training-side release dates, obsolete entries and the blocked evaluation template.
 
-Closure stays the maintainer's decision; the campaign remains open while Stage 7 preparation continues.
-
-Host note: the GCP VM boots kernel 7.0.0-1014-gcp, for which the NVIDIA driver does not build; the playbook block
-records the per-boot kernel selection.
-
-Do not reopen the closed structural-context, symmetry or trunk-LR investigations. Keep EC paused until TECH-030 is
-repaired and verified.
-
-End the session with a record of the completed changes, verification evidence, unresolved blockers and the exact next
-authorized step. Stage changes by explicit path, following the staging rules in the local development guidelines;
-commit and push stay with the maintainer.
+At handover the package was on the secondary drive only. Reuse existing checks while their source, inputs and environment match. The [metal playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#metal-completion-successor-cpu-preparation-and-execution-gates) records the per-boot kernel selection for the GCP host, where the NVIDIA driver failed to build for `7.0.0-1014-gcp`.

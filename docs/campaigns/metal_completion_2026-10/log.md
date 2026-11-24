@@ -3,9 +3,9 @@ Public-release note (2026-10-20, extended 2026-10-22): host paths, device names 
 
 ## 2026-10-14 — approved CPU implementation
 
-The maintainer selected metal first, all three training objectives, a bounded worthwhile optimization pass, and an independent final evaluation. “Implement the approved plan” authorized the CPU preparation described in the campaign README. Subsequent questions about the independent reviewer clarified ownership: the implementing session completes this implementation; the independent reviewer receives a current independent-review handoff. No new execution or test access was authorized.
+The October 14 decision put metal classification first, with direct-four, five- and six-class training, a bounded optimization pass and an independent final evaluation. Approval covered CPU preparation only. Execution and test access required separate decisions.
 
-The original review covered the named earlier session transcript and more recent development-session evidence. The earlier handoff predates the completed v3/trunk-LR closeout and EC inventory. Completed evidence remains intact; no blanket rerun is indicated.
+The earlier plan predated the completed v3 and trunk-LR campaigns and the EC inventory. Their results remained available for reuse. Implementation and independent review were separate responsibilities.
 
 ## Superseded STATUS snapshot
 

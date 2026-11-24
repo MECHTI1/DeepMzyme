@@ -1,5 +1,4 @@
-# Hidden from default searches (ripgrep and similar tools). docs/MOVED.md stays visible.
-# Use `rg --no-ignore` for history, evidence and safety verification (maintainer's local development guidelines, not published).
+# Include archives, raw evidence and the lockfile in audits with rg --no-ignore.
 docs/archive/
 docs/notebook_outputs/raw/
 uv.lock

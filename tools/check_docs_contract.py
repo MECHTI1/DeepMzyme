@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""DeepMzyme documentation contract checker (docs consolidation PLAN_v2, section 12.5).
+"""Check the DeepMzyme documentation contract.
 
 Usage: <python> tools/check_docs_contract.py
 Exit status 1 when any STRICT check fails; WARN lines are informational.
@@ -182,6 +182,15 @@ def anchors_of(root: Path, name: str, cache: dict[str, set[str]]) -> set[str]:
     return cache[name]
 
 
+def campaign_status(lines: list[str]) -> str | None:
+    """Read the first Status line within the campaign README header."""
+    for line in lines[:8]:
+        if line.startswith("Status:"):
+            match = STATUS_LINE.match(line)
+            return match.group(1) if match else None
+    return None
+
+
 def check_frozen_moves(root: Path, findings: Findings) -> dict[str, str]:
     """Pinned moved files keep their SHA-256; each alias is a registered symlink to a closed archived campaign of the
     same id; any other symlink under docs/campaigns/ fails. Returns {pinned path: origin folder} for check_links."""
@@ -217,8 +226,7 @@ def check_frozen_moves(root: Path, findings: Findings) -> dict[str, str]:
         else:
             readme = f"{expected}/README.md"
             lines = text_of(root, readme).split("\n") if (root / readme).is_file() else []
-            match = STATUS_LINE.match(next((line for line in lines[:8] if line.startswith("Status:")), ""))
-            if not match or match.group(1) != "closed":
+            if campaign_status(lines) != "closed":
                 findings.add("STRICT", name, "frozen-moves", "alias to a campaign that is not closed",
                              "close the archived campaign or remove the alias")
     return origins
@@ -361,9 +369,7 @@ def check_status(root: Path, findings: Findings) -> str | None:
             if readme.parent.is_symlink():  # a registered alias of an archived campaign
                 continue
             name = readme.relative_to(root).as_posix()
-            status = next((line for line in text_of(root, name).split("\n")[:8] if line.startswith("Status:")), "")
-            found = STATUS_LINE.match(status)
-            if found and found.group(1) == "active":
+            if campaign_status(text_of(root, name).split("\n")) == "active":
                 findings.add("STRICT", STATUS_PATH, "status", f"'{NO_ACTIVE_CAMPAIGN}' while {name} is active",
                              "link the active campaign README on the 'Current campaign:' line")
         return None
@@ -396,15 +402,14 @@ def check_campaigns(root: Path, names: list[str], findings: Findings) -> None:
                          "add a README with a 'Status:' line")
             continue
         lines = text_of(root, readme).split("\n")
-        status = next((line for line in lines[:8] if line.startswith("Status:")), "")
-        match = STATUS_LINE.match(status)
-        if not match:
+        status = campaign_status(lines)
+        if status is None:
             findings.add("STRICT", readme, "campaigns", "missing or malformed 'Status:' line near the top",
                          "use 'Status: active|paused|closed|planned (YYYY-MM-DD ...)'")
-        elif archived and match.group(1) != "closed":
-            findings.add("STRICT", readme, "campaigns", f"archived campaign has status '{match.group(1)}'",
+        elif archived and status != "closed":
+            findings.add("STRICT", readme, "campaigns", f"archived campaign has status '{status}'",
                          "set 'Status: closed (...)' or move the folder back to docs/campaigns/")
-        elif not archived and match.group(1) == "closed":
+        elif not archived and status == "closed":
             findings.add("STRICT", readme, "campaigns", "closed campaign outside docs/archive/campaigns/",
                          "git mv the folder to docs/archive/campaigns/<id> and update STATUS")
         if len(lines) > CAMPAIGN_README_MAX_LINES + 1:
