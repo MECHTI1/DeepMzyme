@@ -139,14 +139,15 @@ def test_new_approved_configs_do_not_reset_two_failed_windows(approved, tmp_path
     assert ledger.status()["failed_windows"] == 2
 
 
-@pytest.mark.parametrize("decision", ["continue", "stop_futility"])
-def test_pipeline_order_and_binding_stop(approved, monkeypatch, decision):
+def test_later_fold_pipeline_order_is_unchanged(approved, monkeypatch):
+    # Fold 0 ends at its futility record (test_ec_clean30_v5_futility_boundary.py); a later fold has no
+    # futility step and keeps the complete S1, S2, S4 and final CLEAN order.
     _, _, _, _, source = approved
     events = []
     request = {"execution_manifest": "manifest", "amendment_chain_receipt": "receipt",
                "expected_chain": source["amendment_chain"], **phase3.source_identity(source),
-               "provider": "runpod", "fold": 0, "remote_campaign": "/workspace/campaign", "run_final_clean": True,
-               "remote_request_template": {"session_id": "owned", "clean_inputs": "inner", "execution_root": "/workspace/campaign/runs/fold0/phase4"},
+               "provider": "runpod", "fold": 1, "remote_campaign": "/workspace/campaign", "run_final_clean": True,
+               "remote_request_template": {"session_id": "owned", "clean_inputs": "inner", "execution_root": "/workspace/campaign/runs/fold1/phase4"},
                "final_clean_request": {"clean_scope": "final", "clean_inputs": "final",
                                        "clean_forecasts": {}, "clean_timeouts": {}}}
 
@@ -165,19 +166,16 @@ def test_pipeline_order_and_binding_stop(approved, monkeypatch, decision):
 
     def step(request, *, step, **options):
         events.append(step)
-        return {"status": "passed", "decision": decision, **phase3.source_identity(source)}
+        return {"status": "passed", **phase3.source_identity(source)}
 
     for name, function in (("clean_embeddings", "run_embedding_queue"), ("clean_inner", "run_clean_remote_queue"),
-                           ("s1", "run_s1_queue"), ("s4", "run_refit_queue")):
+                           ("s1", "run_s1_queue"), ("s4", "run_refit_queue"), ("attach_fold", "run_fold_attachment")):
         monkeypatch.setattr(phase4, function, queue(name), raising=False)
     monkeypatch.setattr(phase4, "run_scientific_step", step, raising=False)
     result = v5.run_phase4_pipeline(request, transport=object(), check_session=lambda: None,
                                     record_progress=lambda name, result: None)
-    expected = ["clean_embeddings", "clean_inner", "held_out_sanity", "verify_sanity", "s1", "select_s1", "select_s2", "futility"]
-    if decision == "continue":
-        expected += ["select_s4", "s4", "final_embeddings", "clean_final"]
-    assert events == expected
-    assert result["status"] == ("passed" if decision == "continue" else "stop_futility")
+    assert events == ["attach_fold", "s1", "select_s1", "select_s2", "select_s4", "s4", "final_embeddings", "clean_final"]
+    assert result["status"] == "passed"
 
 
 @pytest.mark.parametrize("state,expected", [

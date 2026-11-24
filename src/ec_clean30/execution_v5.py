@@ -44,6 +44,11 @@ PRESTAGE_JOURNAL = "resume_prestage_journal.jsonl"
 PRESTAGE_BATCH_FILES = 2000
 PRESTAGE_BATCH_BYTES = 1024 ** 3
 RESUME_FILE_CHECKS = ("full", "records")
+# Fold 0 ends at its futility record under this manifest: the pipeline returns there for either decision,
+# and no later session resumes a pass that holds that record. The values are the driver's terminal states.
+FUTILITY_UNIT = "ecc30_science_fold0_futility"
+FUTILITY_BOUNDARY = "futility_boundary"
+FUTILITY_BOUNDARY_STATES = {"stop_futility": "stopped_futility", FUTILITY_BOUNDARY: "stopped_at_futility_boundary"}
 
 
 class LaunchWindowError(RuntimeError):
@@ -342,6 +347,10 @@ def validate_launch_authorization(config: Mapping[str, Any], config_path: Path,
              "The controller allocation must fit the positive G3 preapproved ceilings before launch; "
              "a resumed fold's ceilings must also cover every carried-forward allocation.")
     _require(request.get("fold", 0) == config.get("execution_fold", 0), "Reviewed configuration and requested fold differ.")
+    # A fold-0 session closes at its futility record: nothing may be queued behind it or hold the pod open.
+    _require(fold > 0 or (not request.get("run_final_clean", False)
+                          and not config.get("runpod", {}).get("keep_alive_for_operator", False)),
+             "Fold 0 ends at its futility record: final CLEAN and an operator hold are not available.")
     workstation.validate_phase4_plan(config, source, request, preapproval)
     return authorization
 
@@ -527,7 +536,12 @@ def validate_resume(config, source, *, files="full"):
              and state.get("config_sha256") == spec["config_sha256"]
              and state.get("closeout", {}).get("preservation_sha256") == spec["preservation_sha256"]
              and not state.get("preservation_error"), "Resume requires verified terminal closeout and complete preservation.")
-    _require(state.get("status") != "stopped_futility", "A binding futility stop cannot resume.")
+    boundary = state.get("futility_boundary") or {}
+    _require(state.get("status") != "stopped_futility" and boundary.get("decision") != "stop_futility",
+             "A binding futility stop cannot resume.")
+    # The status can be replaced by a later interruption; the write-once record cannot.
+    _require(not boundary and state.get("status") != FUTILITY_BOUNDARY_STATES[FUTILITY_BOUNDARY],
+             "Fold 0 holds its futility record; post-futility work needs a later reviewed execution manifest.")
     for key in ("hardware_profile", "runtime_environments", "remote_repo", "remote_campaign", "remote_python", "embedding"):
         _require(config.get(key) == prior.get(key) and key in config, f"Resume changes pinned {key}.")
     for key in ("gpu_id", "image", "runtime_environment"):
@@ -587,6 +601,13 @@ def validate_resume(config, source, *, files="full"):
                  and (not inventory.get("pending_unit") or inventory["pending_unit"].get("persisted") is True),
                  "Resume refuses unacknowledged work.")
         inventories.append(record)
+    # The preserved records decide, even where a lost driver write left the state without its boundary.
+    # Any file of the unit counts: a futility step that started is neither run nor finalized by a later session.
+    _require(not any(str(entry.get("path", "")).startswith(f"runs/{FUTILITY_UNIT}/")
+                     for record in inventories if record["execution_root"].endswith("/runs/fold0/phase4")
+                     for entry in record["files"]),
+             "The preserved fold-0 records hold a futility step; it is never run or finalized again, and "
+             "post-futility work needs a later reviewed execution manifest.")
     fold = config.get("execution_fold", 0)
     g2 = next((record for record in inventories if record["execution_root"].endswith("/fold0/g2")), None)
     phase = next((record for record in inventories
@@ -1480,6 +1501,39 @@ def _timing_record(path: Path, key: str, value: Any) -> None:
         pass
 
 
+def verify_futility_boundary(request, result):
+    """The terminal futility record in both preserved copies; this reads bytes and never applies the rule."""
+    decision = result.get("decision")
+    _require(result.get("status") == "passed" and result.get("unit_id") == FUTILITY_UNIT
+             and result.get("scientific_step") == "futility" and decision in {"continue", "stop_futility"},
+             "Futility returned no binding decision.")
+    record_sha = _sha256(result.get("record_sha256"), "The futility record digest")
+    attempt, snapshots = result.get("attempt"), result.get("snapshots")
+    _require(type(attempt) is int and attempt > 0 and isinstance(snapshots, list) and len(snapshots) == 3
+             and all(isinstance(row, dict) and isinstance(row.get("snapshot"), str)
+                     and re.fullmatch(r"output[0-9][A-Za-z0-9.]*", row["snapshot"]) for row in snapshots)
+             and snapshots[1].get("sha256") == record_sha,
+             "The futility result does not bind its preserved record snapshot.")
+    roots = [request.get("durable_root"), request.get("mirror_root")]
+    _require(all(isinstance(root, str) and root for root in roots) and roots[0] != roots[1],
+             "The futility boundary needs both independent preserved copies.")
+    digests = []
+    for root in roots:
+        unit = Path(root) / "runs" / FUTILITY_UNIT
+        complete = unit / "complete.json"
+        _require(complete.is_file() and not complete.is_symlink() and _record(complete) == dict(result),
+                 "A preserved copy lacks the terminal futility record.")
+        for row in snapshots:
+            snapshot = unit / f"attempt{attempt}" / row["snapshot"]
+            _require(snapshot.is_file() and not snapshot.is_symlink() and _file_sha(snapshot) == row.get("sha256"),
+                     "A preserved copy lacks a futility output snapshot.")
+        digests.append(_file_sha(complete))
+    _require(digests[0] == digests[1], "The two preserved futility records differ.")
+    return {"unit_id": FUTILITY_UNIT, "decision": decision, "record_sha256": record_sha,
+            "pointer_sequence": result.get("pointer_sequence"), "attempt": attempt,
+            "complete_sha256": digests[0], "preserved_copies": 2}
+
+
 def run_phase4_pipeline(request, *, transport, check_session, record_progress):
     """The fixed amendment-2 order on one already owned pod; this function never allocates."""
     from ec_clean30 import phase3, phase4
@@ -1491,6 +1545,8 @@ def run_phase4_pipeline(request, *, transport, check_session, record_progress):
     fold = request.get("fold", 0)
     _require(type(fold) is int and fold in range(5), "Invalid requested fold.")
     _require(type(request.get("run_final_clean", False)) is bool, "Final CLEAN dispatch must be an explicit boolean.")
+    _require(fold > 0 or not request.get("run_final_clean", False),
+             "Fold 0 ends at its futility record under this execution manifest; final CLEAN is not dispatched.")
     _stage_pipeline_files(request, transport, check_session)
     options = {"transport": transport, "check_session": check_session, "close_session": False}
 
@@ -1515,8 +1571,12 @@ def run_phase4_pipeline(request, *, transport, check_session, record_progress):
         decision = record("futility", phase4.run_scientific_step, step="futility")
         phase3.require_same_scientific_identity(decision, source)
         _require(decision.get("decision") in {"continue", "stop_futility"}, "Futility returned no binding decision.")
-        if decision["decision"] == "stop_futility":
-            return {"status": "stop_futility", **phase3.source_identity(source)}
+        # The fold-0 session ends here for either decision. S4 selection, the refits, final CLEAN and every
+        # later fold need a later reviewed execution manifest. A recovered or repeated entry reads the same
+        # preserved record and returns at this line again; nothing below runs for fold 0.
+        boundary = verify_futility_boundary(request, decision)
+        return {"status": "stop_futility" if boundary["decision"] == "stop_futility" else FUTILITY_BOUNDARY,
+                "futility": boundary, **phase3.source_identity(source)}
     record("select_s4", phase4.run_scientific_step, step="select_s4")
     record("s4", phase4.run_refit_queue)
     if request.get("run_final_clean", False):
@@ -1594,7 +1654,7 @@ def run_v5(config: Mapping[str, Any], config_path: Path, *, authorization_path: 
             preserved = bool(closeout.get("preservation_sha256")) and (
                 closeout.get("provider_absence_verified") is True or closeout.get("provider_stop_verified") is True)
             outcome = ("completed" if (state.get("workload_admitted") or
-                        state.get("status") in {"phase4_complete", "stopped_futility"})
+                        state.get("status") in {"phase4_complete", *FUTILITY_BOUNDARY_STATES.values()})
                        and preserved and not state.get("preservation_error") else "failed")
             ledger.finish_window(window_id, outcome=outcome, closeout_sha256=_file_sha(state_path),
                                   provider_terminal=terminal)

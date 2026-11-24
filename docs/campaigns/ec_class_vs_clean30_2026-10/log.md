@@ -2075,3 +2075,40 @@ of earlier fold-0 sessions as prior charges. Those charges are about $21.6 (wind
 2026-11-15), and with them a $60 ceiling covers about 34 hours. On 2026-11-16 the maintainer kept the $5 reserve
 and the 48 hours. The session's own envelope is then at most $55, so the fold-0 gross stays bounded at about
 $76.6, below the $85 ceiling.
+
+## evc-048
+
+2026-11-24 — **Fold 0 is bounded at its futility decision; the dispatch now ends there for either decision.** No
+session ran after window `ec30v5-g2f0-w11` ([evc-047](#evc-047)), and window `ec30v5-g2f0-w12` was prepared but
+not launched. The published pipeline returned after the fold-0 futility step only for `stop_futility`. After
+`continue` it went on, in the same call, to the S4 selection and the refits, and the launch check requires a G3
+preapproval that allows S4. No reviewed configuration could therefore end a session at the futility record after
+`continue`. On 2026-11-24 the maintainer bounded the fold-0 work at the futility decision and classified the
+following execution-only change as class (a) under A2-GOV-7
+([fold-0 futility boundary](execution_v5/README.md#fold-0-futility-boundary)).
+
+- The pipeline returns after the fold-0 futility step for either decision, after it has read the terminal record
+  and its output snapshots in both preserved copies. For fold 0 it dispatches no S4 selection, refit, final CLEAN
+  unit or later-fold step.
+- The driver records `stopped_futility` or `stopped_at_futility_boundary`, and a write-once boundary entry. Fold 0
+  no longer writes `phase4_complete`.
+- No later session resumes a pass whose records hold a futility step, for any fold. Fold-0 S4, final CLEAN and
+  folds 1–4 need a later reviewed execution manifest; the A2-D6 continuation of fold 0 beyond the futility
+  decision is deferred to it.
+- The launch gate refuses final CLEAN and an operator hold for a fold-0 session.
+
+Only `execution_v5.py` and `workstation.py` change. `phase3.lane_gate` and `phase4.replay_cpu_logits` keep their
+pinned sources, and no rule, unit, chain link or scientific file changes. The scientific identity stays
+`66705ae7…98533f4`. The futility decision remains the scientific step's own: the dispatch reads its record and
+never applies the rule.
+
+The resume gate reads only the pass that a configuration names. The maintainer therefore set two operating rules:
+a new configuration resumes only the newest verified closed pass, and if a futility step may have started in a
+session without a verified closeout, no further window is prepared before the maintainer decides.
+
+The synthetic CPU checks cover both decisions, the two-copy requirement, a repeated entry of an open window, a
+futility step interrupted before its record, a coordinator lost after the record, the session closeout order, the
+launch-window outcome and the resume gate for folds 0 and 1. Each of 18 single reverts of the correction made one
+of them fail. The campaign's CPU tests (69 files) passed with **2,882 passes and 3 skips**, capped at two CPU
+cores and 3 GB. No campaign fit, allocation or provider operation occurred. The correction can be used only after
+a re-pinned manifest, and every launch still needs its own separate explicit authorization.

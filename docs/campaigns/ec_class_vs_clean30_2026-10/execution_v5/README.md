@@ -1,14 +1,16 @@
 # Execution v5 — Runpod G2 through Fold 0
 
 Status: published, 2026-11-12, with the [execution corrections](#execution-corrections-of-2026-11-12) of the
-same day, the [host replacement](#host-replacement-within-a-launch-window) that followed the first launch window and the [supervised caps](#supervised-caps-on-hosts-with-read-only-cgroup-controls) that followed the second, the [float32 ESMC load](#float32-esmc-load-for-the-fp32-producer) of 2026-11-13 that followed the sixth, the [bounded SSH reconnect](#bounded-ssh-reconnect) that followed the eighth, the [fold-0 unit corrections](#fold-0-units-after-g2) of 2026-11-14 that followed the tenth, and the [resume corrections](#resume-from-a-preserved-fold-0-session) of 2026-11-16 that followed the eleventh; CPU implementation only. The [fold-0 ceiling](#fold-0-ceiling-a2-d8) is approved. Neither publication
+same day, the [host replacement](#host-replacement-within-a-launch-window) that followed the first launch window and the [supervised caps](#supervised-caps-on-hosts-with-read-only-cgroup-controls) that followed the second, the [float32 ESMC load](#float32-esmc-load-for-the-fp32-producer) of 2026-11-13 that followed the sixth, the [bounded SSH reconnect](#bounded-ssh-reconnect) that followed the eighth, the [fold-0 unit corrections](#fold-0-units-after-g2) of 2026-11-14 that followed the tenth, the [resume corrections](#resume-from-a-preserved-fold-0-session) of 2026-11-16 that followed the eleventh, and the [fold-0 futility boundary](#fold-0-futility-boundary) of 2026-11-24; CPU implementation only. The [fold-0 ceiling](#fold-0-ceiling-a2-d8) is approved. Neither publication
 nor the ceiling grants launch authorization: each launch needs its own explicit authorization. The previous
 G2-only limits and launch requests do not authorize v5.
 
 ## Execution contract
 
 The initial Runpod pod covers G2 and the subsequent approved fold-0 work. An interrupted fold can continue
-in a separately authorized session under A2-D6, with the same GPU type and pinned environment. Session limits
+in a separately authorized session under A2-D6, with the same GPU type and pinned environment. Under the
+[fold-0 futility boundary](#fold-0-futility-boundary) execution v5 continues fold 0 only up to its futility record.
+Session limits
 come from the approved configuration. The same owner maintains the heartbeat, stop deadline and independent
 preservation throughout both phases. Two further failed launch windows exhaust the permitted retry count;
 changing a pass directory or configuration must not reset it. GCP launches and fallback routes are excluded.
@@ -82,7 +84,9 @@ The implemented order is full-union ESMC fp32 cache, fold-0 F6 attachment, CPU s
 Freeze 1c v2. Plan-v2 queues come from the scientific plan: fold 0 has 112 S1 and 5 S4 units (cap 117),
 and each later fold has 96 S1 and 5 S4 units. Refit recipes come from `selector.verified_refit_recipe`.
 CLEAN in-sample and held-out sanity records precede selection. A verified futility continue is required before
-fold-0 S4, every fold 1–4 unit and every final-arm CLEAN fit; any stop pointer wins. The five folds retain
+fold-0 S4, every fold 1–4 unit and every final-arm CLEAN fit; any stop pointer wins. Under the
+[fold-0 futility boundary](#fold-0-futility-boundary) a fold-0 session ends at the futility record for either
+decision, and execution v5 dispatches no fold-0 S4. The five folds retain
 separate view bindings. No final test export is added here.
 
 F6's `whole_protein_pretrain/` is created empty and writable outside the frozen view manifest. Attachment
@@ -119,6 +123,9 @@ Restoration uses the original remote paths, including F6 attachment snapshots an
 results are verified and reused. A unit with no preserved result gets at most one retry of the identical planned
 unit; another failure, conflicting results or partial scientific decision outputs stop for diagnosis. G2 receipts
 and preparation are reused as well. No lost attempt contributes a checkpoint or prediction to selection.
+Under the [fold-0 futility boundary](#fold-0-futility-boundary) a pass that holds any file in the futility step's
+run directory is not resumed. No futility pointer is then restored, and a later session neither retries nor
+finalizes that step.
 
 Later folds use `execution_scope: fold_execution_v5` and `execution_fold: 1` through `4`, with a matching reviewed
 Phase-4 request and `fold_cost_ceiling_usd` in the launch authorization. They require preserved G2 and fold-0
@@ -126,6 +133,10 @@ records, the corresponding frozen view archive, and a binding futility continue.
 preserved union cache and the fold's bound `corpus_table`, `holdout_receipt`, `identity_work` and
 `official_split_dir`; `attachment_forecast_seconds` and `attachment_timeout_seconds` are explicit reviewed bounds.
 The route then runs the complete canonical S1, S2 and S4 sequence and optional authorized final CLEAN queue.
+Under the [fold-0 futility boundary](#fold-0-futility-boundary) no later-fold session can run a unit under execution
+v5. Every later-fold unit needs the binding futility continue on the pod, and a pass that holds the futility record
+is not resumed. The launch gate does not itself refuse a later-fold configuration that names a pass without a
+futility step; such a session would stop at its first unit on the pod, after allocation.
 
 Pending launch requirements: the reviewed launch inputs, a fresh quote and a separate explicit launch
 authorization. Each session requires a fresh workstation chain receipt on its clean published tree. The published
@@ -411,6 +422,60 @@ and closeout times remain estimates until the timing records exist.
 `phase3.lane_gate` and `phase4.replay_cpu_logits` keep their pinned sources. No rule, unit or scientific file
 changes. The change is execution-only (A2-GOV-7 class (a)).
 
+## Fold-0 futility boundary
+
+The fold-0 work is bounded at the futility decision (FUT). The earlier pipeline returned after FUT only for
+`stop_futility`. After `continue` it went on, in the same call, to the S4 selection and the refits, so a stop
+requested from outside could arrive after the next step had started. The correction puts the boundary into the
+dispatch:
+
+- **One return for either decision.** `execution_v5.run_phase4_pipeline` returns after the fold-0 FUT step for
+  `continue` and for `stop_futility`. For fold 0 it dispatches no S4 selection, refit, final CLEAN unit or
+  later-fold step. The launch gate refuses a fold-0 request with `run_final_clean` before any allocation, and
+  the pipeline refuses it again before any dispatch.
+- **Both preserved copies first.** Before it returns, the host reads the terminal FUT record in the primary and in
+  the mirror copy. The two `complete.json` files must be identical and equal to the returned result. In each copy
+  the three output snapshots must match their recorded SHA-256, and the snapshot of the futility decision record
+  must match the result's `record_sha256`. The check reads bytes only. It does not apply the futility rule, and
+  the decision stays the scientific step's own (A2-GOV-2).
+- **Terminal states.** The pipeline result is `stop_futility` or `futility_boundary`, and the driver state is
+  `stopped_futility` or `stopped_at_futility_boundary`. Fold 0 no longer writes `phase4_complete`. A write-once
+  `futility_boundary` entry in the driver state holds the decision, the record digest, the attempt and the
+  digest of the terminal record. A later interruption can replace the status, but not this entry. A preserved
+  boundary stop is a completed launch window.
+- **Recovery.** The identical re-run of an open window enters the pipeline from the top. The pod returns the
+  finished FUT unit from its record, and the pipeline returns at the same boundary again. A FUT step that started
+  and left neither a result nor a terminal record is refused on the pod and at resume; it is not run again.
+- **Later sessions.** No session resumes a pass whose records hold a FUT step, for any fold. The resume check
+  (`validate_resume`) reads the earlier driver state and the preserved inventories, and any preserved file in the
+  FUT unit's run directory (`runs/ecc30_science_fold0_futility/`) counts. A lost driver write therefore does not
+  make such a pass resumable, and a FUT step that produced its result without its terminal record is not
+  finalized by a later session. A FUT request that was uploaded but never started leaves no file in that
+  directory; a later session may then run FUT once. Fold-0 S4, final CLEAN and folds 1–4 need a later reviewed
+  execution manifest. The A2-D6 continuation of fold 0 beyond FUT is deferred to that manifest.
+- **Limits of the gate.** The resume check reads the pass that a configuration names as its resume source. It
+  does not search other passes, and no code selects that pass. On 2026-11-24 the maintainer therefore set two
+  operating rules: a new configuration resumes only the newest verified closed pass, and if a FUT step may have
+  started in a session without a verified closeout, no further window is prepared before the maintainer decides.
+  The boundary is enforced in the workstation's dispatch; the pod itself adds no check after a `continue`.
+- **Immediate closeout.** `runpod.keep_alive_for_operator` keeps a session's pod open, within its session window,
+  for an operator request after a failure or after the queue ends (the operator hold). The launch gate refuses
+  this option for a fold-0 session, so the hold before workload admission is unavailable as well. After the
+  boundary the coordinator preserves both copies, stops the pod and runs the two-copy closeout, as after any
+  pipeline return.
+- **Calendar stop.** A reviewed configuration can bind `runpod.absolute_hard_stop_unix`. The controller takes
+  the earlier of that time and the session maximum as the hard stop, and every unit admission counts from it.
+  This control existed before and is unchanged.
+
+The G3 authority with its `allowed_steps` (`S1`, `S4`), the scientific forecasts and the fold plan are unchanged.
+A resumed fold must keep its earlier G3, and the boundary lies in the dispatch, not in these records.
+
+No live session has yet run the boundary ([evc-048](../log.md#evc-048)). Until the manifest is re-pinned, the
+published [v5 manifest](manifest.json) still pins the earlier `execution_v5.py` and `workstation.py`, and it must be
+re-pinned before any launch. Only `execution_v5.py` and `workstation.py` change.
+`phase3.lane_gate` and `phase4.replay_cpu_logits` keep their pinned sources. No rule, unit or scientific file
+changes. The change is execution-only (A2-GOV-7 class (a)).
+
 ## Fold-0 ceiling (A2-D8)
 
 On 2026-11-12 the maintainer approved the fold-0 spending ceiling that A2-D8 requires before G2:
@@ -431,6 +496,7 @@ If fold 0 continues in a later session under A2-D6, that session keeps the $85 c
 charges of every earlier fold-0 session as prior charges. After Phase-4 admission, its G3 preapproval must equal
 the sum of the session ceilings, as the resume check requires; that sum grants no further spending. The CLEAN
 scope, inputs and caps bound by the first G3 stay fixed, except that a later session may add the final CLEAN scope.
+Under the [fold-0 futility boundary](#fold-0-futility-boundary) execution v5 dispatches no fold-0 final CLEAN.
 
 ## Provisional cost scenarios
 

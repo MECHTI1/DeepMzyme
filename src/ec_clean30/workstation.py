@@ -2455,10 +2455,18 @@ def _continue_runpod_phase4(config, transport, state, state_path, session, ready
 
         result = execution_v5.run_phase4_pipeline(request, transport=transport, check_session=check_session,
                                                   record_progress=record_progress)
-        _require(result.get("status") in {"passed", "stop_futility"},
+        # Fold 0 ends at its futility record for either decision; only a later fold completes Phase 4 here.
+        fold0 = request.get("fold", 0) == 0
+        _require(result.get("status") in (execution_v5.FUTILITY_BOUNDARY_STATES if fold0 else {"passed"}),
                  "The v5 pipeline did not reach a verified terminal boundary.")
+        if fold0:
+            # Written once: a later interruption may replace the status, never this record.
+            _require(isinstance(result.get("futility"), dict)
+                     and state.get("futility_boundary", result["futility"]) == result["futility"],
+                     "The preserved futility boundary changed during recovery.")
+            state["futility_boundary"] = dict(result["futility"])
         state["phase4"]["result"] = result
-        state["status"] = "stopped_futility" if result["status"] == "stop_futility" else "phase4_complete"
+        state["status"] = execution_v5.FUTILITY_BOUNDARY_STATES[result["status"]] if fold0 else "phase4_complete"
         _write(state_path, state)
         return
     runners = {"s1": phase4.run_s1_queue, "clean_embeddings": phase4.run_embedding_queue,
