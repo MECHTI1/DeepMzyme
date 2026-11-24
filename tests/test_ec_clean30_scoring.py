@@ -858,8 +858,13 @@ def test_clearly_better_system_passes_both_co_primaries(space):
         text = (campaign.report_dir / name).read_text(encoding="utf-8")
         assert v2_pass("P1") in text and v2_pass("P2") in text
     markdown = (campaign.report_dir / scoring.REPORT_MD_NAME).read_text(encoding="utf-8")
+    wording = markdown
+    for digest in (report["claim"]["sha256"], report["access_receipt"]["label_table"]["sha256"]):
+        field = f"SHA-256 `{digest}`"
+        assert field in markdown
+        wording = wording.replace(field, "SHA-256")
     for word in FORBIDDEN_REPORT_WORDS:
-        assert word.lower() not in markdown.lower()
+        assert word.lower() not in wording.lower()
     assert f"used by {ACKNOWLEDGEMENT}" in markdown and "fair-esm 2.0.0" in markdown and "PYTHONHASHSEED" in markdown
     assert "No list of later nomenclature transfers" in markdown
     assert "## CLEAN ties" in markdown and "## CLEAN training-side sanity checks" in markdown
