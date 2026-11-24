@@ -1986,14 +1986,29 @@ def test_copied_c3_constants_match_the_export_module():
 
 
 def test_scorer_is_torch_free_and_pins_every_repository_module_it_loads():
-    code = (
-        f"import json, os, sys; sys.path.insert(0, {str(ROOT / 'src')!r}); import ec_clean30.scoring; "
-        f"root = os.path.realpath({str(ROOT)!r}); "
-        "files = sorted(os.path.relpath(os.path.realpath(m.__file__), root) for m in list(sys.modules.values()) "
-        "if getattr(m, '__file__', None) and os.path.realpath(m.__file__).startswith(root + os.sep)); "
-        "print(json.dumps({'torch': 'torch' in sys.modules, 'files': files}))"
-    )
-    output = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True, env=ENV).stdout
+    code = textwrap.dedent("""
+        import json
+        from pathlib import Path
+        import sys
+        import sysconfig
+
+        root = Path(sys.argv[1])
+        sys.path.insert(0, str(root / "src"))
+        import ec_clean30.scoring
+
+        # CI installs third-party packages in a virtual environment inside the checkout.
+        installed = {Path(sysconfig.get_path(key)).resolve() for key in ("purelib", "platlib")}
+        in_tree_packages = {directory for directory in installed if root in directory.parents}
+        files = []
+        for module in list(sys.modules.values()):
+            if getattr(module, "__file__", None):
+                path = Path(module.__file__).resolve()
+                if root in path.parents and in_tree_packages.isdisjoint(path.parents):
+                    files.append(str(path.relative_to(root)))
+        print(json.dumps({"torch": "torch" in sys.modules, "files": files}))
+    """)
+    output = subprocess.run([sys.executable, "-c", code, str(ROOT)], capture_output=True,
+                            text=True, check=True, env=ENV).stdout
     record = json.loads(output)
     assert record["torch"] is False
     assert set(record["files"]) == set(scoring.SCORER_CODE_PATHS) - {"scripts/score_ec_clean30_comparison.py"}

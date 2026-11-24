@@ -500,6 +500,7 @@ reporting = [
     { name = "pandas" },
 ]
 test = [
+    { name = "botocore" },
     { name = "pandas" },
     { name = "pytest" },
 ]
@@ -525,6 +526,7 @@ reporting = [
     { name = "pandas", specifier = "==3.0.1" },
 ]
 test = [
+    { name = "botocore", specifier = "==1.43.78" },
     { name = "pandas", specifier = "==3.0.1" },
     { name = "pytest", specifier = "==8.4.2" },
 ]

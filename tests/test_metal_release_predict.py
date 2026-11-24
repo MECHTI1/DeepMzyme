@@ -106,9 +106,10 @@ def test_observed_atom_equals_center_and_mixed_targets_restore_state(release):
 
     path, structure, cache, _ = release
     before = label_schemes.ACTIVE_METAL_LABEL_SCHEME
+    # Compare both site inputs at the same batch position for exact CPU score equality.
     report = predict.predict_sites(path, structure, [
         {"id": "located", "atom": "A:201:_:ZN"}, {"id": "center", "center": [0, 0, 0]},
-    ], embedding_cache=cache, include_member_predictions=True)
+    ], embedding_cache=cache, include_member_predictions=True, batch_size=1)
     np.testing.assert_array_equal(_scores(report)[0], _scores(report)[1])
     assert label_schemes.ACTIVE_METAL_LABEL_SCHEME == before
     assert report["member_count"] == 4 and report["device"] == "cpu"

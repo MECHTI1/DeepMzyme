@@ -17,6 +17,7 @@ dependencies = [
 
 [dependency-groups]
 test = [
+    "botocore==1.43.78",
     "pandas==3.0.1",
     "pytest==8.4.2",
 ]

@@ -392,10 +392,12 @@ except caps.CapError as exc:
 
 
 def test_readonly_backend_gives_concurrent_commands_distinct_cores_and_nests_on_the_parents_cores(tmp_path):
-    result = _supervised(tmp_path, """
+    # Leave two CPUs for the outer command and its nested child on four-core runners.
+    peer_cores = 2 if len(os.sched_getaffinity(0)) >= 6 else 1
+    result = _supervised(tmp_path, f"peer_quota = {peer_cores} * caps.PERIOD_US\n" + """
 import os
-first = caps._ReadonlyScope(root, 2 * caps.PERIOD_US, 1024**3); first.establish()
-second = caps._ReadonlyScope(root, 2 * caps.PERIOD_US, 1024**3); second.establish()
+first = caps._ReadonlyScope(root, peer_quota, 1024**3); first.establish()
+second = caps._ReadonlyScope(root, peer_quota, 1024**3); second.establish()
 env = first.environment()
 out = {'first': list(first.cpus), 'second': list(second.cpus), 'threads': env.get('OMP_NUM_THREADS') == os.environ.get('OMP_NUM_THREADS'),
        'scope': env[caps.SCOPE_ENV] == first.path.name}
@@ -406,12 +408,12 @@ inner = caps._run(root, 2 * caps.PERIOD_US, 1024**3, [sys.executable, '-c', nest
 out['outer'] = inner['cpu_affinity']; record = json.loads(inner['stdout'].strip().splitlines()[-1])
 out['inner'] = record['cpu_affinity']; out['inner_seen'] = json.loads(record['stdout']); out['enclosing'] = record['before']['enclosing_scope'] == Path(inner['cgroup']).name
 first.cleanup(); second.cleanup()
-third = caps._ReadonlyScope(root, 2 * caps.PERIOD_US, 1024**3); third.establish(); out['third'] = list(third.cpus); third.cleanup()
+third = caps._ReadonlyScope(root, peer_quota, 1024**3); third.establish(); out['third'] = list(third.cpus); third.cleanup()
 print(json.dumps(out))
 """.replace('DRIVER', repr(READONLY_DRIVER)))
-    assert len(result['first']) == len(result['second']) == 2 and not set(result['first']) & set(result['second'])
+    assert len(result['first']) == len(result['second']) == peer_cores and not set(result['first']) & set(result['second'])
     assert result['third'] == result['first'] and result['threads'] and result['scope']
-    assert not set(result['outer']) & (set(result['first']) | set(result['second']))
+    assert len(result['outer']) == 2 and not set(result['outer']) & (set(result['first']) | set(result['second']))
     assert result['inner'] == result['inner_seen'] == result['outer'] and result['enclosing']
 
 
