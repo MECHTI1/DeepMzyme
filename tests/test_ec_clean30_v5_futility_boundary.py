@@ -14,9 +14,7 @@ from types import SimpleNamespace
 import pytest
 
 from ec_clean30 import campaign, execution_v5 as v5, phase3, phase4, workstation
-from test_ec_clean30_v5_dispatch import approved  # noqa: F401
-from test_ec_clean30_v5_resume import IDENTITY, SOURCE, build, sha, write  # noqa: F401
-from test_ec_clean30_workstation_bootstrap import cached_driver  # noqa: F401
+from ec_clean30_fold0_fixtures import IDENTITY, SOURCE, approved, build, cached_driver, sha, write  # noqa: F401
 
 UNIT = v5.FUTILITY_UNIT
 BEFORE = ["clean_embeddings", "clean_inner", "held_out_sanity", "verify_sanity", "s1", "select_s1", "select_s2",
