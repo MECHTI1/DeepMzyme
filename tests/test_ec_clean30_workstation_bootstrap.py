@@ -2,7 +2,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 import json
-import os
 from pathlib import Path
 from types import SimpleNamespace
 import threading
@@ -11,6 +10,7 @@ import time
 import pytest
 
 from ec_clean30 import phase3, runpod_bootstrap as bootstrap, runpod_controller, workstation as ws
+from ec_clean30_fold0_fixtures import cached_driver  # noqa: F401
 
 
 def write(path, data):
@@ -115,83 +115,6 @@ def test_cache_seed_mode_and_execution_are_exclusive(tmp_path):
     with pytest.raises(SystemExit) as result:
         ws.main(["--config", str(tmp_path / "config.json"), "--seed-cache", "--run"])
     assert result.value.code == 2
-
-
-@pytest.fixture
-def cached_driver(tmp_path, monkeypatch):
-    """An owned allocation with inert controller and transport boundaries."""
-    events = []
-    main, clean = tmp_path / "main.tar.gz", tmp_path / "clean.tar.gz"
-    main.write_bytes(b"main archive")
-    clean.write_bytes(b"clean archive")
-    config = {"provider": "runpod", "artifact_cache": {"fixture": True},
-              "state_root": str(tmp_path / "state"), "gcp_controller_root": str(tmp_path / "gcp"),
-              "gcp_stopped_identity": {"name": "retained"}, "bootstrap_python": "/usr/bin/python3",
-              "stage": [{"local": str(main), "remote": "/main", "kind": "file"},
-                        {"local": str(clean), "remote": "/clean", "kind": "file"}],
-              "runtime_environments": {"fit": {"archive": "/main"}, "esm1b": {"archive": "/clean"}},
-              "remote_python": "/main/bin/python", "profiles": {"fit": {"cap_prefix": ["limits"]}},
-              "remote_repo": "/repo", "hardware_profile": "approved"}
-    path = tmp_path / "config.json"
-    write(path, config)
-    source = {"format": phase3.BOOTSTRAP_FORMAT, "published": True}
-    ready = {"source": source, "staging_peak_bytes": 1}
-    begun = time.time()
-    session_record = {"session_id": "owned-session", "pod_id": "owned-pod", "allocation_started_unix": begun,
-                      "deadline_unix": begun + 6900, "hard_stop_unix": begun + 7020}
-
-    class Controller:
-        def start(self):
-            events.append("start")
-            return self.session()
-
-        def session(self, previous=None):
-            assert previous in (None, "owned-session")
-            return dict(session_record)
-
-        @contextmanager
-        def maintain_heartbeat(self, *, interval):
-            assert interval == 30
-            events.append("heartbeat_enter")
-            try:
-                yield SimpleNamespace(check=lambda: events.append("heartbeat_check"))
-            finally:
-                events.append("heartbeat_exit")
-
-        def write_ssh_config(self):
-            return tmp_path / "ssh_config"
-
-        def admit_workload(self):
-            events.append("admit")
-
-        def stop(self):
-            events.append("stop")
-            return {"desiredStatus": "EXITED", "runtimeStatus": "stopped"}
-
-    class Transport:
-        def remote(self, argv, **kwargs):
-            if "import shutil; print(shutil.disk_usage('/workspace').free)" in argv:
-                return str(1000 * ws.GIB)
-            if "cuda proof" in argv:
-                return "{}"
-            return "ready"
-
-    def preserve(*args, max_download_bytes):
-        assert type(max_download_bytes) is int and max_download_bytes > 0
-        events.append("preserve")
-        return None
-
-    monkeypatch.setattr(ws, "_prepared_preflight", lambda *a, **kw: ready)
-    monkeypatch.setattr(bootstrap, "verify_seeded_cache", lambda *a, **kw: events.append("cache_verified"))
-    monkeypatch.setattr(bootstrap, "staging_scratch_bytes", lambda *a: 1)
-    monkeypatch.setattr(ws.subprocess, "run", lambda *a, **kw: SimpleNamespace(stdout="GCP TERMINATED"))
-    monkeypatch.setattr(ws, "_status", lambda *a: "TERMINATED")
-    monkeypatch.setattr(ws, "_bootstrap_runpod", lambda *a: events.append("bootstrap"))
-    monkeypatch.setattr(ws, "_runtime_preflight", lambda *a: events.append("runtime_preflight") or ("manifest", "probe"))
-    monkeypatch.setattr(ws, "_execute_queue", lambda *a: events.append("queue"))
-    monkeypatch.setattr(ws, "_preserve_runpod_outputs", preserve)
-    return SimpleNamespace(config=config, path=path, ready=ready, events=events,
-                           controller=Controller(), transport=Transport(), session=session_record)
 
 
 def test_cold_cache_refuses_before_any_allocation_or_provider_command(cached_driver, monkeypatch):

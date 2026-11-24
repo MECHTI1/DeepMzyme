@@ -16,9 +16,10 @@ from types import SimpleNamespace
 import pytest
 
 from ec_clean30 import amendment_rules, execution_v5 as v5, phase3, phase4, runpod_controller as rc, workstation
-from test_ec_clean30_closeout_inventory import _fold_world, _preserve_fold, local_provider  # noqa: F401
-from test_ec_clean30_workstation_bootstrap import cached_driver  # noqa: F401
-from test_ec_clean30_v5_resume import BASE, HOUR, IDENTITY, MASKED, SOURCE, Transport, build, sha, write  # noqa: F401
+from ec_clean30_fold0_fixtures import (  # noqa: F401
+    BASE, HOUR, IDENTITY, MASKED, SOURCE, Transport, build, cached_driver, fold_world, local_provider,
+    preserve_fold, sha, write,
+)
 
 REPO = Path(__file__).resolve().parents[1]
 REAL_RUN = subprocess.run  # The restore program runs for real even while ssh/scp/rsync are local copies.
@@ -618,7 +619,7 @@ def separate_mirror(monkeypatch, mirror):
 
 
 def test_acknowledged_files_are_journaled_and_covered_on_the_next_closeout(tmp_path, local_provider, monkeypatch):
-    world = _fold_world(tmp_path)
+    world = fold_world(tmp_path)
     separate_mirror(monkeypatch, world.output["mirror_root"])
     log = world.fold / "commands/unit_a_attempt1.log"
     with world.execution as execution:
@@ -627,7 +628,7 @@ def test_acknowledged_files_are_journaled_and_covered_on_the_next_closeout(tmp_p
         log.write_text("the unit's own check refused its device\n")
         execution.record_result("unit_a", "failed_fit", 1.0)
         execution.persist([log])
-    _preserve_fold(world, tmp_path)
+    preserve_fold(world, tmp_path)
     journal = tmp_path / "fold-state" / workstation.VERIFIED_COPIES
     rows = [json.loads(line) for line in journal.read_text().splitlines()]
     assert {row["primary_root"] for row in rows} == {world.output["primary_root"]}
@@ -638,7 +639,7 @@ def test_acknowledged_files_are_journaled_and_covered_on_the_next_closeout(tmp_p
     covered = {item[0] for item in rows[0]["files"]}
     assert timings["covered"] == len(covered) and 0 < timings["covered"] < timings["files"]
     # The repeated closeout covers every file both copies were verified for.
-    receipt, _ = _preserve_fold(world, tmp_path)
+    receipt, _ = preserve_fold(world, tmp_path)
     timings = json.loads((tmp_path / "state" / "closeout_timings.json").read_text())[world.output["execution_root"]]
     assert timings["covered"] == timings["files"] and timings["download_files"] == 0
     # A same-size decay of an acknowledged copy voids its witness: the billed pass repairs it before the stop.
@@ -648,7 +649,7 @@ def test_acknowledged_files_are_journaled_and_covered_on_the_next_closeout(tmp_p
         copy = Path(root) / "commands/unit_a_attempt1.log"
         original = copy.read_bytes()
         flip(copy)
-        _preserve_fold(world, tmp_path)
+        preserve_fold(world, tmp_path)
         timings = json.loads((tmp_path / "state" / "closeout_timings.json").read_text())[world.output["execution_root"]]
         assert timings["uncovered"] == 1
         assert timings["download_files"] == (1 if root == world.output["primary_root"] else 0)
@@ -657,7 +658,7 @@ def test_acknowledged_files_are_journaled_and_covered_on_the_next_closeout(tmp_p
 
 
 def test_a_rewritten_remote_file_has_two_witnesses_and_takes_the_full_path(tmp_path, local_provider):
-    world = _fold_world(tmp_path)
+    world = fold_world(tmp_path)
     log = world.fold / "commands/unit_a_attempt1.log"
     with world.execution as execution:
         execution.admit("unit_a", 60.0)
@@ -665,11 +666,11 @@ def test_a_rewritten_remote_file_has_two_witnesses_and_takes_the_full_path(tmp_p
         log.write_text("first\n")
         execution.record_result("unit_a", "failed_fit", 1.0)
         execution.persist([log])
-    _preserve_fold(world, tmp_path)
+    preserve_fold(world, tmp_path)
     log.write_text("other\n")  # Same size, other digest on the pod.
-    _preserve_fold(world, tmp_path)
+    preserve_fold(world, tmp_path)
     log.write_text("first\n")  # Back to the first digest: two witnesses now exist for this path.
-    _preserve_fold(world, tmp_path)
+    preserve_fold(world, tmp_path)
     timings = json.loads((tmp_path / "state" / "closeout_timings.json").read_text())[world.output["execution_root"]]
     assert timings["uncovered"] >= 1 and timings["download_files"] == 1
     for root in (world.output["primary_root"], world.output["mirror_root"]):

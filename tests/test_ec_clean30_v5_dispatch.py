@@ -1,59 +1,19 @@
 """Synthetic CPU gates; fake transports cannot allocate, train or score."""
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
 
 import pytest
 
 from ec_clean30 import execution_v5 as v5, phase3, phase4, workstation
+from ec_clean30_fold0_fixtures import approved, sha  # noqa: F401
 
 
 def write(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, sort_keys=True) + "\n")
     return path
-
-
-def sha(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-@pytest.fixture
-def approved(tmp_path, monkeypatch):
-    identity = {"scientific_identity_sha256": "a" * 64, "fit_chain": ["b" * 64, "c" * 64]}
-    source = {"format": phase3.EXECUTION_V5_FORMAT, "published": True, **identity,
-              "amendment_chain": identity["fit_chain"], "execution_manifest_sha256": "d" * 64,
-              "git_head": "e" * 40}
-    request = write(tmp_path / "reviewed-request.json", identity)
-    preapproval = write(tmp_path / "preapproval.json", {"format": v5.PREAPPROVAL_FORMAT,
-        "status": "approved", "campaign_id": phase3.CAMPAIGN_ID, **identity,
-        "scope": "amendment2_fold_execution_v5", "ceilings": {"gpu_seconds": 3600, "cpu_seconds": 3600, "cost_usd": 8}})
-    manifest = write(tmp_path / "manifest.json", source)
-    write(request, {**identity, "execution_manifest": str(manifest)})
-    config = {"provider": "runpod", "execution_scope": "g2_then_fold0_v5", "state_root": str(tmp_path / "pass"),
-              "execution_manifest": str(manifest), "runpod": {"gross_ceiling_usd": 8, "max_runtime_seconds": 3600},
-              "phase4": {"request_path": str(request), "request_sha256": sha(request),
-                         "preapproval_path": str(preapproval), "preapproval_sha256": sha(preapproval)}}
-    config_path = write(tmp_path / "config.json", config)
-    shared = tmp_path / "shared"
-    shared.mkdir(mode=0o700)
-    authorization = {"format": v5.AUTHORIZATION_FORMAT, "launch_authorized": True, "provider": "runpod",
-        "scope": "g2_then_fold0_v5", "approved_by": "maintainer-fixture", **identity,
-        "config_sha256": sha(config_path), "execution_manifest_sha256": source["execution_manifest_sha256"],
-        "fold0_cost_ceiling_usd": 8, "failed_window_limit": 2, "failure_ledger": str(shared / "ledger.json"),
-        "failure_ledger_authorization_sha256": "f" * 64}
-    auth_path = write(tmp_path / "authorization.json", authorization)
-    ledger = write(Path(authorization["failure_ledger"]), v5.empty_failure_ledger(
-        authorization["failure_ledger"], authorization["failure_ledger_authorization_sha256"]))
-    ledger.chmod(0o600)
-    monkeypatch.setattr(phase3, "authenticated_chain", lambda source: source)
-    monkeypatch.setattr(phase3, "verify_execution_source", lambda *args, **kwargs: source)
-    monkeypatch.setattr(phase3, "require_record_precedence", lambda record, source: phase3.require_same_scientific_identity(record, source))
-    monkeypatch.setattr(workstation, "prepare_session_chain_receipt", lambda config: {})
-    monkeypatch.setattr(workstation, "validate_phase4_plan", lambda *args: None, raising=False)
-    return config, config_path, auth_path, authorization, source
 
 
 def test_authorization_binds_exact_config_science_and_ceiling(approved):
