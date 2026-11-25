@@ -23,8 +23,8 @@ that code path and recipe:
 - site summary: 4 values -> 32; constant in this release because each example holds one metal
 - fusion: gate = sigmoid(W [h_struct ; h_seq]) scales h_seq element-wise;
   [h_struct ; gated h_seq ; h_site] = 128 + 128 + 32 = 288 values
-- classifier: MLP 288 -> 128 -> 5 classes in the order Mn, Cu, Zn, Fe, Co/Ni; four-class
-  scores sum Fe and Co/Ni into Class VIII
+- classifier: MLP 288 -> 128 -> 5 classes in the order Mn, Cu, Zn, Fe, Co/Ni (Co/Ni is cobalt and
+  nickel as one class); the prediction command's four-class sum of Fe and Co/Ni is not drawn
 
 Update this file, not the generated SVGs, when the model changes. Every label carries a
 data-fit box (the region it must stay inside); labels drawn on purpose over a glyph carry
@@ -554,7 +554,7 @@ def classifier(g: Svg) -> None:
     x0, x1 = COL["F"]
     bar_x1, top, unit = BAR[1], BAR[2], BAR[3]
     mid = top + (288 * unit) / 2
-    y0, y1 = mid - 100, mid + 110
+    y0, y1 = mid - 71, mid + 71
     arrow(g, f"M {bar_x1 + 18} {mid} H {x0 - 2}", "ink")
     shadowed(g, x0, y0, x1, y1, fill="f_fill", stroke="ink3")
     fit = (x0 + 8, y0, x1 - 8, y1)
@@ -566,21 +566,11 @@ def classifier(g: Svg) -> None:
     widths = [28, 28, 28, 28, 40]
     tx = x0 + 14
     ty0, ty1 = y0 + 96, y0 + 126
-    centres = []
     for (symbol, number), w in zip(CLASSES, widths):
         g.rect(tx, ty0, tx + w, ty1, r=4, fill="tile", stroke="ink", width=1.1)
         g.text(tx + w / 2, ty1 - 10, symbol, size=14 if len(symbol) <= 2 else 12, weight=700, anchor="middle",
                fit=(tx + 1, ty0, tx + w - 1, ty1))
-        centres.append(tx + w / 2)
         tx += w + 3.5
-    fx, cx = centres[3], centres[4]
-    by = ty1 + 10
-    g.path(f"M {fx} {ty1 + 4} V {by - 4} Q {fx} {by} {fx + 4} {by} H {cx - 4} Q {cx} {by} {cx} {by - 4} V {ty1 + 4}",
-           stroke="ink3", width=1.3)
-    g.path(f"M {(fx + cx) / 2} {by} V {by + 6}", stroke="ink3", width=1.3)
-    g.text((fx + cx) / 2, by + 20, "Class VIII", size=12, weight=650, fill="ink2", anchor="middle", fit=fit)
-    g.text(x0 + 14, by + 46, "4-class scores:", size=12.5, weight=650, fill="ink2", fit=fit)
-    g.text(x0 + 14, by + 64, "Mn, Cu, Zn, Class VIII", size=12.5, fill="ink2", fit=fit)
 
 
 def footer(g: Svg, *, training: bool = True) -> None:
@@ -603,7 +593,7 @@ def footer(g: Svg, *, training: bool = True) -> None:
            "First shell: side-chain donor atom ≤ 2.7 Å from the metal  ·  second shell: side-chain group ≤ 4.5 Å "
            "from a first-shell group  ·  not used: waters, small molecules, other metals", size=12, fill="txt3", fit=fit)
     g.text(COL["A"][0], y + 60,
-           f"Shown: one network of public release {RELEASE}, which averages the 4-class scores of five such "
+           f"Shown: one network of public release {RELEASE}, which averages the scores of five such "
            "networks, each trained with a different CV fold held out.", size=12, fill="txt3", fit=fit)
     g.text(COL["A"][0], y + 78, "Drawings are schematic; a real pocket has about 38 residues (training median).",
            size=12, fill="txt3", fit=fit)
@@ -632,9 +622,8 @@ def build(theme: str) -> str:
             "pocket residues. Sequence: each chain embedded in full by frozen ESM-C 600M and pooled over the same "
             "pocket residues. Site: a four-value summary that is constant in this release. A sigmoid gate computed "
             "from the two pooled vectors scales the sequence vector; the three vectors are concatenated (288 "
-            "values) and an MLP gives softmax scores for five classes: Mn, Cu, Zn, Fe and Co/Ni. The release sums "
-            "Fe and Co/Ni into Class VIII and averages the 4-class scores of five copies, each trained with one "
-            "CV fold held out.")
+            "values) and an MLP gives softmax scores for five classes: Mn, Cu, Zn, Fe and Co/Ni. The release "
+            "averages the scores of five copies, each trained with one CV fold held out.")
     head = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
             f'role="img" aria-labelledby="title desc" font-family="{escape(SANS)}">'
             f'<title id="title">{title}</title><desc id="desc">{escape(desc)}</desc>'
