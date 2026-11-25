@@ -1,6 +1,6 @@
 # DeepMzyme: Metal-Type Prediction from Protein Structure and Sequence
 
-[![CPU CI](https://github.com/MECHTI1/DeepMzyme/actions/workflows/cpu-ci.yml/badge.svg?branch=main)](https://github.com/MECHTI1/DeepMzyme/actions/workflows/cpu-ci.yml?query=branch%3Amain)
+[CPU CI](https://github.com/MECHTI1/DeepMzyme/actions/workflows/cpu-ci.yml?query=branch%3Amain)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](pyproject.toml)
 [![PyTorch 2.5.1 · PyG 2.7.0](https://img.shields.io/badge/PyTorch-2.5.1%20%C2%B7%20PyG%202.7.0-EE4C2C?logo=pytorch&logoColor=white)](pyproject.toml)
 [![ESM-C 600M](https://img.shields.io/badge/PLM-ESM--C%20600M-00A67E)](src/metal_release/README.md#input-features)
