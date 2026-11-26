@@ -9,8 +9,8 @@
 **DeepMzyme predicts which metal occupies a known metal-binding site in a protein structure.** It combines the 3D geometry and chemistry of nearby protein residues with sequence representations from the pretrained **ESM-C 600M** protein language model.
 
 - **Input:** a protein structure (`.pdb`, `.cif` or `.mmcif`) and a site, supplied as a metal atom or XYZ coordinates. The sequence is read from the structure file.
-- **Output:** the public model is trained on five classes: **Mn** (manganese), **Cu** (copper), **Zn** (zinc), **Fe** (iron) and **Co/Ni** (cobalt and nickel grouped together). The prediction command currently reports the predicted class and scores for four classes, with Fe and Co/Ni summed into **Class VIII**.
-- **Available now:** a five-model research ensemble with public weights and a CPU prediction interface. No deployment default has been selected.
+- **Output:** the public model is trained on five classes: **Mn** (manganese), **Cu** (copper), **Zn** (zinc), **Fe** (iron) and **Co/Ni** (cobalt and nickel grouped together). The prediction command reports a predicted class and scores for these five classes, and for the four-class task used in the results below, where Fe and Co/Ni are summed into **Class VIII**.
+- **Official metal predictor.** The CPU quick start uses the five-class ensemble. It averages scores from five public checkpoints, each trained with a different one of the five frozen folds held out.
 
 DeepMzyme assumes the supplied site binds one of these metals. It does not locate binding sites or determine whether metal binding occurs. Evaluation used experimental metal-bound (holo) structures; performance on metal-free or predicted structures is untested. The output scores are uncalibrated.
 
@@ -47,7 +47,6 @@ Then use your own uncompressed holo structure. Replace the structure path and at
 uv sync --frozen --group esm
 uv run --frozen --no-sync python src/metal_release_cli.py predict \
   --manifest DeepMzyme_Data/public_metal/bound_manifest.json \
-  --candidate unified_p5_trunklr1e4_5fold_s42 \
   --structure path/to/holo_structure.pdb \
   --atom A:402:_:ZN:_ \
   --embedding-cache ~/.cache/deepmzyme/inference_esmc600m \
@@ -60,7 +59,7 @@ uv run --frozen --no-sync python src/metal_release_cli.py predict \
 
 The first prediction downloads ESM-C weights if needed (about 2.3 GB) and caches the sequence embeddings. Keep this inference cache separate from training caches. Choose a new output filename for each run; existing files are not overwritten.
 
-The JSON output contains `predicted_class`, four `class_scores` (Mn, Cu, Zn and Class VIII, the sum of the model's Fe and Co/Ni scores) and `quality_flags` for each site, plus model and input provenance. A high score ranks a metal class; it is not a calibrated probability that the site binds that metal. See the [prediction guide](src/metal_release/README.md) for multiple sites and validation details.
+Read `native_predicted_class` for the five-class prediction and `native_class_scores` for its scores. The JSON label `Co+Ni` means cobalt and nickel share one class. Each site also has `quality_flags` and the four-class benchmark output in `predicted_class` and `class_scores`. That output combines Fe and Co/Ni into Class VIII, so its winning class can differ. The benchmark results below evaluate the four-class output. [Prediction guide](src/metal_release/README.md#public-checkpoint-inference)
 
 <a id="approach"></a>
 ## How it works
@@ -104,7 +103,7 @@ All scores below are balanced accuracy. An ensemble averages predictions from mu
 
 ² These 15 ensembles were assembled using CV-based rules. Selecting from the same CV predictions makes the upper scores optimistic. The reported nested selection estimates are **74.54–76.61%**, with the [limitations of reusing fitted models](docs/campaigns/phase2_unified_2026-10/release_audit/README.md#decision). Most use late fusion; the greedy ensemble also includes structure-only models.
 
-³ This is the downloadable model used in the quick start. Its recipe combined previously tested components after test scores were known; no validation-only selection rationale was recorded. It is separate from the 15-ensemble comparison and has not been promoted as a deployment default.
+³ This is the downloadable model used in the quick start. Its recipe combined previously tested components after test scores were known; no validation-only selection rationale was recorded. The 15-ensemble comparison evaluated a separate set of recipes.
 
 ### Comparison with PinMyMetal
 

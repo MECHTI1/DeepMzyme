@@ -28,7 +28,7 @@ def _artifact(path):
 
 
 @pytest.fixture
-def release(tmp_path_factory, monkeypatch):
+def release(tmp_path_factory, monkeypatch, request):
     import label_schemes
     from data_structures import EXTERNAL_FEATURE_NAMES
     from embed_helpers.esmc import extract_chain_sequences
@@ -45,15 +45,16 @@ def release(tmp_path_factory, monkeypatch):
     structure = tmp_path / "fixture.pdb"
     write_pdb(structure, ions=[("A", 201, "", "ZN", (0, 0, 0))], chains=("A", "B"))
     cache = tmp_path / "cache"
+    folds, embedding_model = getattr(request, "param", (2, "synthetic_esmc"))
     parsed = parse_structure_file(str(structure))
     for sequence in extract_chain_sequences(parsed).values():
         embedding = torch.arange(len(sequence) * 8, dtype=torch.float32).reshape(len(sequence), 8) / 100
-        path = predict._sequence_cache_path(cache, "synthetic_esmc", sequence, predict._embedding_profile("cpu"))
-        predict._save_sequence_cache(path, embedding, sequence=sequence, model_name="synthetic_esmc")
+        path = predict._sequence_cache_path(cache, embedding_model, sequence, predict._embedding_profile("cpu"))
+        predict._save_sequence_cache(path, embedding, sequence=sequence, model_name=embedding_model)
     members, groups = {}, []
     for target, architecture in (("four_class", "gvp"), ("five_class", "only_esm")):
         ids = []
-        for fold in range(2):
+        for fold in range(folds):
             member_id = f"{architecture}_{target}_{fold}"
             ids.append(member_id)
             directory = tmp_path / member_id
@@ -61,7 +62,7 @@ def release(tmp_path_factory, monkeypatch):
             config = json.loads(json.dumps(asdict(TrainConfig(
                 task="metal", metal_example_unit="ion", metal_label_scheme=target, model_architecture=architecture,
                 checkpoint_rule="terminal",
-                n_folds=2, fold_index=fold, seed=42, esm_dim=8, hidden_s=16, hidden_v=4, edge_hidden=8,
+                n_folds=folds, fold_index=fold, seed=42, esm_dim=8, hidden_s=16, hidden_v=4, edge_hidden=8,
                 gvp_layers=1, esm_fusion_dim=8, head_mlp_layers=1, shell_role_source="geometry",
                 omit_node_features=tuple(EXTERNAL_FEATURE_NAMES), require_esm_embeddings=True,
                 use_ring_edges=False, require_ring_edges=False, require_external_features=False,
@@ -89,7 +90,7 @@ def release(tmp_path_factory, monkeypatch):
                 "selected_checkpoint": _artifact(receipt_path), "validation_predictions": _artifact(predictions_path)}
         groups.append({"id": architecture, "weight": 1.0 if target == "four_class" else 0.5, "members": ids})
     manifest = {"schema": "deepmzyme-metal-release-v1", "reference": "mixed", "release_status": "provisional",
-        "n_folds": 2, "embedding_model": "synthetic_esmc", "members": members, "candidates": {"mixed": {"groups": groups}}}
+        "n_folds": folds, "embedding_model": embedding_model, "members": members, "candidates": {"mixed": {"groups": groups}}}
     path = tmp_path / "manifest.json"
     path.write_text(json.dumps(manifest))
     yield path, structure, cache, manifest
@@ -120,6 +121,60 @@ def test_observed_atom_equals_center_and_mixed_targets_restore_state(release):
     assert all(site["predicted_class"] in report["class_order"] for site in report["sites"])
     assert len(report["member_predictions"]) == 4
     assert all(len(item["native_predictions"]) == 2 for item in report["member_predictions"].values())
+    # Members trained on different targets share only the common-four classes.
+    assert report["schema"] == "deepmzyme-metal-predictions-v1" and "native_class_order" not in report
+    assert all("native_class_scores" not in site for site in report["sites"])
+
+
+def test_single_target_candidate_adds_trained_class_scores(release):
+    from metal_release.manifest import NATIVE, aggregate_probabilities
+
+    path, structure, cache, manifest = release
+    five = sorted(member_id for member_id, member in manifest["members"].items() if member["target"] == "five_class")
+    manifest["candidates"]["five_only"] = {"groups": [{"id": "five", "weight": 1.0, "members": five}]}
+    path.write_text(json.dumps(manifest))
+    report = predict.predict_sites(path, structure, [
+        {"id": "a", "center": [0, 0, 0]}, {"id": "b", "center": [6.0, 0.0, 0.0]},
+    ], candidate="five_only", embedding_cache=cache, include_member_predictions=True)
+    assert report["schema"] == "deepmzyme-metal-predictions-v2"
+    assert report["class_order"] == ["Mn", "Cu", "Zn", "Class VIII"]
+    assert report["native_class_order"] == ["Mn", "Cu", "Zn", "Fe", "Co+Ni"]
+    assert report["native_metal_label_scheme"] == "five_class"
+    assert report["common_four_rule"] == "sum Fe/Co/Ni probabilities before argmax"
+    assert predict.NATIVE_OUTPUT_LABELS == {"five_class": (*NATIVE["five_class"][:4], "Co+Ni"),
+                                            "six_class": NATIVE["six_class"]}
+    # The common-four scores keep the historical arithmetic: each member is collapsed first, then averaged.
+    np.testing.assert_array_equal(_scores(report), np.mean(
+        [report["member_predictions"][member_id]["common4_probabilities"] for member_id in five], axis=0))
+    expected = np.mean([report["member_predictions"][member_id]["native_probabilities"] for member_id in five], axis=0)
+    for index, site in enumerate(report["sites"]):
+        native, common = site["native_class_scores"], site["class_scores"]
+        assert list(native) == report["native_class_order"] and list(common) == report["class_order"]
+        np.testing.assert_allclose(list(native.values()), expected[index], rtol=0, atol=1e-12)
+        assert site["native_predicted_class"] == report["native_class_order"][int(expected[index].argmax())]
+        assert site["predicted_class"] == report["class_order"][int(np.argmax(list(common.values())))]
+        # The common-four scores are the same members with Fe and Co+Ni summed.
+        np.testing.assert_allclose([native[label] for label in ("Mn", "Cu", "Zn")],
+                                   [common[label] for label in ("Mn", "Cu", "Zn")], rtol=0, atol=1e-7)
+        np.testing.assert_allclose(native["Fe"] + native["Co+Ni"], common["Class VIII"], rtol=0, atol=1e-6)
+        np.testing.assert_allclose(sum(native.values()), 1.0, rtol=0, atol=1e-6)
+    assert not np.allclose(expected[:, 3], expected[:, 4])  # Fe and Co+Ni are separate outputs, not a split sum
+    with pytest.raises(ReleaseError, match="one training target"):
+        aggregate_probabilities(manifest, "mixed", {member_id: np.full((1, 4), 0.25) for member_id in manifest["members"]},
+                                native=True)
+    with pytest.raises(ReleaseError, match="Invalid native probabilities"):
+        aggregate_probabilities(manifest, "five_only", {member_id: np.full((1, 4), 0.25) for member_id in five}, native=True)
+
+
+def test_four_class_candidate_keeps_v1_output(release):
+    path, structure, cache, manifest = release
+    four = sorted(member_id for member_id, member in manifest["members"].items() if member["target"] == "four_class")
+    manifest["candidates"]["four_only"] = {"groups": [{"id": "four", "weight": 1.0, "members": four}]}
+    path.write_text(json.dumps(manifest))
+    report = predict.predict_structure(path, structure, center=[0, 0, 0], candidate="four_only", embedding_cache=cache)
+    assert report["schema"] == "deepmzyme-metal-predictions-v1" and report["member_count"] == 2
+    assert not [key for key in report if key.startswith("native_")] and "common_four_rule" not in report
+    assert not [key for key in report["sites"][0] if key.startswith("native_")]
 
 
 def test_parsed_symbol_and_labels_do_not_change_inputs_or_predictions(release, tmp_path):
@@ -304,16 +359,23 @@ def test_blocked_manifest_invalid_sites_and_unsupported_features(release):
         predict.build_site_pocket(structure, center=[1000, 0, 0])
 
 
-def test_prediction_accepts_bound_scope_and_rejects_unbound_candidate(release, monkeypatch):
+@pytest.mark.parametrize(("scope", "requested", "expected"), [
+    (["mixed"], "mixed", "mixed"),
+    (["second", "mixed"], None, "mixed"),
+    (["second", "mixed"], "", "mixed"),
+    (["second", "mixed"], "second", "second"),
+])
+def test_prediction_accepts_bound_scope_and_rejects_unbound_candidate(release, monkeypatch, scope, requested, expected):
     path, structure, cache, manifest = release
-    manifest["binding_scope"] = {"candidates": ["mixed"]}
+    manifest["binding_scope"] = {"candidates": scope}
+    manifest["candidates"]["second"] = copy.deepcopy(manifest["candidates"]["mixed"])
     manifest["candidates"]["unbound"] = copy.deepcopy(manifest["candidates"]["mixed"])
     for member in manifest["members"].values():
         member["receipt_binding_verified"] = True
     path.write_text(json.dumps(manifest))
     report = predict.predict_structure(path, structure, center=[0, 0, 0],
-                                       embedding_cache=cache, candidate="mixed")
-    assert report["candidate"] == "mixed" and report["member_count"] == 4
+                                       embedding_cache=cache, candidate=requested)
+    assert report["candidate"] == expected and report["member_count"] == 4
 
     def unexpected_member_load(*args):
         pytest.fail("An unbound candidate must fail before loading any member")
@@ -322,6 +384,36 @@ def test_prediction_accepts_bound_scope_and_rejects_unbound_candidate(release, m
     with pytest.raises(ReleaseError, match="outside.*binding scope"):
         predict.predict_structure(path, structure, center=[0, 0, 0],
                                   embedding_cache=cache, candidate="unbound")
+
+
+@pytest.mark.parametrize("release", [(5, "esmc_600m")], indirect=True)
+def test_public_bound_five_fold_cli_default(release, tmp_path):
+    from metal_release.__main__ import main
+    from metal_release.catalog import PUBLIC_UNIFIED, REFERENCE, release_catalog
+    from metal_release.manifest import candidate_member_ids
+
+    path, structure, cache, fixture = release
+    # Reproduce the public binding layout on synthetic checkpoints. Older bundles retain
+    # the full historical catalog and its reference, with only the bound family available.
+    manifest = release_catalog()
+    manifest["binding_scope"] = {"candidates": [PUBLIC_UNIFIED]}
+    manifest["release_status"] = "provisional"
+    public_members = candidate_member_ids(manifest, PUBLIC_UNIFIED)
+    for index, member_id in enumerate(public_members):
+        member = manifest["members"][member_id]
+        assert member["fold"] == index
+        member.update(fixture["members"][f"only_esm_five_class_{index}"], receipt_binding_verified=True)
+    path.write_text(json.dumps(manifest))
+    output = tmp_path / "prediction.json"
+    assert main(["predict", "--manifest", str(path), "--structure", str(structure), "--center", "0", "0", "0",
+                 "--embedding-cache", str(cache), "--output", str(output)]) == 0
+    report = json.loads(output.read_text())
+    assert report["candidate"] == PUBLIC_UNIFIED and report["reference"] == REFERENCE
+    assert report["member_count"] == 5 and report["native_metal_label_scheme"] == "five_class"
+    assert report["native_class_order"] == ["Mn", "Cu", "Zn", "Fe", "Co+Ni"]
+    site = report["sites"][0]
+    assert set(site["native_class_scores"]) == set(report["native_class_order"])
+    assert set(site["class_scores"]) == {"Mn", "Cu", "Zn", "Class VIII"}
 
 
 def test_parity_gate_requires_every_eligible_member_and_bound_fixture_identity(release, tmp_path):

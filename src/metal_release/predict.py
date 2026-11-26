@@ -28,6 +28,10 @@ from .manifest import (
 )
 
 COMMON_FOUR = ("Mn", "Cu", "Zn", "Class VIII")
+# Output names for trained-class scores. The five-class training label for cobalt and nickel is also
+# called "Class VIII" internally; "Co+Ni" keeps it distinct from the common-four Fe+Co+Ni class.
+NATIVE_OUTPUT_LABELS = {"five_class": ("Mn", "Cu", "Zn", "Fe", "Co+Ni"),
+                        "six_class": ("Mn", "Cu", "Zn", "Fe", "Co", "Ni")}
 _MODEL_LOCK = threading.RLock()
 
 
@@ -364,7 +368,9 @@ def predict_sites(manifest_path: Path, structure_path: Path, sites: list[dict], 
         torch.cuda.reset_peak_memory_stats(resolved_device)
     manifest_path, structure_path = Path(manifest_path).resolve(), Path(structure_path).resolve()
     manifest = load_manifest(manifest_path)
-    candidate = candidate or manifest["reference"]
+    if not candidate:
+        bound = manifest.get("binding_scope", {}).get("candidates", [])
+        candidate = bound[0] if len(bound) == 1 else manifest["reference"]
     member_ids = prediction_member_ids(manifest, candidate)
     prepared = {member_id: _validated_member(manifest, member_id) for member_id in member_ids}
     if structure_path.suffix.lower() not in {".pdb", ".cif", ".mmcif"}:
@@ -397,7 +403,7 @@ def predict_sites(manifest_path: Path, structure_path: Path, sites: list[dict], 
         for pocket in pockets:
             attach_esm_embeddings(pocket, lookup, dim, zero_if_missing=False)
     embedding_seconds = time.perf_counter() - embedding_started
-    probabilities, member_timings, raw_graphs, member_predictions = {}, {}, {}, {}
+    probabilities, native_probabilities, member_timings, raw_graphs, member_predictions = {}, {}, {}, {}, {}
     with _MODEL_LOCK:
         old_scheme = label_schemes.ACTIVE_METAL_LABEL_SCHEME
         try:
@@ -436,6 +442,7 @@ def predict_sites(manifest_path: Path, structure_path: Path, sites: list[dict], 
                 # float64 family/block arithmetic. Do not average native logits.
                 common = torch.cat((native_values[:, :3], native_values[:, 3:].sum(-1, keepdim=True)), dim=-1)
                 probabilities[member_id] = common.numpy().astype(np.float64)
+                native_probabilities[member_id] = native_values.numpy().astype(np.float64)
                 if include_member_predictions:
                     member = manifest["members"][member_id]
                     artifacts = member.get("artifacts", member)
@@ -453,6 +460,16 @@ def predict_sites(manifest_path: Path, structure_path: Path, sites: list[dict], 
     for index, report in enumerate(reports):
         report.update({"predicted_class": COMMON_FOUR[int(combined[index].argmax())],
                        "class_scores": dict(zip(COMMON_FOUR, combined[index].tolist()))})
+    # Trained-class scores are defined only when every member shares one five- or six-class target.
+    # They are added beside the common-four fields, which stay computed exactly as above.
+    targets = {manifest["members"][member_id]["target"] for member_id in member_ids}
+    native_target = next(iter(targets)) if len(targets) == 1 else None
+    native_labels = NATIVE_OUTPUT_LABELS.get(native_target)
+    if native_labels is not None:
+        native_combined = aggregate_probabilities(manifest, candidate, native_probabilities, native=True)
+        for index, report in enumerate(reports):
+            report.update({"native_predicted_class": native_labels[int(native_combined[index].argmax())],
+                           "native_class_scores": dict(zip(native_labels, native_combined[index].tolist()))})
     peak_ram = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
     if sys.platform != "darwin":
         peak_ram *= 1024
@@ -490,6 +507,10 @@ def predict_sites(manifest_path: Path, structure_path: Path, sites: list[dict], 
             "peak_cuda_allocated_bytes": int(torch.cuda.max_memory_allocated(resolved_device)) if resolved_device.type == "cuda" else None,
             "peak_cuda_reserved_bytes": int(torch.cuda.max_memory_reserved(resolved_device)) if resolved_device.type == "cuda" else None},
     }
+    if native_labels is not None:
+        result.update(schema="deepmzyme-metal-predictions-v2", native_class_order=list(native_labels),
+                      native_metal_label_scheme=native_target,
+                      common_four_rule="sum Fe/Co/Ni probabilities before argmax")
     if include_member_predictions:
         result["member_predictions"] = member_predictions
     return result

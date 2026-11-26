@@ -242,9 +242,13 @@ def native_to_common(probabilities: np.ndarray, target: str) -> np.ndarray:
 
 
 def aggregate_probabilities(manifest: dict, candidate: str, probs: dict[str, np.ndarray],
-                            fold: int | None = None) -> np.ndarray:
+                            fold: int | None = None, native: bool = False) -> np.ndarray:
     """Mean within each family then weighted mean across families; never drop missing members."""
-    candidate_member_ids(manifest, candidate)
+    ids = candidate_member_ids(manifest, candidate)
+    targets = {manifest["members"][member]["target"] for member in ids}
+    if native and len(targets) != 1:
+        raise ReleaseError("Native output requires one training target across every ensemble member")
+    width = len(NATIVE[next(iter(targets))]) if native else 4
     if fold is not None and (isinstance(fold, bool) or fold not in range(manifest.get("n_folds", 5))):
         raise ReleaseError("Invalid OOF fold")
     total = None
@@ -261,10 +265,10 @@ def aggregate_probabilities(manifest: dict, candidate: str, probs: dict[str, np.
         arrays = []
         for member_id in ids:
             values = np.asarray(probs[member_id])
-            if values.ndim != 2 or values.shape[-1] != 4 or not np.isfinite(values).all():
-                raise ReleaseError(f"Invalid common-four probabilities: {member_id}")
+            if values.ndim != 2 or values.shape[-1] != width or not np.isfinite(values).all():
+                raise ReleaseError(f"Invalid {'native' if native else 'common-four'} probabilities: {member_id}")
             if np.any(values < 0) or np.any(values > 1) or not np.allclose(values.sum(-1), 1, atol=2e-6, rtol=0):
-                raise ReleaseError(f"Common-four probabilities must sum to one: {member_id}")
+                raise ReleaseError(f"{'Native' if native else 'Common-four'} probabilities must sum to one: {member_id}")
             if shape is not None and values.shape != shape:
                 raise ReleaseError("Ensemble member row shapes differ")
             shape = values.shape

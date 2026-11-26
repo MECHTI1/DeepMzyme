@@ -54,8 +54,8 @@ def parser() -> argparse.ArgumentParser:
     parity.add_argument("--output-dir", required=True, type=Path)
     predict = commands.add_parser("predict", help="Predict supported metal identity conditional on a supplied structure and site")
     predict.add_argument("--manifest", required=True, type=Path)
-    predict.add_argument("--candidate", help="Catalog candidate to run; defaults to the manifest reference. "
-                                             "Missing checkpoints fail explicitly")
+    predict.add_argument("--candidate", help="Catalog candidate to run. Defaults to the sole bound candidate "
+                                             "when there is one, otherwise the manifest reference.")
     predict.add_argument("--structure", required=True, type=Path)
     site = predict.add_mutually_exclusive_group(required=True)
     site.add_argument("--center", nargs=3, type=float, metavar=("X", "Y", "Z"))

@@ -7,12 +7,10 @@ owns ensemble comparisons, parity evidence and timing.
 ## Public checkpoint inference
 
 Run these commands from the repository root after the locked CPU installation in
-[Getting started](../../docs/GETTING_STARTED.md). The standalone candidate
-`unified_p5_trunklr1e4_5fold_s42` averages the five public
-`unified__P_five_class_trunklr1e4__fold{0..4}__seed42` terminal checkpoints.
-It trains on five classes and sums Fe and Co+Ni probabilities into Class VIII
-before averaging common-four scores. It is an available research configuration;
-no deployment default has been chosen.
+[Getting started](../../docs/GETTING_STARTED.md). The official five-class predictor
+`unified_p5_trunklr1e4_5fold_s42` averages the class scores from five terminal
+checkpoints, one for each held-out fold of the frozen sequence-clustered split.
+Their IDs are `unified__P_five_class_trunklr1e4__fold{0..4}__seed42`.
 
 Download and verify the public archive, then extract only its training-run subtree.
 The archive also contains historical test outputs; they are not inputs to binding
@@ -44,6 +42,7 @@ Unrelated catalog members are outside this explicit scope; requesting them from
 this manifest fails. Omitting `bind --candidate` retains the developer workflow
 that requires the complete local catalog. Existing output files are never overwritten.
 
+The prediction command uses the single candidate bound above automatically.
 For a structure and site of your own, install the ESM group and replace the
 example structure path and atom locator below. The locator fields are
 `CHAIN:RESSEQ:ICODE:ATOM[:ALTLOC]`; `_` denotes a blank field. Alternatively,
@@ -53,7 +52,6 @@ replace `--atom` with `--center X Y Z` in the structure's coordinate frame.
 uv sync --frozen --group esm
 uv run --frozen --no-sync python src/metal_release_cli.py predict \
   --manifest DeepMzyme_Data/public_metal/bound_manifest.json \
-  --candidate unified_p5_trunklr1e4_5fold_s42 \
   --structure path/to/holo_structure.pdb \
   --atom A:402:_:ZN:_ \
   --embedding-cache ~/.cache/deepmzyme/inference_esmc600m \
@@ -67,9 +65,26 @@ embeddings; later calls reuse matching cached embeddings. The inference cache
 requires `bfloat16` model-dtype metadata that the training helper's cache does
 not supply. Keep these caches separate.
 
-The output JSON records `class_order: ["Mn", "Cu", "Zn", "Class VIII"]`
-and `calibration: "none"` at the top level. Each entry in `sites` contains
-`predicted_class`, `class_scores` in that class order, and `quality_flags`.
+The public predictor writes `deepmzyme-metal-predictions-v2` JSON. For each site:
+
+| Field | Meaning |
+|---|---|
+| `native_predicted_class` | The highest-scoring class among Mn, Cu, Zn, Fe and Co+Ni. |
+| `native_class_scores` | The mean ensemble score for each of those five training classes. Co+Ni groups cobalt and nickel. |
+| `predicted_class` and `class_scores` | The four-class prediction and scores used in the benchmarks. Class VIII combines the Fe and Co+Ni scores. |
+| `quality_flags` | Input and site quality flags for interpreting the prediction. |
+
+The top-level fields `native_class_order`, `native_metal_label_scheme` and
+`common_four_rule` describe the training labels and how they map to the four
+classes in `class_order`. The scores are uncalibrated (`calibration: "none"`).
+For example, Zn can have the largest individual score while Fe and Co+Ni
+together give Class VIII the largest combined score. The benchmark tables
+evaluate the four-class output.
+
+Other research candidates trained entirely on six classes also report their
+native scores. Four-class candidates and candidates that mix training targets
+use the common-four v1 format.
+
 The sequence is reconstructed from the coordinate file's observed residues;
 it need not include unresolved residues from the full biological sequence.
 
