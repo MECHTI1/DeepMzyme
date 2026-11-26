@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 from contextlib import contextmanager
 from datetime import datetime, timezone
+from decimal import Decimal
 import fcntl
 import hashlib
 import ipaddress
@@ -30,6 +31,7 @@ import urllib.request
 
 # One launch window may replace a host whose kernel refused delegation before any workload, at most this many tries.
 HOST_TRY_LIMIT = 3
+V5_EXECUTION_SCOPES = {"g2_then_fold0_v5", "fold_execution_v5"}
 
 
 class RunpodError(RuntimeError):
@@ -278,6 +280,9 @@ def validate_config(config: Mapping[str, Any], *, fresh: bool = True) -> dict[st
     create path keeps the fresh quote.
     """
     _require(type(fresh) is bool, "Quote freshness must be an explicit boolean.")
+    if config.get("execution_scope") in V5_EXECUTION_SCOPES:
+        _require(config.get("runpod", {}).get("adopt_pod_id") is None,
+                 "Execution v5 requires a new allocation with an opening credit record and cannot adopt a pod.")
     return _validate(config, fresh=fresh)
 
 
@@ -288,6 +293,128 @@ def _status(pod: Mapping[str, Any]) -> tuple[str, str]:
 def _stopped(pod: Mapping[str, Any]) -> bool:
     desired, runtime = _status(pod)
     return desired == "EXITED" and runtime == "stopped"
+
+
+def _verify_prior_credit(cfg, observed):
+    """Check the reviewed cumulative EC and metal charge ledger for this allocation."""
+    guard = cfg["unit_credit"]
+    path = Path(guard.get("prior_ledger_path") or "")
+    _require(path.is_absolute(), "A reviewed project charge ledger is required.")
+    data = path.read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    _require(digest == guard.get("prior_ledger_sha256"), "The reviewed project charge ledger changed.")
+    ledger = json.loads(data)
+    _require(ledger.get("schema") == "deepmzyme-project-credit-ledger-v1"
+             and ledger.get("next_pod_name") == cfg["pod_name"], "Project charge ledger belongs to another window.")
+    lanes = ledger.get("charges")
+    _require(isinstance(lanes, dict) and set(lanes) == {"ec", "metal"},
+             "The project charge ledger must cover both EC and metal.")
+    total = Decimal(0)
+    intervals = {}
+    for rows in lanes.values():
+        _require(isinstance(rows, list), "Invalid project charge list.")
+        for row in rows:
+            _require(isinstance(row, dict), "Invalid project charge entry.")
+            resource = row.get("resource")
+            _require(isinstance(resource, str) and resource.strip(), "A project charge requires a resource.")
+            start = _number(row.get("from_unix"), "charge start", zero=True)
+            end = _number(row.get("until_unix"), "charge end")
+            _require(start < end <= observed, "Invalid project charge interval.")
+            intervals.setdefault(resource, []).append((start, end))
+            _number(row.get("gross_usd"), "project charge", zero=True)
+            total += Decimal(str(row["gross_usd"]))
+    for periods in intervals.values():
+        ordered = sorted(periods)
+        _require(all(before[1] <= after[0] for before, after in zip(ordered, ordered[1:])),
+                 "Project charge intervals overlap for one resource.")
+    incurred = _number(guard.get("project_incurred_before_window_usd"), "prior project charges", zero=True)
+    _require(Decimal(str(incurred)) >= total, "Prior project charges are below the reconciled ledger total.")
+    return digest
+
+
+def _window_credit(cfg, policy, account, baseline, *, observed, now, pod_id, reserve_seconds):
+    """Conservative gross project, account and available-credit checks for one reviewed window."""
+    g = cfg["unit_credit"]
+    q = cfg["quote"]
+    def amount(value, name):
+        return _number(value, name, zero=True)
+    age_limit = _number(policy["accounting"]["billing_max_age_seconds"], "billing freshness")
+    _require(0 <= now - observed <= min(300, age_limit), "Live billing and balance read is stale.")
+    hold = _number(reserve_seconds, "work and closeout reserve")
+    stop = min(cfg["absolute_hard_stop_unix"], _number(g["approved_until_unix"], "funding expiry"))
+    _require(g["approved_from_unix"] <= observed <= now and now + hold <= stop,
+             "Work and preservation extend beyond this funding window.")
+    _require(policy["window"]["seconds"] == 86400 and policy["currency"] == "USD", "Unexpected rolling policy.")
+    rolling = _number(policy["default_limit_usd"], "rolling limit")
+    if g.get("override_evidence_reference"):
+        matching = [r for r in policy["overrides"]["approved_overrides"]
+                    if r["evidence_reference"] == g["override_evidence_reference"] and r["scope"] == g["override_scope"]]
+        _require(len(matching) == 1, "No matching recorded rolling override.")
+        row = matching[0]
+        _require(_epoch(row["approved_at"]) <= now and now + hold <= min(_epoch(row["expires_at"]),
+                 _epoch(row["absolute_stop_boundary"])), "The rolling override does not cover closeout.")
+        rolling = _number(row["approved_limit_usd"], "approved rolling limit")
+    pods = [r["id"] for r in account["pods"]]
+    _require(pods == ([] if pod_id is None else [pod_id]), "The account has an unexpected allocation.")
+    own_rate = _number(q["hourly_compute_usd"], "compute rate") + amount(q["running_storage_hourly_usd"], "storage")
+    _require(amount(account["spend_per_hour_usd"], "account spend rate") <=
+             (own_rate if pod_id else 0) + amount(g["other_account_hourly_upper_usd"], "other account rate"),
+             "Unexpected account spend rate; reconcile outstanding charges.")
+    other_rate = amount(g["other_account_hourly_upper_usd"], "other account rate")
+    margin = 1 + _number(q["margin_fraction"], "margin")
+    fees = amount(q["egress_reserve_usd"], "egress") + amount(q["stopped_storage_reserve_usd"], "retention")
+    opened = _number(baseline["observed_unix"], "opening time")
+    elapsed = now - opened
+    _require(elapsed >= 0, "Invalid opening observation.")
+    other = amount(g["other_account_fixed_upper_usd"], "other account reservations")
+    old_unpaid = amount(g["unposted_before_window_upper_usd"], "unpaid before opening")
+    prior_rolling = amount(g["rolling_before_window_upper_usd"], "rolling spend before opening")
+    _require(old_unpaid <= prior_rolling, "Unposted charges exceed the reconciled prior reserve.")
+    hours = (elapsed + hold) / 3600
+    submitted_cap = _number(cfg["gross_ceiling_usd"], "window ceiling")
+    own = margin * (fees + own_rate * hours)
+    _require(own + q["prior_charge_usd"] <= submitted_cap, "Approved window envelope exhausted.")
+    total = _number(g["project_ceiling_usd"], "total project ceiling")
+    spent = amount(g["project_incurred_before_window_usd"], "prior project charges")
+    _require(spent >= amount(g["reported_prior_spend_usd"], "reported prior spend"),
+             "Prior project charges cannot be reset for a successor window.")
+    other_project = amount(g["other_project_reserved_usd"], "other task and window reservations")
+    gross = spent + other_project + own
+    _require(gross <= total, f"Project ceiling exhausted: {gross:.2f} > {total:.2f} USD.")
+    recent = amount(account["billing_25h_usd"], "recent gross billing")
+    previous_window = prior_rolling if observed - opened < 25 * 3600 else 0
+    # A new pod has incurred no charges. Leave room for prior charges that have yet to post.
+    if pod_id is None:
+        reconciled = Decimal(str(recent)) + Decimal(str(old_unpaid)) <= Decimal(str(prior_rolling))
+    else:
+        # After opening, previously unposted charges can appear in the bill. The prior gross bound
+        # covers them once. Neither future closeout nor outstanding fixed reservations explain past debits.
+        metered_recent = margin * (own_rate + other_rate) * min(25, elapsed / 3600)
+        reconciled = recent <= previous_window + metered_recent
+    _require(reconciled, "Live account bill exceeds the reconciled upper bound; review posted and outstanding charges.")
+    rolling_gross = previous_window + other + margin * (fees + (own_rate + other_rate) * min(24, hours))
+    warning = _number(policy["warning_fraction"], "warning fraction")
+    _require(warning <= 1, "Invalid warning fraction.")
+    # A specific, recorded warning decision may permit the same window up to its bound ceiling.
+    adjusted = (g.get("warning_acknowledged_for_usd") == rolling
+                and isinstance(g.get("warning_evidence_reference"), str) and bool(g["warning_evidence_reference"].strip()))
+    limit = rolling if adjusted else rolling * warning
+    balance = amount(account["balance_usd"], "balance")
+    future = margin * ((own_rate + other_rate) * hold / 3600 + fees)
+    report = (f"project projection {gross:.2f}/{total:.2f}, rolling projection {rolling_gross:.2f}/{rolling:.2f}, "
+              f"credit {balance:.2f}, work plus closeout {future:.2f} USD")
+    _require(rolling_gross < limit or (limit == rolling and rolling_gross <= limit),
+             f"Rolling warning or ceiling reached: {report}; threshold {limit:.2f}, excess {rolling_gross-limit:.2f} USD.")
+    opening = amount(baseline["balance_usd"], "opening balance")
+    incurred_bound = old_unpaid + other + margin * (fees + (own_rate + other_rate) * elapsed / 3600)
+    _require(balance >= opening - incurred_bound, "Account debit exceeds reconciled liabilities.")
+    opening_need = old_unpaid + other + margin * (fees + (own_rate + other_rate) * hours)
+    _require(opening >= opening_need and balance >= future,
+             f"Insufficient credit: {report}; additional funds needed {max(opening_need-opening, future-balance):.2f} USD.")
+    _require(pod_id is not None or balance >= _number(g["opening_balance_floor_usd"], "opening floor"),
+             "Balance is below the approved opening floor.")
+    return {"approved": True, "live_balance_usd": balance, "project_gross_upper_usd": gross,
+            "rolling_gross_upper_usd": rolling_gross, "unit_and_closeout_usd": future}
 
 
 def _gpu_count(pod: Mapping[str, Any]) -> int | None:
@@ -411,7 +538,10 @@ class RunpodController:
             _require(not self.cfg.get("adopt_pod_id"), "An adoption configuration can never create a pod.")
             try:
                 self._unchanged()
-                self._create_cost()
+                cost = self._create_cost()
+                if self.config.get("execution_scope") in V5_EXECUTION_SCOPES:
+                    # Admission before creating the pod bounds the entire first window. Later units recheck live credit.
+                    self.check_window_funds(reserve_seconds=cost["max_total_seconds"])
                 with self._lock():
                     state = self._state()
                     _require(state.get("phase") == "creating" and state.get("create_attempted") is True
@@ -494,6 +624,73 @@ class RunpodController:
         _require(total <= self.cfg['quote']['prior_charge_usd'], 'Fresh billing exceeds the recorded prior-charge reserve.')
         _write(self.root / 'stock_billing.json', {'observed_unix': time.time(), 'total_usd': total,
                                                 'config_sha256': self.config_sha, 'billing': billing})
+
+    def check_window_funds(self, *, reserve_seconds, pod_id=None, unit=None):
+        """Read account credit at create and immediately before each new Phase 4 job."""
+        self._unchanged()
+        guard = self.cfg.get("unit_credit")
+        _require(isinstance(guard, dict), "A v5 window requires a bound financial authorization.")
+        policy_path = Path(guard["policy_path"])
+        reader = Path(guard["account_reader"])
+        _require(policy_path.is_absolute() and reader.is_absolute()
+                 and _sha(reader) == guard["account_reader_sha256"], "The reviewed account reader changed.")
+        # Read and authenticate the same policy bytes; an override change closes new admissions.
+        policy_bytes = policy_path.read_bytes()
+        _require(hashlib.sha256(policy_bytes).hexdigest() == guard["policy_sha256"],
+                 "The rolling spending policy changed; review the window again.")
+        policy = json.loads(policy_bytes)
+        observed = time.time()
+        result = subprocess.run([sys.executable, "-I", "-B", str(reader)], capture_output=True,
+                                check=False, timeout=90, cwd="/")
+        _require(result.returncode == 0, "Cannot verify the live account balance and billing.")
+        account = json.loads(result.stdout)
+        ledger_sha = _verify_prior_credit(self.cfg, observed)
+        now = time.time()
+        if pod_id is None:
+            # The controller clamps runtime to the absolute deadline. A clipped window must still cover its first unit.
+            reserve_seconds = min(reserve_seconds, self.cfg["absolute_hard_stop_unix"] - now)
+            minimum = _number(guard["initial_unit_and_closeout_seconds"], "opening work and closeout reserve")
+            _require(reserve_seconds >= minimum, "Too little window remains for the first unit and closeout.")
+        with self._lock():
+            state = self._state()
+            path = self.root / "unit_credit_opening.json"
+            binding = {"config_sha256": self.config_sha, "session_id": state["session_id"],
+                       "prior_ledger_sha256": ledger_sha}
+            pin = state.get("unit_credit_opening_sha256")
+            if pod_id is None:
+                _require(state.get("phase") == "creating" and self.host_try == 1 and not self.cfg.get("adopt_pod_id"),
+                         "Opening credit requires the owned initial create intent.")
+            else:
+                _require(pin and state.get("pod_id") == pod_id, "Missing credit opening or wrong pod.")
+            if pin:
+                data = path.read_bytes()
+                _require(hashlib.sha256(data).hexdigest() == pin, "Credit opening differs from its lifecycle pin.")
+                baseline = json.loads(data)
+                _require(all(baseline.get(k) == v for k, v in binding.items()),
+                         "Credit opening belongs to another window.")
+            else:
+                _require(not path.exists(), "An unbound credit opening already exists.")
+                baseline = dict(binding, observed_unix=observed,
+                                balance_usd=_number(account["balance_usd"], "balance", zero=True))
+            receipt = _window_credit(self.cfg, policy, account, baseline, observed=observed, now=now,
+                                     pod_id=pod_id, reserve_seconds=reserve_seconds)
+            if not pin:
+                data = (json.dumps(baseline, indent=2, sort_keys=True, allow_nan=False) + "\n").encode()
+                with path.open("xb") as handle:
+                    os.fchmod(handle.fileno(), 0o600)
+                    handle.write(data)
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                pin = hashlib.sha256(data).hexdigest()
+                state["unit_credit_opening_sha256"] = pin
+                _write(self.state_path, state)
+                self._cached_state = dict(state)
+        receipt.update(opening_sha256=pin, prior_ledger_sha256=ledger_sha)
+        receipt.update(config_sha256=self.config_sha, pod_id=pod_id, unit_id=unit, observed_unix=observed)
+        token = hashlib.sha256(json.dumps([pod_id, unit]).encode()).hexdigest()
+        _write(self.root / "unit_credit_receipts" / (token + ".json"), receipt)
+        _write(self.root / "unit_credit_last.json", receipt)
+        return receipt
 
     def _create_cost(self) -> dict[str, Any]:
         if not self.cfg.get('stock_search_seconds'):

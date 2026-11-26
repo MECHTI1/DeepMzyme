@@ -104,6 +104,29 @@ def launch(tmp_path, monkeypatch):
                                    "prior_charge_usd": .6, "margin_fraction": .15}},
               "phase4": {"request_path": str(request), "request_sha256": sha(request),
                          "preapproval_path": str(preapproval), "preapproval_sha256": sha(preapproval)}}
+    # The real credit reader contract runs in a separate interpreter and sees this fixture's provider state.
+    reader = tmp_path / "read_account.py"
+    reader.write_text(
+        "from pathlib import Path\nimport json\n"
+        f"pods = json.loads(Path({str(api)!r}).read_text())['pods']\n"
+        "running = sum(pod.get('desiredStatus') == 'RUNNING' for pod in pods)\n"
+        "print(json.dumps({'pods': [{'id': pod['id']} for pod in pods], 'balance_usd': 12, "
+        "'spend_per_hour_usd': round(running * .90, 2), 'billing_25h_usd': .4}))\n")
+    policy = write(tmp_path / "billing_policy.json", {"currency": "USD", "window": {"seconds": 86400},
+        "default_limit_usd": 10, "warning_fraction": .8, "accounting": {"billing_max_age_seconds": 300}})
+    now = time.time()
+    charges = write(tmp_path / "project_charges.json", {"schema": "deepmzyme-project-credit-ledger-v1",
+        "next_pod_name": POD_NAME, "charges": {"ec": [{"resource": "previous-pod", "from_unix": now - 7200,
+            "until_unix": now - 3600, "gross_usd": .5}], "metal": []}})
+    config["runpod"].update(absolute_hard_stop_unix=now + 7200, unit_credit={
+        "account_reader": str(reader), "account_reader_sha256": sha(reader),
+        "policy_path": str(policy), "policy_sha256": sha(policy),
+        "prior_ledger_path": str(charges), "prior_ledger_sha256": sha(charges),
+        "approved_from_unix": now, "approved_until_unix": now + 7200, "project_ceiling_usd": 8,
+        "project_incurred_before_window_usd": .5, "reported_prior_spend_usd": .5,
+        "rolling_before_window_upper_usd": .5, "unposted_before_window_upper_usd": .1,
+        "other_account_fixed_upper_usd": 0, "other_account_hourly_upper_usd": 0, "other_project_reserved_usd": 0,
+        "initial_unit_and_closeout_seconds": 1200, "opening_balance_floor_usd": 8})
     case = SimpleNamespace(config=config, config_path=tmp_path / "config.json", api=api, source=source,
                            authorization_path=tmp_path / "authorization.json", state_root=state_root,
                            driver_state=state_root / "driver_state.json", session_path=state_root / "session.json",

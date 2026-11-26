@@ -14,6 +14,7 @@ import hashlib
 import json
 import math
 import os
+from functools import cached_property
 from pathlib import Path, PurePosixPath
 import re
 import secrets
@@ -605,9 +606,25 @@ def complete_remote_unit(transport: ControllerTransport, host: HostPull, request
                          runner: str, action: str, remote_request: str, completed_relative: str,
                          timeout: float) -> dict[str, Any]:
     """Run/recover one declared unit, acknowledge its bytes, then finalize and copy its receipt."""
+    from ec_clean30.runpod_controller import V5_EXECUTION_SCOPES
+
     root = _absolute(request["execution_root"])
     _require(str(host.root) == request["durable_root"], "Request and independent destination differ.")
     host.sync_pending(root)
+    guard = getattr(transport, "stop_controller", None)
+    funds = request.get("provider") == "runpod" and bool(request.get("expected_chain"))
+    if guard is not None and guard.config.get("execution_scope") in V5_EXECUTION_SCOPES:
+        _require(funds, "A v5 unit must bind the Runpod provider and expected amendment chain.")
+    _require(not funds or guard is not None, "A v5 unit requires its Runpod credit controller.")
+    _require("restored_complete_sha256" not in request, "Only the verified resume inventory may bind a completion.")
+    restored = None
+    if funds and action in {"s1-unit", "refit-unit", "clean-unit", "clean-embeddings", "attach-fold", "scientific-unit"}:
+        restored = transport.restored_completions.get(str(PurePosixPath(root) / completed_relative))
+        if restored is not None:
+            _require(host.mirror_root is not None and all(
+                _sha(destination / completed_relative) == restored for destination in (host.root, host.mirror_root)),
+                "Restored completion differs from its verified independent copies.")
+            request = {**request, "restored_complete_sha256": restored}
     local_request = host.state_root / "requests" / (hashlib.sha256(remote_request.encode()).hexdigest() + ".json")
     if local_request.exists():
         _require(_json(local_request) == dict(request), "An existing unit request cannot change during recovery.")
@@ -618,14 +635,26 @@ def complete_remote_unit(transport: ControllerTransport, host: HostPull, request
     cwd = str(PurePosixPath(runner).parent.parent)
     for suffix in (".job", ".finalize", ".seal"):
         job = remote_request + suffix
-        # Launch is idempotent even if its SSH response was lost; never invent another job path.
-        try:
-            transport.launch(argv, cwd=cwd, job_dir=job)
-        except (OSError, subprocess.SubprocessError, WorkstationError):
+        saved = None
+        if suffix == ".job" and funds and restored is None:
             saved = transport.read_json(job + "/command.json", optional=True)
-            _require(saved == {"argv": argv, "cwd": cwd}, "Ambiguous remote launch; no duplicate submitted.")
-        _require(transport.read_json(job + "/command.json") == {"argv": argv, "cwd": cwd},
-                 "An existing remote job has a different command; no duplicate submitted.")
+            if saved is None:
+                from ec_clean30.phase4 import CLOSEOUT_RESERVE_SECONDS
+                # Bind the entire timeout if longer than the science forecast, plus persistence and stop time.
+                reserve = (max(timeout, 1.25 * float(request.get("forecast_seconds", timeout)))
+                           + 900 + CLOSEOUT_RESERVE_SECONDS + guard.cost["stop_reserve_seconds"])
+                guard.check_window_funds(reserve_seconds=reserve, pod_id=request["pod_id"], unit=request.get("unit_id", PurePosixPath(remote_request).name))
+            else:
+                _require(saved == {"argv": argv, "cwd": cwd}, "An existing job has a different command.")
+        # Only poll a previously admitted job. Its disappearance cannot authorize a replacement.
+        if saved is None:
+            try:
+                transport.launch(argv, cwd=cwd, job_dir=job)
+            except (OSError, subprocess.SubprocessError, WorkstationError):
+                saved = transport.read_json(job + "/command.json", optional=True)
+                _require(saved == {"argv": argv, "cwd": cwd}, "Ambiguous remote launch; no duplicate submitted.")
+        _require(transport.read_json(job + "/command.json", optional=True) == {"argv": argv, "cwd": cwd},
+                 "An existing remote job disappeared or has a different command; no duplicate submitted.")
         until = min(time.monotonic() + timeout, time.monotonic() + host.deadline - time.time() - 30)
         result = None
         while time.monotonic() < until:
@@ -644,6 +673,14 @@ def complete_remote_unit(transport: ControllerTransport, host: HostPull, request
         if suffix != ".job" and not acknowledged:
             break
         _require(suffix != ".seal" or not acknowledged, "Unexpected additional persistence cycle; no next unit admitted.")
+    if restored is not None:
+        # Verification-only work must never overwrite the predecessor's two authenticated copies.
+        remote = transport.stat_file(str(PurePosixPath(root) / completed_relative))
+        data = (host.root / completed_relative).read_bytes()
+        _require(remote is not None and remote["sha256"] == restored
+                 and hashlib.sha256(data).hexdigest() == restored and _sha(host.mirror_root / completed_relative) == restored,
+                 "Restored completion changed during verification.")
+        return json.loads(data)
     return host.receipt(root, completed_relative)
 
 
@@ -1771,6 +1808,24 @@ class RunpodTransport(ControllerTransport):
         super().__init__(Path(config["state_root"]), config["runpod"]["ssh_alias"],
                          bootstrap_python=config["bootstrap_python"])
         self.stop_controller = controller
+
+    @cached_property
+    def restored_completions(self):
+        """Index only completion digests bound to this allocation's reviewed predecessor."""
+        from ec_clean30 import execution_v5
+
+        resume = self.stop_controller.config.get("resume")
+        records = {}
+        for row in execution_v5._resume_receipts(resume) if resume else ():
+            data = Path(row["path"]).read_bytes()
+            _require(hashlib.sha256(data).hexdigest() == row["sha256"], "Preserved inventory changed.")
+            inventory = json.loads(data)
+            for entry in inventory["files"]:
+                if re.fullmatch(r"runs/[A-Za-z0-9_.-]+/complete\.json", entry["path"]):
+                    path = str(PurePosixPath(inventory["execution_root"]) / entry["path"])
+                    _require(path not in records, "Overlapping preserved unit completion records.")
+                    records[path] = entry["sha256"]
+        return records
 
     def _bounded(self, timeout):
         self.stop_controller.heartbeat()

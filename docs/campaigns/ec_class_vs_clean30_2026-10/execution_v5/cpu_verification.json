@@ -1516,6 +1516,52 @@
     "published_commit": "4347ec3ce208a921d75ec3bd7685652b5e45dc4d",
     "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4"
   },
+  "review_candidate": {
+    "base_commit": "47e349fa419a3ca5cf842a22539784f6328a93f5",
+    "candidate_manifest_sha256": "9d454f45c074d9689d28117b3007c5cd2059a148eb316f6e1281837e533ad9db",
+    "changed_execution_sha256": {
+      "src/ec_clean30/phase3.py": "7d377fca18382e23e08f649239f32d94c65daccbc3a9cdd2bb42c8d2ca44b9de",
+      "src/ec_clean30/phase4.py": "f2a671ddfc77f7ee5950cfaa1c7db1dae40efef8aa08977379ff9c32b91ec805",
+      "src/ec_clean30/runpod_controller.py": "da4c8fcd2673f6f390be3ca66c89b3a9f13eb097306e937b4e871ab0b5630ec6",
+      "src/ec_clean30/workstation.py": "e3b9a7f2c8a3381ff0f16cb0e3880a76b59c9f98c502a8172845e04f8ef1ded6"
+    },
+    "cpu_checks": {
+      "command": "python -m pytest -q tests/test_ec_clean30_unit_credit.py tests/test_ec_clean30_credit_ledger.py tests/test_ec_clean30_restored_attachment.py tests/test_ec_clean30_v5_resume_closeout.py tests/test_ec_clean30_v5_futility_boundary.py tests/test_ec_clean30_v5_resume.py tests/test_ec_clean30_workstation.py tests/test_ec_clean30_runpod_controller.py tests/test_ec_clean30_runpod_stock_search.py tests/test_ec_clean30_phase4.py tests/test_ec_clean30_phase4_dispatch_v5.py tests/test_ec_clean30_phase4_hot_storage.py tests/test_ec_clean30_phase4_v5_identity.py tests/test_ec_clean30_pretrain_execution.py tests/test_ec_clean30_phase3.py tests/test_ec_clean30_manifest_v5.py tests/test_ec_clean30_v5_launch_recovery.py tests/test_ec_clean30_workstation_v5_dispatch.py tests/test_ec_clean30_amendment_rules.py::test_function_closure_pins_are_stable_and_follow_referenced_helpers",
+      "log_sha256": "6717347e701c0c25f519aa7639757b896c07351d3899e46c05bb810f7b6ef654",
+      "network": "isolated namespace with loopback",
+      "smoke_checks_passed": 44,
+      "smoke_checks_skipped": 1,
+      "smoke_command": "python tests/smoke_checks.py",
+      "smoke_log_sha256": "637e451abe607f7e45e4e0c2dd09efc7c6d699f2160ccaeb161903914d5e2f4a",
+      "smoke_skipped": [
+        "check_multi_metal_site_level_granularity"
+      ],
+      "tests_failed": 0,
+      "tests_passed": 822,
+      "warnings": 3
+    },
+    "date": "2026-11-26",
+    "execution_files_checked": 11,
+    "launch_authorized_by_record": false,
+    "parent_manifest_sha256": "2aa2d22380a31c4c5d65771b904a15cd3818a864b4c96f9aea41c5abdb5c75a6",
+    "pinned_functions_verified": [
+      "src/ec_clean30/phase3.py::lane_gate",
+      "src/ec_clean30/phase4.py::replay_cpu_logits"
+    ],
+    "purpose": "Enforce credit on new v5 jobs, reconcile prior charges at opening, and verify restored attachments against existing bytes.",
+    "regressions": [
+      "Both v5 launch scopes refuse adopted pods before provider access. A new job requires its amendment chain and financial authorization.",
+      "Reattaching to a saved job only polls the original command. A missing command cannot trigger a replacement.",
+      "Prior posted and outstanding charges must fit the opening reserve. Later checks count elapsed metered charges and expire the prior reserve.",
+      "A restored attachment requires the preserved corpus, embeddings and original attestation. Legacy attachment construction remains available."
+    ],
+    "remaining": [
+      "Published-source verification for the candidate manifest",
+      "Reviewed window configuration and verified two-copy preparation before paid execution"
+    ],
+    "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4",
+    "status": "cpu_verified_pending_publication"
+  },
   "source_sha256": {
     "scripts/run_clean_split30_comparator.py": "5530b2801b41de02b6b83e25fdbefb8881f51c419a4ae214c88b46fef8a96402",
     "src/ec_clean30/execution_v5.py": "1491d1deef41a64f3e2dd81c99c421e311652fbe006427fcf293916adb729e4e",

@@ -1771,8 +1771,8 @@ def pretrain_embedding_command(request: Mapping[str, Any], source: Mapping[str, 
     return argv, env
 
 
-def attach_pretrain(request: Mapping[str, Any]) -> dict[str, Any]:
-    """Attach a fold's bound corpus to the verified parent cache; no fit or model build is performed."""
+def attach_pretrain(request: Mapping[str, Any], *, restored_record: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Attach the bound corpus, or check its existing bytes against a restored completion."""
     from ec_clean30 import pretrain_corpus
 
     source = verify_execution_source(Path(request["execution_manifest"]),
@@ -1802,7 +1802,7 @@ def attach_pretrain(request: Mapping[str, Any]) -> dict[str, Any]:
     digest = request["seq_manifest_sha256"]
     _require(_sha(cache / "manifest.json") == digest, "F6 parent cache manifest changed.")
     root = pretrain_corpus.pretrain_dir(view)
-    if not root.exists() or not any(root.iterdir()):
+    if restored_record is None and (not root.exists() or not any(root.iterdir())):
         if view.fold == 0:
             owned_attempt = Path(request["execution_root"]) / "runs" / _pretrain_name(request)
             base_request = {key: value for key, value in request.items() if key not in {"seq_cache", "seq_manifest_sha256"}}
@@ -1818,12 +1818,16 @@ def attach_pretrain(request: Mapping[str, Any]) -> dict[str, Any]:
     _require(inputs.corpus_sha256 == corpus_binding["sha256"]
              and receipt.get("inputs", {}).get("parent_sequence_means", {}).get("manifest_sha256") == digest,
              "An existing F6 attachment belongs to another bound corpus or parent cache.")
-    return {"status": "passed", "fold": view.fold, "view_manifest_sha256": view.manifest_sha256,
-            "corpus_binding": corpus_binding, "holdout_binding": holdout_binding,
-            "parent_manifest_sha256": digest, "corpus_sha256": inputs.corpus_sha256,
-            "manifest_sha256": inputs.manifest_sha256, "receipt_sha256": inputs.receipt_sha256,
-            "verification": verification, **source_identity(source), "git_head": source["git_head"],
-            "created_utc": provenance.utc_now()}
+    evidence = {"status": "passed", "fold": view.fold, "view_manifest_sha256": view.manifest_sha256,
+                "corpus_binding": corpus_binding, "holdout_binding": holdout_binding,
+                "parent_manifest_sha256": digest, "corpus_sha256": inputs.corpus_sha256,
+                "manifest_sha256": inputs.manifest_sha256, "receipt_sha256": inputs.receipt_sha256,
+                "verification": verification}
+    if restored_record is not None:
+        _require(restored_record.get("unit_id") == request["unit_id"]
+                 and all(restored_record.get(key) == value for key, value in evidence.items()),
+                 "Restored fold attachment differs from its completed evidence.")
+    return {**evidence, **source_identity(source), "git_head": source["git_head"], "created_utc": provenance.utc_now()}
 
 
 def verify_pretrain_evidence(path: Path, source: Mapping[str, Any], *, view: views.View | None = None) -> dict[str, Any]:
