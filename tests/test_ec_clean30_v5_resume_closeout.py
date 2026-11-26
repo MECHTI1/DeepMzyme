@@ -851,3 +851,72 @@ def test_pinned_closures_and_private_imports_are_unchanged():
             text = (REPO / path).read_text()
             assert amendment_rules.private_import_problems(text, path, protected=protected) == [], path
             assert amendment_rules.private_import_problems(text, path) == [], path
+
+
+@pytest.mark.parametrize("damage", [None, "remove", "replace", "after_verify"])
+def test_new_window_verifies_bound_completed_unit_without_admitting_a_fit(build, devices, monkeypatch, damage):
+    from contextlib import nullcontext
+    from test_ec_clean30_workstation import LocalTransport
+
+    world = resumed(build, devices, monkeypatch, g2_files=g2_runs())
+    v5.prestage_resume(world.config, world.config_path, source=SOURCE)
+    v5.restore_session(world.config, RestoreTransport(), {}, world.state_path, SOURCE, lambda: None)
+    assert v5.verify_prestage(world.config)
+    relative = f"runs/{BASE}/complete.json"
+    marker = world.root / relative
+    expected = sha(marker)
+    primary = world.tmp / "new_p4"
+    mirror = world.tmp / "new_p4_mirror"
+    session = "successor"
+    request_file = world.root / "queue" / session / f"{BASE}_attempt1.json"
+    assert not Path(str(request_file) + ".job/command.json").exists()
+    request = {"unit_id": BASE, "execution_root": str(world.root), "durable_root": str(primary),
+               "python": sys.executable, "session_id": session, "pod_id": "new-pod", "provider": "runpod",
+               "expected_chain": ["fixture"], "forecast_seconds": 7200}
+    verified = []
+    # The fixture has a synthetic checkpoint. Exercise real pre-stage, restore, submission and recovery logic.
+    monkeypatch.setattr(phase4, "_runtime", lambda *a, **kw: (SOURCE, None, None, None, None))
+    monkeypatch.setattr(phase4, "_unit", lambda *a: None)
+    monkeypatch.setattr(phase4, "_execution", lambda *a: nullcontext(SimpleNamespace(state={})))
+    monkeypatch.setattr(phase4, "_verify_result", lambda req, record, *a: verified.append(record["unit_id"]))
+
+    class RecoveryTransport(LocalTransport):
+        restored_completions = workstation.RunpodTransport.restored_completions
+
+        def launch(self, argv, *, cwd, job_dir):
+            unit = json.loads(Path(argv[-1]).read_text())
+            assert unit["restored_complete_sha256"] == expected
+            if job_dir.endswith(".job"):
+                if damage == "remove":
+                    marker.unlink()
+                elif damage == "replace":
+                    marker.write_text("{}")
+            write(Path(job_dir) / "command.json", {"argv": argv, "cwd": cwd})
+            try:
+                phase4.run_unit(unit, kind="embedding")
+            except (phase4.Phase4Error, FileNotFoundError):
+                write(Path(job_dir) / "result.json", {"returncode": 1})
+            else:
+                if job_dir.endswith(".finalize") and damage == "after_verify":
+                    marker.write_text("{}")
+                write(Path(job_dir) / "result.json", {"returncode": 0})
+
+    transport = RecoveryTransport()
+    transport.stop_controller = SimpleNamespace(config=world.config, cfg={"unit_credit": {}},
+        check_window_funds=lambda **kw: pytest.fail("Already-completed fit entered new-work admission."))
+    host = workstation.HostPull(transport, primary, world.tmp / "new-host-state", max_download_bytes=100000,
+                                deadline_unix=time.time() + 600, mirror_root=mirror)
+    args = dict(action="clean-embeddings", runner=str(world.tmp / "scripts/phase4.py"),
+                remote_request=str(request_file), completed_relative=relative, timeout=3)
+    if damage is None:
+        result = workstation.complete_remote_unit(transport, host, request, **args)
+        assert result["unit_id"] == BASE and verified and set(verified) == {BASE}
+    elif damage == "after_verify":
+        with pytest.raises(workstation.WorkstationError, match="changed during verification"):
+            workstation.complete_remote_unit(transport, host, request, **args)
+        assert verified
+    else:
+        with pytest.raises(workstation.WorkstationError, match="Remote unit failed"):
+            workstation.complete_remote_unit(transport, host, request, **args)
+        assert not verified
+    assert sha(primary / relative) == sha(mirror / relative) == expected

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 from dataclasses import replace
 import json
 import math
@@ -592,6 +593,18 @@ def _verify_result(request, result, kind, source, view, *, relocated=False):
             _require(_sha(farm / f"{entry.label}.pt") == entry.file_sha256, "Completed embedding farm changed.")
 
 
+def _completed_record(request, path):
+    expected = request.get("restored_complete_sha256")
+    if expected is None and not path.exists():
+        return None
+    data = path.read_bytes()
+    # A successor can verify its bound terminal record, even though its own command marker is new.
+    _require(expected is None or hashlib.sha256(data).hexdigest() == expected, "Restored unit completion changed.")
+    record = json.loads(data)
+    _require(isinstance(record, dict), "Unit completion must be a record.")
+    return record
+
+
 def run_unit(request, *, kind):
     resource = "cpu" if kind == "clean" and request.get("provider") != "runpod" else "gpu"
     source, view, policy, authority, _ = _runtime(request, resource=resource, kind=kind)
@@ -608,8 +621,8 @@ def run_unit(request, *, kind):
     require_restored_scientific_outputs(root.resolve())
     completed = root / "runs" / request["unit_id"] / "complete.json"
     with _execution(request, policy) as execution:
-        if completed.exists():
-            record = _json(completed)
+        record = _completed_record(request, completed)
+        if record is not None:
             _verify_result(request, record, kind, source, view)
             pending = execution.state.get("pending_unit") or {}
             if (remote_clean and pending.get("run_name") == request["unit_id"] and pending.get("persisted")
@@ -1334,10 +1347,10 @@ def attach_fold(request):
     out = root / "runs" / request["unit_id"]
     complete, terminal = out / "complete.json", out / "attachment_result.json"
     with _execution(request, policy) as execution:
-        if complete.exists():
-            result = _json(complete)
+        result = _completed_record(request, complete)
+        if result is not None:
             phase3.require_record_precedence(result, source)
-            phase3.attach_pretrain(request)
+            phase3.attach_pretrain(request, restored_record=result if request.get("restored_complete_sha256") else None)
             return result
         if terminal.exists():
             result = _json(terminal)
@@ -1749,8 +1762,8 @@ def run_scientific_unit(request):
     require_restored_scientific_outputs(root.resolve())
     complete = root / "runs" / request["unit_id"] / "complete.json"
     with _execution(request, policy) as execution:
-        if complete.exists():
-            result = _json(complete)
+        result = _completed_record(request, complete)
+        if result is not None:
             _verify_scientific_result(request, result, source)
             return result
         terminal = attempt / "unit_result.json"

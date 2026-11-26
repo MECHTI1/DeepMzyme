@@ -550,6 +550,23 @@ def adoption_fixture(config, *, ready=True, started=None):
             "env": cfg["runtime_environment"] if ready else {}, "ssh": {"ip": "127.0.0.1", "port": 2222}}
 
 
+@pytest.mark.parametrize("scope", ["g2_then_fold0_v5", "fold_execution_v5"])
+@pytest.mark.parametrize("credit", [None, {"opening_balance_floor_usd": 50}])
+def test_v5_adoption_refused_before_provider_access(fixture, monkeypatch, scope, credit):
+    config, _, _, _, make = fixture
+    config["execution_scope"] = scope
+    pod = adoption_fixture(config)
+    if credit is not None:
+        config["runpod"]["unit_credit"] = credit
+    controller = make(pods=[pod])
+    monkeypatch.setattr(controller, "_call", lambda *args, **kwargs: pytest.fail("Provider accessed during adoption"))
+    with pytest.raises(rc.RunpodError, match="v5.*adopt"):
+        rc.validate_config(config)
+    with pytest.raises(rc.RunpodError, match="v5.*adopt"):
+        controller.adopt(pod["id"])
+    assert not controller.state_path.exists() and not controller.owner_path.exists()
+
+
 def test_named_adoption_arms_guard_without_creating_or_restarting(fixture):
     config, _, api, _, make = fixture
     pod = adoption_fixture(config, ready=False)
