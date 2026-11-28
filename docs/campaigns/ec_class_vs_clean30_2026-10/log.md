@@ -2112,3 +2112,66 @@ launch-window outcome and the resume gate for folds 0 and 1. Each of 18 single r
 of them fail. The campaign's CPU tests (69 files) passed with **2,882 passes and 3 skips**, capped at two CPU
 cores and 3 GB. No campaign fit, allocation or provider operation occurred. The correction can be used only after
 a re-pinned manifest, and every launch still needs its own separate explicit authorization.
+
+## evc-049
+
+2026-11-28 — **Window thirteen stopped at the first CLEAN fit on a host with read-only cgroup controls: the unit's
+capped distance-map step was refused. The caps helper now finds a step's parent without the environment, and the
+probe tests that case at admission.** Window `ec30v5-g2f0-w13` ran at `b54a93d` on 2026-11-27 under the fifth
+retry record, with a session ceiling of $60. That commit holds the execution change of 2026-11-26: a credit check
+before each new v5 job, reconciliation of prior charges at opening, and verification of restored fold attachments
+against existing bytes. The maintainer approved it on 2026-11-26 as an execution-only change (A2-GOV-7 class (a):
+four execution files, both pinned functions unchanged). Its manifest `9d454f45…` superseded `2aa2d223…` and was
+verified in published mode at `b54a93d` on 2026-11-27 (chain receipt `b0725188…`), after the commit had become
+reachable from `origin/main` through a merge that changed no file. Admission and staging passed and the records of
+window eleven were restored. The first new unit, `ecc30_clean_r2_inner_inner1_seed42`, attempt 1, ran under the
+supervised caps (`cgroup_v1_readonly`). Its worker started under the 4-core, 24 GiB cap. The worker's distance-map
+step, under its own 4-core, 8 GiB cap, was refused before it started: `container caps refused: Too few unclaimed
+CPU cores remain for this capped command.` The worker ended with code 2; its memory peak was 0.57 GB and no memory
+event occurred. No CLEAN computation ran in this window.
+
+The session preserved the refused unit's files in both copies and stopped the pod. The closeout then refused: the
+primary copy lies on a disk that was mounted with another owner for that boot, and the check that a preserved
+attempt directory belongs to the account failed. The window is therefore recorded as failed with the pod verified
+stopped. An independent check on 2026-11-28 found every preserved file identical in both copies (174,834 files),
+and the preserved pod inventory held no pending transfer; the pod was then deleted. The window cost about $5. The
+fifth retry record now holds two failed windows, so a further launch needs a new retry record. The disk is to be
+mounted with the account as owner before the next preparation.
+
+The cause of the refusal is in `container_caps.py`, not in the host
+([capped steps inside a capped unit](execution_v5/README.md#capped-steps-inside-a-capped-unit-on-read-only-hosts)).
+On the supervised backend a command started inside another capped command learned its parent only from an
+environment variable. The CLEAN steps run with an environment rebuilt from a fixed list of names, so the variable
+was gone, the step tried to reserve cores of its own and found all of them held by its own parent. The fault is as
+old as the supervised backend ([evc-041](#evc-041)). Window eleven did not meet it because its host delegated
+cgroup v2: the cap records of its three CLEAN fits name that backend.
+
+On 2026-11-28 the maintainer approved the following execution-only change (A2-GOV-7 class (a)), to be published
+once the CPU tests passed and the scientific settings were verified unchanged.
+
+- A command that reserves cores records its scope, process number and start time in its claim files. A command
+  with no parent in its environment that can reserve none of its cores continues as a nested command only if every
+  core it may use is held by one live ancestor, and it takes exactly those cores. Every other case is refused as
+  before. Once that holder has ended, the nested command ends its own tree and is refused.
+- The nested step is supervised against its own memory limit and counts against its unit's limit as well.
+- The caps probe starts one capped command inside another with the rebuilt environment, on every backend. A host
+  that fails it is rejected at admission. By the code a host with writable cgroup v1 controls fails it; this has
+  not been observed on a host.
+- The probe keeps one time limit of 70 seconds for all its steps, inside the 90 seconds that admission waits, and a
+  probe that runs out of time is a containment refusal.
+
+The claim records are trusted as written by processes of the same account, as the environment variable is.
+
+Only `container_caps.py` changes. `phase3.lane_gate` and `phase4.replay_cpu_logits` keep their pinned sources, and
+no rule, unit, chain link or scientific file changes. The scientific identity stays `66705ae7…98533f4`. Cap sizes,
+cores, threads, device, commands, seeds and epochs are unchanged.
+
+The CPU checks run the nesting through the real CLEAN fit path and through the probe, and fail against the earlier
+helper with the host's refusal. Each of 32 single reverts of the correction made one of them fail. The campaign's
+CPU tests (73 files) passed with **2,999 passes and 3 skips**, capped at two CPU cores and 3 GB.
+The whole probe, with the nested command, also passed on a cgroup v2 kernel interface on the workstation. No
+campaign fit, allocation or provider operation occurred in this work. No CLEAN step has completed on a host with
+read-only controls yet. On such a host the unit and its steps share the unit's 24 GiB; the records of window
+eleven hold no memory peak for training and the exports, so that margin is not established. The refused unit has
+one attempt left. The correction can be used only after a re-pinned manifest, and every launch still needs its own
+separate explicit authorization.
