@@ -225,6 +225,30 @@
       },
       "trigger": "Window ec30v5-g2f0-w1 ended at container caps prepare on a host with read-only cgroup v1 controls (about one minute of billing, pod deleted, absence verified)"
     },
+    "nested_caps_20261128": {
+      "cgroup_v2_kernel_interface": "On the workstation (Linux 7.0.0-44, unified cgroup hierarchy, inside a delegated session scope capped at two cores and 1.5 GB) the existing live test passed and the whole probe, with the nested command, ran on the kernel's own controls and passed in 2.9 s; no kernel group was left.",
+      "corrections": [
+        "A wrapper that reserves cores on the cgroup_v1_readonly backend records its scope, process number and start time in the claim files it holds and empties them at release",
+        "A wrapper without a parent in its environment that can reserve none of its cores continues as a nested command only when every inherited core is held by one live ancestor; it takes exactly the cores it checked, and every other case is refused as before",
+        "A nested command that found its parent in the claim records is refused once that holder has ended",
+        "The caps probe runs one capped command inside another with an environment reduced to PATH, HOME, LANG, LC_ALL, TMPDIR, USER and LOGNAME, on every backend, and its record gains nested_test",
+        "The caps probe keeps one time limit of 70 seconds for all its steps and stops a nested command that does not return"
+      ],
+      "docs_contract": "passed with 0 strict failures",
+      "local_end_to_end": "The probe ran end to end in the supervised backend on the workstation with real processes, including the nested command with the rebuilt environment, and its evidence validated; the same nesting ran through phase4._clean_fit with the comparator's real environment builder",
+      "pinned_functions_unchanged": true,
+      "scientific_files_changed": false,
+      "stated_difference": "On a read-only host a nested step is supervised at its own limit and also counts against its parent's limit; on cgroup v2 each step keeps its own kernel group. By the code a host with writable cgroup v1 controls refuses a capped command inside another one, so it is expected to fail the probe at admission; this has not been observed on a host.",
+      "stated_trust": "Claim records are trusted as written by processes of the same account, as the environment variable that names a parent is; a record is not proof that the process it names holds the lock",
+      "targeted_run": {
+        "caps": "two CPU cores, 1.5 GB",
+        "failed": 0,
+        "passed": 165,
+        "scope": "tests/test_ec_clean30_container_caps.py and tests/test_ec_clean30_nested_caps_readonly.py; the first file against the b54a93d helper: 47 failed, 114 passed, 1 skipped; each of 32 single reverts of the correction made one of its tests fail",
+        "skipped": 1
+      },
+      "trigger": "Window ec30v5-g2f0-w13: the distance-map step of ecc30_clean_r2_inner_inner1_seed42 was refused on a host with read-only cgroup v1 controls with 'Too few unclaimed CPU cores remain for this capped command.'"
+    },
     "pinned_functions": {
       "src/ec_clean30/phase3.py::lane_gate": "77d13394ad188a51a5d8258023bf5542132f4c9df53447995a1ed2e9fc4930d4",
       "src/ec_clean30/phase4.py::replay_cpu_logits": "e7d1d3a497d484a59c04544e0808ad699f720ce55511dbaa7b18099b2254f537",
@@ -1394,6 +1418,73 @@
     },
     "status": "execution_manifest_published_verified_launch_not_authorized"
   },
+  "historical_publication_20261126_b54a93d": {
+    "base_commit": "47e349fa419a3ca5cf842a22539784f6328a93f5",
+    "candidate_manifest_sha256": "9d454f45c074d9689d28117b3007c5cd2059a148eb316f6e1281837e533ad9db",
+    "changed_execution_sha256": {
+      "src/ec_clean30/phase3.py": "7d377fca18382e23e08f649239f32d94c65daccbc3a9cdd2bb42c8d2ca44b9de",
+      "src/ec_clean30/phase4.py": "f2a671ddfc77f7ee5950cfaa1c7db1dae40efef8aa08977379ff9c32b91ec805",
+      "src/ec_clean30/runpod_controller.py": "da4c8fcd2673f6f390be3ca66c89b3a9f13eb097306e937b4e871ab0b5630ec6",
+      "src/ec_clean30/workstation.py": "e3b9a7f2c8a3381ff0f16cb0e3880a76b59c9f98c502a8172845e04f8ef1ded6"
+    },
+    "cpu_checks": {
+      "command": "python -m pytest -q tests/test_ec_clean30_unit_credit.py tests/test_ec_clean30_credit_ledger.py tests/test_ec_clean30_restored_attachment.py tests/test_ec_clean30_v5_resume_closeout.py tests/test_ec_clean30_v5_futility_boundary.py tests/test_ec_clean30_v5_resume.py tests/test_ec_clean30_workstation.py tests/test_ec_clean30_runpod_controller.py tests/test_ec_clean30_runpod_stock_search.py tests/test_ec_clean30_phase4.py tests/test_ec_clean30_phase4_dispatch_v5.py tests/test_ec_clean30_phase4_hot_storage.py tests/test_ec_clean30_phase4_v5_identity.py tests/test_ec_clean30_pretrain_execution.py tests/test_ec_clean30_phase3.py tests/test_ec_clean30_manifest_v5.py tests/test_ec_clean30_v5_launch_recovery.py tests/test_ec_clean30_workstation_v5_dispatch.py tests/test_ec_clean30_amendment_rules.py::test_function_closure_pins_are_stable_and_follow_referenced_helpers",
+      "log_sha256": "6717347e701c0c25f519aa7639757b896c07351d3899e46c05bb810f7b6ef654",
+      "network": "isolated namespace with loopback",
+      "smoke_checks_passed": 44,
+      "smoke_checks_skipped": 1,
+      "smoke_command": "python tests/smoke_checks.py",
+      "smoke_log_sha256": "637e451abe607f7e45e4e0c2dd09efc7c6d699f2160ccaeb161903914d5e2f4a",
+      "smoke_skipped": [
+        "check_multi_metal_site_level_granularity"
+      ],
+      "tests_failed": 0,
+      "tests_passed": 822,
+      "warnings": 3
+    },
+    "date": "2026-11-26",
+    "execution_files_checked": 11,
+    "launch_authorized_by_record": false,
+    "parent_manifest_sha256": "2aa2d22380a31c4c5d65771b904a15cd3818a864b4c96f9aea41c5abdb5c75a6",
+    "pinned_functions_verified": [
+      "src/ec_clean30/phase3.py::lane_gate",
+      "src/ec_clean30/phase4.py::replay_cpu_logits"
+    ],
+    "publication": "The change was committed as b54a93df58d0958d2e59582833ebfce3e707cc58 on the execution lineage and became reachable from origin/main through the merge 53080dc23c5c658703d7fa29984e06d7510bb9c0 on 2026-11-27, which changed no file on main. Published-mode chain verification and published-mode verification of this manifest passed at b54a93d on 2026-11-27 with a fresh chain receipt.",
+    "publication_verification": {
+      "chain_receipt": {
+        "sha256": "b0725188c390d790435da01b406dca78ff81b439fbb0f7061cb58b46ea7a12c7"
+      },
+      "date": "2026-11-27",
+      "execution_source_commit": "b54a93df58d0958d2e59582833ebfce3e707cc58",
+      "execution_source_published": true,
+      "gpu_or_provider_operations": 0,
+      "launch_authorized": false,
+      "manifest": {
+        "path": "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v5/manifest.json",
+        "sha256": "9d454f45c074d9689d28117b3007c5cd2059a148eb316f6e1281837e533ad9db"
+      },
+      "manifest_source_pin_count": 11,
+      "published_commit": "b54a93df58d0958d2e59582833ebfce3e707cc58",
+      "published_through_merge": "53080dc23c5c658703d7fa29984e06d7510bb9c0",
+      "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4",
+      "supersedes_manifest_sha256": "2aa2d22380a31c4c5d65771b904a15cd3818a864b4c96f9aea41c5abdb5c75a6"
+    },
+    "purpose": "Enforce credit on new v5 jobs, reconcile prior charges at opening, and verify restored attachments against existing bytes.",
+    "regressions": [
+      "Both v5 launch scopes refuse adopted pods before provider access. A new job requires its amendment chain and financial authorization.",
+      "Reattaching to a saved job only polls the original command. A missing command cannot trigger a replacement.",
+      "Prior posted and outstanding charges must fit the opening reserve. Later checks count elapsed metered charges and expire the prior reserve.",
+      "A restored attachment requires the preserved corpus, embeddings and original attestation. Legacy attachment construction remains available."
+    ],
+    "remaining": [
+      "Reviewed window configuration and verified two-copy preparation before paid execution"
+    ],
+    "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4",
+    "status": "execution_manifest_published_verified_and_used_by_window_13",
+    "top_level_inventory_note": "The top-level status, date, base_commit, publication objects, changed_files and source_sha256 of this file remain the inventory of 2026-11-24 and were not refreshed for this manifest or for its successor.",
+    "used_by_window": "ec30v5-g2f0-w13"
+  },
   "integration_science_sha256": {
     "scripts/run_ec_clean30_campaign.py": "190d968e2e3421e69e7f3472f01fdf9d82dd0ec58b679ced34bf6a0613010e46",
     "scripts/run_ec_clean30_clean_sanity.py": "01a68db20a237c90125603aa779b72ec66d40d9be3433e8fe2ac5b6d66829da5",
@@ -1517,46 +1608,56 @@
     "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4"
   },
   "review_candidate": {
-    "base_commit": "47e349fa419a3ca5cf842a22539784f6328a93f5",
-    "candidate_manifest_sha256": "9d454f45c074d9689d28117b3007c5cd2059a148eb316f6e1281837e533ad9db",
+    "base_commit": "b54a93df58d0958d2e59582833ebfce3e707cc58",
+    "candidate_manifest_sha256": "9e610b3305c10ba5fc882ad2875df3d31a5144ea7378b3d26ceda6e4de3456c6",
     "changed_execution_sha256": {
-      "src/ec_clean30/phase3.py": "7d377fca18382e23e08f649239f32d94c65daccbc3a9cdd2bb42c8d2ca44b9de",
-      "src/ec_clean30/phase4.py": "f2a671ddfc77f7ee5950cfaa1c7db1dae40efef8aa08977379ff9c32b91ec805",
-      "src/ec_clean30/runpod_controller.py": "da4c8fcd2673f6f390be3ca66c89b3a9f13eb097306e937b4e871ab0b5630ec6",
-      "src/ec_clean30/workstation.py": "e3b9a7f2c8a3381ff0f16cb0e3880a76b59c9f98c502a8172845e04f8ef1ded6"
+      "src/ec_clean30/container_caps.py": "7f03abc1dfdfb866daff3b9a9cc9e415bd45ff0a194c9157d69638363b2ac56c"
     },
     "cpu_checks": {
-      "command": "python -m pytest -q tests/test_ec_clean30_unit_credit.py tests/test_ec_clean30_credit_ledger.py tests/test_ec_clean30_restored_attachment.py tests/test_ec_clean30_v5_resume_closeout.py tests/test_ec_clean30_v5_futility_boundary.py tests/test_ec_clean30_v5_resume.py tests/test_ec_clean30_workstation.py tests/test_ec_clean30_runpod_controller.py tests/test_ec_clean30_runpod_stock_search.py tests/test_ec_clean30_phase4.py tests/test_ec_clean30_phase4_dispatch_v5.py tests/test_ec_clean30_phase4_hot_storage.py tests/test_ec_clean30_phase4_v5_identity.py tests/test_ec_clean30_pretrain_execution.py tests/test_ec_clean30_phase3.py tests/test_ec_clean30_manifest_v5.py tests/test_ec_clean30_v5_launch_recovery.py tests/test_ec_clean30_workstation_v5_dispatch.py tests/test_ec_clean30_amendment_rules.py::test_function_closure_pins_are_stable_and_follow_referenced_helpers",
-      "log_sha256": "6717347e701c0c25f519aa7639757b896c07351d3899e46c05bb810f7b6ef654",
+      "command": "python -m pytest -q tests/test_ec_clean30*.py",
+      "files": 73,
+      "log_sha256": "ab5f38a7eb456f19fc9e8d4b47c62a54c1dc9a1f62c65b6ab7a3a2d4f85e09aa",
       "network": "isolated namespace with loopback",
+      "selected_run": {
+        "log_sha256": "8edffe9d3fe52577eb9b32416deadf140ffb4ecf4f916f03400fd79d9464b365",
+        "scope": "the nineteen entries of the 2026-11-26 candidate run plus tests/test_ec_clean30_container_caps.py, tests/test_ec_clean30_nested_caps_readonly.py, tests/test_ec_clean30_runpod_runtime.py, tests/test_ec_clean30_workstation_bootstrap.py and tests/test_ec_clean30_fold0_session.py",
+        "tests_failed": 0,
+        "tests_passed": 1106,
+        "tests_skipped": 1
+      },
       "smoke_checks_passed": 44,
       "smoke_checks_skipped": 1,
       "smoke_command": "python tests/smoke_checks.py",
-      "smoke_log_sha256": "637e451abe607f7e45e4e0c2dd09efc7c6d699f2160ccaeb161903914d5e2f4a",
+      "smoke_log_sha256": "6ba042f6f9ba37c5e51959b0cecd39d62743d3c593074194ffaf3c1e5aacb578",
       "smoke_skipped": [
         "check_multi_metal_site_level_granularity"
       ],
       "tests_failed": 0,
-      "tests_passed": 822,
+      "tests_passed": 2999,
+      "tests_skipped": 3,
       "warnings": 3
     },
-    "date": "2026-11-26",
+    "date": "2026-11-28",
     "execution_files_checked": 11,
     "launch_authorized_by_record": false,
-    "parent_manifest_sha256": "2aa2d22380a31c4c5d65771b904a15cd3818a864b4c96f9aea41c5abdb5c75a6",
+    "parent_manifest_sha256": "9d454f45c074d9689d28117b3007c5cd2059a148eb316f6e1281837e533ad9db",
     "pinned_functions_verified": [
       "src/ec_clean30/phase3.py::lane_gate",
       "src/ec_clean30/phase4.py::replay_cpu_logits"
     ],
-    "purpose": "Enforce credit on new v5 jobs, reconcile prior charges at opening, and verify restored attachments against existing bytes.",
+    "purpose": "Let a capped step that a capped unit starts with a rebuilt environment run on a host with read-only cgroup controls, and test that case in the caps probe at host admission.",
     "regressions": [
-      "Both v5 launch scopes refuse adopted pods before provider access. A new job requires its amendment chain and financial authorization.",
-      "Reattaching to a saved job only polls the original command. A missing command cannot trigger a replacement.",
-      "Prior posted and outstanding charges must fit the opening reserve. Later checks count elapsed metered charges and expire the prior reserve.",
-      "A restored attachment requires the preserved corpus, embeddings and original attestation. Legacy attachment construction remains available."
+      "On the supervised backend a capped command started inside another one with an environment that no longer names its parent stays on its parent's cores under its own memory limit. Tested through the real CLEAN fit path for the distance map, the training launcher and the export launcher.",
+      "The parent is accepted only when every core the command may use is held by one live ancestor, matched by process number and start time, and the command takes exactly the cores whose holder it checked. A holder that is not an ancestor, different holders, a free core beside held ones, a missing, damaged or non-private record, a claim file with a second name and a holder that has ended are refused as before.",
+      "A command that found its parent in the claim records looks the holder up again in every supervision poll and before each of its records. Once the holder has ended, the command ends its own process tree and is refused.",
+      "The nested command is killed at its own memory limit while its parent goes on, and the parent's limit counts the nested command as well, exactly once. Two nested commands started at once share the parent's cores under separate memory limits.",
+      "The caps probe starts one capped command inside another with the rebuilt environment on every backend. A host on which it fails is refused with the containment prefix, so bootstrap replaces the host before staging. A probe record without the nested test does not validate.",
+      "The whole probe ends by itself within 70 seconds whatever its steps take, inside the 90 seconds that host admission waits, and a probe that runs out of time is a containment refusal. A nested command that does not return is stopped by the probe's own outer command and leaves no process, claim or kernel group.",
+      "Commands on the cgroup v2 and writable cgroup v1 backends, commands whose environment names their parent, and commands without a parent run as before. A command whose claim record cannot be written still runs."
     ],
     "remaining": [
       "Published-source verification for the candidate manifest",
+      "The probe and one nested CLEAN step on a host with read-only cgroup controls",
       "Reviewed window configuration and verified two-copy preparation before paid execution"
     ],
     "scientific_identity_sha256": "66705ae7f35e643d81bdbc3f34e9bcdf72a7361401b3a0a37f1a0634898533f4",

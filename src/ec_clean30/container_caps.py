@@ -10,10 +10,17 @@ Where the container-scoped v1 controls exist but are read-only, the
 kernel scheduler affinity on cores claimed for this command alone, and the
 memory cap is enforced by this supervisor, which follows every descendant
 as a child subreaper and kills the whole tree above the limit. A capped command
-started inside another one keeps to its parent's cores. The host must
+started inside another one keeps to its parent's cores. It knows its parent
+from the environment or, where a step rebuilt the environment, from the claim
+records of its inherited cores: every one of them must be held by one live
+ancestor of this process, and the command ends as refused once that holder
+has ended. The claim records are trusted as written by processes of the same
+user, exactly as the environment variable is. The host must
 still have no swap backing. The memory cap there is supervised, not a kernel
 limit: it counts process memory only and reacts within one poll interval,
-while the provider's own container limit stays the kernel bound.
+while the provider's own container limit stays the kernel bound. Each nested
+command is supervised against its own limit by its own wrapper and stays in
+its parent's process tree, so its memory counts against the parent's limit too.
 """
 from __future__ import annotations
 
@@ -44,6 +51,13 @@ READONLY_BACKEND = "cgroup_v1_readonly"
 POLL_SECONDS = .25
 CPU_CLAIM_ROOT = Path("/tmp/deepmzyme-g2-cpu-claims")
 SCOPE_ENV = "DEEPMZYME_CAPS_SCOPE"
+CLAIM_RECORD_BYTES = 256
+# A step that rebuilds its environment keeps these names only; the nested probe starts its inner command so.
+NESTED_ENVIRONMENT = ("PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "USER", "LOGNAME")
+# The whole probe ends by itself inside this time, whatever its steps take. Host admission waits 90 seconds for
+# it; the rest is left for the end of a step that ran out of time (kill, wait and cleanup, five seconds each).
+PROBE_SECONDS = 70
+NESTED_PROBE_SECONDS = 30
 
 
 class CapError(RuntimeError):
@@ -605,6 +619,89 @@ def _descendants(root_pid: int) -> dict[int, str]:
     return found
 
 
+def _process_identity(pid: int) -> tuple[int, str, str] | None:
+    """Parent, state and start time of a process as procfs reports them; None when there is nothing to read."""
+    try:
+        fields = Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()
+        return int(fields[1]), fields[0], fields[19]
+    except (OSError, IndexError, ValueError):
+        return None
+
+
+def _live_ancestor(pid: int, start: str) -> bool:
+    """Whether the process with this number and start time is alive and an ancestor of this process.
+
+    The parent chain is followed one link at a time. A link counts only while the child still names the same
+    parent after that parent was read, and each process must keep the start time it had one link earlier, so a
+    number that another process took over cannot stand in for the original.
+    """
+    current, expected, visited = os.getpid(), None, set()
+    while current > 1 and current not in visited and len(visited) < 1024:
+        visited.add(current)
+        child = _process_identity(current)
+        if child is None or child[0] <= 0 or (expected is not None and child[2] != expected):
+            return False
+        parent = _process_identity(child[0])
+        again = _process_identity(current)
+        if parent is None or again is None or (again[0], again[2]) != (child[0], child[2]):
+            return False
+        if child[0] == pid:
+            return parent[1] not in ('Z', 'X') and parent[2] == start
+        current, expected = child[0], parent[2]
+    return False
+
+
+def _claim_record(scope: str) -> bytes | None:
+    """What a wrapper writes into each core claim it holds: its scope, process number and start time."""
+    identity = _process_identity(os.getpid())
+    if identity is None:
+        return None
+    return (json.dumps({'pid': os.getpid(), 'scope': scope, 'start': identity[2]}, sort_keys=True) + '\n').encode()
+
+
+def _write_claim(descriptor: int, record: bytes | None) -> None:
+    """Name the holder of a locked claim file, or leave the file empty.
+
+    The lock alone reserves the core, so a command that reserved its cores runs whether or not the record could be
+    written. A file without a complete record names no holder, and a command started inside then finds no parent
+    in it and is refused as a command without a parent is.
+    """
+    try:
+        os.ftruncate(descriptor, 0)
+        if record is not None and os.pwrite(descriptor, record, 0) != len(record):
+            os.ftruncate(descriptor, 0)
+    except OSError:
+        try:
+            os.ftruncate(descriptor, 0)
+        except OSError:
+            pass
+
+
+def _read_claim(descriptor: int) -> tuple[int, str, str] | None:
+    """The holder that a claim file names, or None unless the file is private and holds exactly one record.
+
+    A file with a second name is refused: one held file must not stand for two cores.
+    """
+    try:
+        info = os.fstat(descriptor)
+        if not (stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and not info.st_mode & 0o077
+                and info.st_nlink == 1 and 0 < info.st_size <= CLAIM_RECORD_BYTES):
+            return None
+        raw = os.pread(descriptor, CLAIM_RECORD_BYTES + 1, 0)
+        record = json.loads(raw)
+    except (OSError, ValueError, RecursionError):
+        return None
+    if type(record) is not dict or set(record) != {'pid', 'scope', 'start'}:
+        return None
+    pid, scope, start = record['pid'], record['scope'], record['start']
+    if not (type(pid) is int and pid > 0 and isinstance(scope, str) and isinstance(start, str)
+            and re.fullmatch(r'[0-9]{1,20}', start) is not None
+            and re.fullmatch(rf'deepmzyme-g2-{pid}-[0-9a-f]{{16}}', scope) is not None
+            and raw == (json.dumps(record, sort_keys=True) + '\n').encode()):
+        return None
+    return pid, scope, start
+
+
 def _status_kib(pid: int, path: str, names: tuple[str, ...]) -> dict[str, int]:
     values = {}
     for line in Path(f'/proc/{pid}/{path}').read_text().splitlines():
@@ -637,6 +734,8 @@ class _ReadonlyScope:
         self.established = False
         # A capped command started inside another one stays on its parent's claimed cores.
         self.parent_scope = os.environ.get(SCOPE_ENV) or None
+        # Set only when the parent was recognised from its claim records instead of the environment.
+        self.parent_claim: dict[str, Any] | None = None
 
     def establish(self) -> None:
         _require(_pidfd_available() and _subreaper(),
@@ -646,34 +745,67 @@ class _ReadonlyScope:
         _require(all(state == 'Z' for state in earlier.values()), 'The supervising wrapper already has live descendants.')
         _require(os.sched_getscheduler(0) == os.SCHED_OTHER, 'CPU containment requires the ordinary fair scheduler.')
         if self.parent_scope is not None:
-            _require(re.fullmatch(r'deepmzyme-g2-[0-9]+-[0-9a-f]{16}', self.parent_scope) is not None,
-                     'The enclosing capped command has an invalid identity.')
-            inherited = sorted(os.sched_getaffinity(0))
-            _require(len(inherited) >= self.cores, 'The enclosing capped command has fewer cores than this one needs.')
-            self.established = True
-            self.cpus = tuple(inherited[:self.cores])
-            self.snapshot()
+            self._join_parent(sorted(os.sched_getaffinity(0)))
             return
         CPU_CLAIM_ROOT.mkdir(mode=0o700, exist_ok=True)
         info = os.lstat(CPU_CLAIM_ROOT)
         _require(stat.S_ISDIR(info.st_mode) and info.st_uid == os.getuid() and not info.st_mode & 0o022,
                  'The CPU claim directory is not a private directory of this user.')
         self.established = True
-        chosen = []
-        for cpu in sorted(os.sched_getaffinity(0)):
+        chosen, held = [], []
+        inherited = sorted(os.sched_getaffinity(0))
+        for cpu in inherited:
             descriptor = os.open(CPU_CLAIM_ROOT / f'cpu{cpu}', os.O_RDWR | os.O_CREAT | os.O_CLOEXEC | os.O_NOFOLLOW, 0o600)
             try:
                 fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except OSError:
+                held.append(_read_claim(descriptor))
                 os.close(descriptor)
                 continue
             self.claims.append(descriptor)
             chosen.append(cpu)
             if len(chosen) == self.cores:
                 break
+        if not chosen and held and len(held) == len(inherited):
+            # No core of this process is free. A step that rebuilt its environment looks exactly like this when it
+            # starts a capped command inside its own capped command: the parent holds every inherited core. That
+            # is accepted only when all of them name one holder and that holder is a live ancestor of this process.
+            holder = held[0]
+            if (holder is not None and all(other == holder for other in held)
+                    and _live_ancestor(holder[0], holder[2])):
+                self.parent_scope = holder[1]
+                self.parent_claim = {'pid': holder[0], 'start': holder[2]}
+                # Exactly the cores whose holder was checked, not a later reading of the affinity.
+                self._join_parent(inherited)
+                return
         _require(len(chosen) == self.cores, 'Too few unclaimed CPU cores remain for this capped command.')
+        record = _claim_record(self.path.name)
+        for descriptor in self.claims:
+            _write_claim(descriptor, record)
         self.cpus = tuple(chosen)
         self.snapshot()
+
+    def _join_parent(self, inherited: list[int]) -> None:
+        """Stay on the enclosing capped command's cores; this command claims none of its own."""
+        _require(re.fullmatch(r'deepmzyme-g2-[0-9]+-[0-9a-f]{16}', self.parent_scope) is not None,
+                 'The enclosing capped command has an invalid identity.')
+        _require(len(inherited) >= self.cores, 'The enclosing capped command has fewer cores than this one needs.')
+        self.established = True
+        self.cpus = tuple(inherited[:self.cores])
+        self.snapshot()
+
+    def _require_holder(self) -> None:
+        """A parent found in the claim records must still be there: once it has ended, its cores are free for others.
+
+        Only the holder itself is looked up, by process number and start time. The chain to it is not walked
+        again, so a step that was handed to another parent in between is not ended by mistake.
+        """
+        if self.parent_claim is None:
+            return
+        identity = _process_identity(self.parent_claim['pid'])
+        if identity is None or identity[1] in ('Z', 'X') or identity[2] != self.parent_claim['start']:
+            self.kill()
+            raise CapError("The capped command that holds this command's cores has ended; its outputs cannot qualify.")
 
     def _provider_bounds(self) -> dict[str, Any]:
         bounds = {}
@@ -686,15 +818,20 @@ class _ReadonlyScope:
         return bounds
 
     def snapshot(self) -> dict[str, Any]:
+        self._require_holder()
         host_swap = _no_host_swap()
         _require(host_swap == self.host_swap, 'Host swap configuration or swap I/O counters changed during the capped command.')
-        return {'limits': self.limits, 'backend': self.backend, 'zero_swap_basis': host_swap,
-                'cpu_affinity': list(self.cpus), 'enclosing_scope': self.parent_scope,
-                'provider_container_bounds': self._provider_bounds(),
-                'cpu_stat': {'supervised_polls': self.polls, 'nr_throttled': 0, 'throttled_usec': 0},
-                'memory_events': {'oom': self.oom_events, 'oom_kill': self.oom_kills},
-                'swap_current_source': 'host_no_swap_invariant', 'swap_current_bytes': 0,
-                'memory_current_bytes': self.current, 'memory_peak_bytes': self.peak}
+        record = {'limits': self.limits, 'backend': self.backend, 'zero_swap_basis': host_swap,
+                  'cpu_affinity': list(self.cpus), 'enclosing_scope': self.parent_scope,
+                  'provider_container_bounds': self._provider_bounds(),
+                  'cpu_stat': {'supervised_polls': self.polls, 'nr_throttled': 0, 'throttled_usec': 0},
+                  'memory_events': {'oom': self.oom_events, 'oom_kill': self.oom_kills},
+                  'swap_current_source': 'host_no_swap_invariant', 'swap_current_bytes': 0,
+                  'memory_current_bytes': self.current, 'memory_peak_bytes': self.peak}
+        if self.parent_claim is not None:
+            # Present only for a parent recognised from its claim records: the ancestor that holds the cores.
+            record['enclosing_claim'] = dict(self.parent_claim)
+        return record
 
     def attach(self) -> None:
         os.sched_setaffinity(0, self.cpus)
@@ -719,6 +856,7 @@ class _ReadonlyScope:
     def enforce(self) -> None:
         """One supervision poll: no swap, no widened affinity, and the whole tree under its memory cap."""
         self.polls += 1
+        self._require_holder()
         _require(_no_host_swap() == self.host_swap,
                  'Host swap configuration or swap I/O counters changed during the capped command.')
         members = _descendants(os.getpid())
@@ -792,6 +930,10 @@ class _ReadonlyScope:
             self.kill()
         finally:
             for descriptor in self.claims:
+                try:
+                    os.ftruncate(descriptor, 0)  # A released core names no holder.
+                except OSError:
+                    pass
                 os.close(descriptor)
             self.claims = []
 
@@ -876,8 +1018,97 @@ def _run(root: Path, cpu_quota_us: int, memory_bytes: int, argv: Sequence[str], 
     return evidence
 
 
+def _helper_command() -> list[str]:
+    """How a step starts this helper as a command of its own, as ``cap_prefix`` does."""
+    return [sys.executable, str(Path(__file__).resolve())]
+
+
+def _within(deadline: float, limit: float) -> float:
+    """The time limit of one probe step: its own, or what is left of the whole probe's time when that is less."""
+    remaining = deadline - time.monotonic()
+    _require(remaining > 0, "The caps probe exceeded its time limit.")
+    return min(float(limit), remaining)
+
+
+def _nested_probe(root: Path, backend: str, deadline: float) -> dict[str, Any]:
+    """One capped command inside another, started the way a capped unit starts its own capped steps.
+
+    The outer command has the largest profile. It starts this helper again for a four-core 8 GiB step with an
+    environment rebuilt from ``NESTED_ENVIRONMENT`` alone, so only the kernel and the claim records can tell the
+    inner command where it runs. A host on which this is refused cannot run such a unit.
+    """
+    cores, outer_bytes, inner_bytes = 4, 24 * GIB, 8 * GIB
+    proof = "from pathlib import Path; print(Path('/proc/self/cgroup').read_text())"
+    if backend == READONLY_BACKEND:
+        proof = (f"import os; print(os.environ['{SCOPE_ENV}']); "
+                 "print('affinity_cpus='+str(len(os.sched_getaffinity(0))))")
+    inner = [*_helper_command(), "run", "--cgroup-root", str(root), "--cpu-cores", str(cores),
+             "--memory-bytes", str(inner_bytes), "--", sys.executable, "-c", proof]
+    limit = _within(deadline, NESTED_PROBE_SECONDS)
+    # The outer program ends a slow inner helper itself, well inside the outer limit. A helper that is asked to
+    # stop removes its own scope and its child; a kill of the outer scope alone would leave them behind.
+    wait, grace = limit * 2 / 3, limit / 6
+    program = ("import json,os,signal,subprocess\n"
+               f"env={{name:os.environ[name] for name in {NESTED_ENVIRONMENT!r} if name in os.environ}}\n"
+               f"job=subprocess.Popen({inner!r},env=env,stdin=subprocess.DEVNULL,"
+               "stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)\n"
+               "late=False\n"
+               "try:\n"
+               f"    out,err=job.communicate(timeout={wait!r})\n"
+               "except subprocess.TimeoutExpired:\n"
+               "    late=True; job.send_signal(signal.SIGTERM)\n"
+               "    try:\n"
+               f"        out,err=job.communicate(timeout={grace!r})\n"
+               "    except subprocess.TimeoutExpired:\n"
+               "        job.kill(); out,err='',''\n"
+               "print(json.dumps({'environment':sorted(env),'returncode':job.returncode,'timed_out':late,"
+               "'stdout':out,'stderr':err}))")
+    try:
+        evidence = _run(root, cores * PERIOD_US, outer_bytes, [sys.executable, "-c", program], timeout=limit, capture=True)
+    except subprocess.TimeoutExpired:
+        # Keep the refusal short: host admission reads only the end of this helper's error output.
+        raise CapError("The nested cap probe exceeded its time limit.") from None
+    _require(evidence["returncode"] == 0, "The outer command of the nested cap probe failed.")
+    try:
+        report = json.loads(evidence.pop("stdout").strip().splitlines()[-1])
+        _require(report["timed_out"] is False, "The nested cap probe exceeded its time limit.")
+        lines = [line for line in report["stderr"].splitlines() if line.strip()]
+        finished = [json.loads(line)["container_caps_finished"] for line in lines
+                    if line.startswith('{"container_caps_finished"')]
+        said = [line for line in lines if not line.startswith('{"container_caps_')]
+        reason = said[-1] if said else f"exit status {report['returncode']}"
+        if reason.startswith("container caps refused: "):
+            reason = reason[len("container caps refused: "):]
+        _require(report["returncode"] == 0 and len(finished) == 1,
+                 "A capped command started inside another one with a rebuilt environment did not run: "
+                 + reason[:300])
+        nested = {**finished[0], "cpu_cores": cores, "helper_returncode": report["returncode"],
+                  "stdout": report["stdout"]}
+        _require(nested["backend"] == backend and nested["returncode"] == 0
+                 and nested["memory_limit_bytes"] == inner_bytes and nested["cgroup"] != evidence["cgroup"]
+                 and Path(nested["cgroup"]).name in nested["stdout"]
+                 and set(report["environment"]) <= set(NESTED_ENVIRONMENT),
+                 "The nested cap probe did not confirm the inner command's own cap.")
+        if backend == READONLY_BACKEND:
+            # The parent must have been found in the claim records: this wrapper is the holder they name.
+            _require(nested["before"]["enclosing_scope"] == Path(evidence["cgroup"]).name
+                     and (nested["before"].get("enclosing_claim") or {}).get("pid") == os.getpid()
+                     and nested["cpu_affinity"] == evidence["cpu_affinity"][:cores]
+                     and f'affinity_cpus={cores}\n' in nested["stdout"],
+                     "The nested supervised command did not stay on its parent's cores.")
+    except (AttributeError, IndexError, KeyError, TypeError, ValueError) as exc:
+        raise CapError(f"The nested cap probe returned no usable record: {type(exc).__name__}") from exc
+    evidence.update({"cpu_cores": cores, "status": "passed", "environment": report["environment"], "nested": nested})
+    return evidence
+
+
 def probe(root: Path) -> dict[str, Any]:
-    """Exercise kernel enforcement in bounded disposable scopes, then both profiles."""
+    """Exercise kernel enforcement in bounded disposable scopes, then both profiles and one nested command.
+
+    Every step keeps its own time limit, and all of them together end within ``PROBE_SECONDS``: a step gets only
+    what is left of that time, and none starts when nothing is left.
+    """
+    deadline = time.monotonic() + PROBE_SECONDS
     root = validate_root(root)
     backend = 'cgroup_v2' if (root / 'cgroup.type').exists() else _v1_backend(root)
     if backend == READONLY_BACKEND:
@@ -890,7 +1121,7 @@ def probe(root: Path) -> dict[str, Any]:
                    "'returncodes':codes,'wall_seconds':time.monotonic()-start,"
                    "'cpu_seconds':after.children_user+after.children_system-before.children_user-before.children_system}))")
         cpu = _run(root, PERIOD_US // 4, 64 * 1024**2, [sys.executable, "-c", "import json; " + program],
-                   timeout=30, capture=True)
+                   timeout=_within(deadline, 30), capture=True)
         _require(cpu["returncode"] == 0, "The contained CPU probe failed.")
         proof = json.loads(cpu["stdout"].strip().splitlines()[-1])
         _require(proof["affinity_cpus"] == 1 and proof["busy_processes"] == 4 and proof["returncodes"] == [0] * 4
@@ -900,7 +1131,7 @@ def probe(root: Path) -> dict[str, Any]:
     else:
         cpu = _run(root, PERIOD_US // 4, 64 * 1024**2,
                    [sys.executable, "-c", "import time; end=time.monotonic()+2\nwhile time.monotonic()<end: pass"],
-                   timeout=15, capture=True)
+                   timeout=_within(deadline, 15), capture=True)
         _require(cpu["returncode"] == 0 and cpu["after"]["cpu_stat"].get("nr_throttled", 0) > 0
                  and cpu["after"]["cpu_stat"].get("throttled_usec", 0) > 0,
                  "The contained CPU probe did not demonstrate kernel throttling.")
@@ -908,7 +1139,7 @@ def probe(root: Path) -> dict[str, Any]:
     hold = "; import time; time.sleep(10)" if backend == READONLY_BACKEND else ""
     memory = _run(root, PERIOD_US, 64 * 1024**2,
                   [sys.executable, "-c", f"payload=bytearray(128*1024*1024){hold}; print(len(payload))"],
-                  timeout=15, capture=True, allow_oom=True)
+                  timeout=_within(deadline, 15), capture=True, allow_oom=True)
     _require(memory["returncode"] == -signal.SIGKILL
              and memory["after"]["memory_events"].get("oom_kill", 0) > 0,
              "The contained memory probe did not demonstrate kernel OOM termination.")
@@ -936,7 +1167,7 @@ def probe(root: Path) -> dict[str, Any]:
                 "print('descendant_membership_verified='+str(child.pid))")
         evidence = _run(root, cores * PERIOD_US, gib * GIB,
                         [sys.executable, "-c", program],
-                        timeout=15, capture=True)
+                        timeout=_within(deadline, 15), capture=True)
         _require(evidence["returncode"] == 0 and Path(evidence["cgroup"]).name in evidence["stdout"],
                  "The profile probe did not confirm its actual cgroup membership.")
         evidence.update({"cpu_cores": cores, "status": "passed"})
@@ -948,12 +1179,13 @@ def probe(root: Path) -> dict[str, Any]:
             _require(f'affinity_cpus={cores}\n' in evidence['stdout'] and len(evidence['cpu_affinity']) == cores,
                      'The supervised profile did not run on exactly its capped cores.')
         profiles[name] = evidence
+    nested = _nested_probe(root, backend, deadline)
     return {"format": PROBE_FORMAT, "status": "passed", "cgroup_root": str(root),
             'backend': backend,
             "hostname": socket.gethostname(), "boot_id": _read(Path("/proc/sys/kernel/random/boot_id")),
             "created_unix": time.time(), "python_executable": sys.executable,
             "helper_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-            "profiles": profiles, "cpu_throttle_test": cpu, "memory_oom_test": memory}
+            "profiles": profiles, "cpu_throttle_test": cpu, "memory_oom_test": memory, "nested_test": nested}
 
 
 def validate_probe_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
@@ -969,7 +1201,9 @@ def validate_probe_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
                  and math.isfinite(evidence["created_unix"]) and evidence["created_unix"] > 0,
                  "The cap probe lacks host, interpreter, source or time identity.")
 
-        def check(record: dict[str, Any], quota: int, memory: int, *, oom: bool = False) -> None:
+        def check(record: dict[str, Any], quota: int, memory: int, *, oom: bool = False,
+                  emitted: bool = False) -> None:
+            # ``emitted``: the record a wrapper prints while its scope is still open, so it has no cleanup fields.
             backend = evidence.get('backend', 'cgroup_v2')
             _require(backend in ('cgroup_v1', 'cgroup_v2', READONLY_BACKEND)
                      and record.get('backend', 'cgroup_v2') == backend, 'Cgroup backend evidence differs.')
@@ -981,7 +1215,7 @@ def validate_probe_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
                                        'poll_seconds': POLL_SECONDS}}
                 _require(type(record['cpu_affinity']) is list and len(set(record['cpu_affinity'])) == cores
                          and all(type(cpu) is int and cpu >= 0 for cpu in record['cpu_affinity'])
-                         and type(record['descendant_cleanup_count']) is int,
+                         and (emitted or type(record['descendant_cleanup_count']) is int),
                          'The supervised record lacks its exact claimed CPU cores.')
             elif backend == 'cgroup_v1':
                 expected = {'cpu': {'cpu.cfs_quota_us': str(quota), 'cpu.cfs_period_us': str(PERIOD_US)},
@@ -1001,9 +1235,9 @@ def validate_probe_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
                             "memory.swap.max": "0", "memory.oom.group": "1"}
                 if "cpu.max.burst" in record["limits"]:
                     expected["cpu.max.burst"] = "0"
-            _require(record["status"] == "passed" and record["limits"] == expected
+            _require((emitted or record["status"] == "passed") and record["limits"] == expected
                      and record["memory_limit_bytes"] == memory and record["membership_verified"] is True
-                     and record["cleanup_verified"] is True and Path(record["cgroup"]).parent == root
+                     and (emitted or record["cleanup_verified"] is True) and Path(record["cgroup"]).parent == root
                      and Path(record["cgroup"]).name.startswith("deepmzyme-g2-"),
                      "The cap probe lacks exact kernel limits, membership or cleanup evidence.")
             for stage in ("before", "after"):
@@ -1075,6 +1309,22 @@ def validate_probe_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
             _require(memory['after']['memory_failcnt'] > memory['before']['memory_failcnt']
                      and memory['after']['memory_events']['oom'] > memory['before']['memory_events']['oom'],
                      'The v1 OOM proof lacks a local limit hit and genuine OOM notification.')
+        outer = evidence["nested_test"]
+        check(outer, 4 * PERIOD_US, 24 * GIB)
+        inner = outer["nested"]
+        check(inner, 4 * PERIOD_US, 8 * GIB, emitted=True)
+        _require(outer["cpu_cores"] == 4 and outer["returncode"] == 0 and inner["cpu_cores"] == 4
+                 and inner["returncode"] == 0 and inner["helper_returncode"] == 0
+                 and inner["cgroup"] != outer["cgroup"] and Path(inner["cgroup"]).name in inner["stdout"]
+                 and type(outer["environment"]) is list and set(outer["environment"]) <= set(NESTED_ENVIRONMENT),
+                 "The cap probe lacks a capped command that ran inside another one with a rebuilt environment.")
+        if evidence.get('backend') == READONLY_BACKEND:
+            # The parent was found in the claim records: the holder they name is the outer command's wrapper.
+            holder, scope = inner["before"]["enclosing_claim"]["pid"], Path(outer["cgroup"]).name
+            _require(inner["before"]["enclosing_scope"] == scope
+                     and type(holder) is int and scope.startswith(f'deepmzyme-g2-{holder}-')
+                     and inner["cpu_affinity"] == outer["cpu_affinity"] and 'affinity_cpus=4\n' in inner["stdout"],
+                     "The nested supervised command lacks its parent's scope and cores.")
     except (KeyError, TypeError, ValueError) as exc:
         raise CapError(f"Malformed container-cap probe evidence: {exc}") from exc
     return evidence

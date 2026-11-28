@@ -1,7 +1,7 @@
 # Execution v5 — Runpod G2 through Fold 0
 
 Status: published, 2026-11-12, with the [execution corrections](#execution-corrections-of-2026-11-12) of the
-same day, the [host replacement](#host-replacement-within-a-launch-window) that followed the first launch window and the [supervised caps](#supervised-caps-on-hosts-with-read-only-cgroup-controls) that followed the second, the [float32 ESMC load](#float32-esmc-load-for-the-fp32-producer) of 2026-11-13 that followed the sixth, the [bounded SSH reconnect](#bounded-ssh-reconnect) that followed the eighth, the [fold-0 unit corrections](#fold-0-units-after-g2) of 2026-11-14 that followed the tenth, the [resume corrections](#resume-from-a-preserved-fold-0-session) of 2026-11-16 that followed the eleventh, and the [fold-0 futility boundary](#fold-0-futility-boundary) of 2026-11-24; CPU implementation only. The [fold-0 ceiling](#fold-0-ceiling-a2-d8) is approved. Neither publication
+same day, the [host replacement](#host-replacement-within-a-launch-window) that followed the first launch window and the [supervised caps](#supervised-caps-on-hosts-with-read-only-cgroup-controls) that followed the second, the [float32 ESMC load](#float32-esmc-load-for-the-fp32-producer) of 2026-11-13 that followed the sixth, the [bounded SSH reconnect](#bounded-ssh-reconnect) that followed the eighth, the [fold-0 unit corrections](#fold-0-units-after-g2) of 2026-11-14 that followed the tenth, the [resume corrections](#resume-from-a-preserved-fold-0-session) of 2026-11-16 that followed the eleventh, the [fold-0 futility boundary](#fold-0-futility-boundary) of 2026-11-24, and the [nested caps](#capped-steps-inside-a-capped-unit-on-read-only-hosts) of 2026-11-28 that followed the thirteenth; CPU implementation only. The [fold-0 ceiling](#fold-0-ceiling-a2-d8) is approved. Neither publication
 nor the ceiling grants launch authorization: each launch needs its own explicit authorization. The previous
 G2-only limits and launch requests do not authorize v5.
 
@@ -476,6 +476,78 @@ binds all 11 execution files to the published source. The boundary still awaits 
 ([evc-048](../log.md#evc-048)).
 `phase3.lane_gate` and `phase4.replay_cpu_logits` keep their pinned sources. No rule, unit or scientific file
 changes. The change is execution-only (A2-GOV-7 class (a)).
+
+## Capped steps inside a capped unit on read-only hosts
+
+Window `ec30v5-g2f0-w13` ran a CLEAN fit unit on a host with read-only cgroup controls, and the unit's distance-map
+step was refused before it started ([evc-049](../log.md#evc-049)). The three CLEAN fits of window eleven had run on
+a host that delegates cgroup v2, so this was the first CLEAN fit unit on a read-only host.
+
+A CLEAN unit is a capped command (4 cores, 24 GiB) that starts its own capped steps: the distance map (8 GiB), and
+training and the exports through a launcher (24 GiB). On the supervised backend a command started inside another
+capped command must stay on its parent's cores, and it knew its parent only from one environment variable. The
+CLEAN steps run with an environment rebuilt from a fixed list of names, which does not hold that variable. The
+step's wrapper therefore tried to reserve cores of its own, found every core it may use held by its own parent, and
+refused: `Too few unclaimed CPU cores remain for this capped command.` This is a fault of the helper, not of the
+host. It occurs on every host with read-only controls, for every CLEAN fit and any number of cores. A host that
+delegates cgroup v2 is not affected, because every capped command gets its own kernel group there.
+
+The correction is in `container_caps.py` alone:
+
+- **Claim records.** A command that reserves cores writes its scope name, its process number and its process start
+  time into the claim files it holds, and empties them when it releases the cores.
+- **Parent found without the environment.** A command with no parent in its environment that can reserve none of
+  its cores continues as a nested command only if every core it may use is held by one live process that is its own
+  ancestor. The ancestry is read from the process table and matched by process number and start time. The command
+  then takes exactly the cores whose holder it checked. Every other case is refused as before: a holder that is not
+  an ancestor, different holders, a free core beside held ones, a missing, damaged or non-private record, a claim
+  file with a second name, a holder that has ended.
+- **Holder watched.** A command that found its parent this way looks the holder up again in every supervision poll
+  and before each of its records. Once the holder has ended its cores are free for other commands, so the nested
+  command ends its own process tree and is refused.
+- **Probe.** The caps probe now also starts one capped command inside another, with the environment reduced to the
+  names a CLEAN step keeps, on every backend. A host on which this fails is rejected at admission, before staging.
+  The probe record gains the field `nested_test`, and a record without it does not validate.
+- **Probe time limit.** With the added step the time limits of the probe's steps add up to more than the 90 seconds
+  that host admission waits for the probe. The probe therefore keeps one limit of 70 seconds for all its steps: a
+  step gets its own limit or what is left, whichever is less, and no step starts when nothing is left. A probe that
+  runs out of time ends as a containment refusal, so the host is replaced like any other refused host. A nested
+  command that does not return is stopped by the probe's own outer command, and the stopped helper removes what it
+  started.
+
+The claim records are trusted as written by processes of the same account, exactly as the environment variable
+that names a parent is. The claim directory and its files are private to that account, but a record is not proof
+that the process it names holds the lock: a process of the same account could forge one, as it could set the
+variable. The parent's own supervision of its cores and its memory applies in either case.
+
+The nested step is supervised against its own memory limit by its own wrapper and stays in its parent's process
+tree. On a read-only host its memory therefore also counts against the unit's limit: the distance map has at most
+8 GiB, and the unit with all its steps at most 24 GiB together, where on a cgroup v2 host training and the exports
+have 24 GiB of their own beside the worker. Nested steps get no cores of their own: they share the unit's four
+cores. On a cgroup v2 host each step keeps its own kernel group, as before. The memory cap on a read-only host
+remains supervised, not a kernel limit
+([supervised caps](#supervised-caps-on-hosts-with-read-only-cgroup-controls)). The records of window eleven hold
+no memory peak for training and the exports (on cgroup v2 only the value at the end of a step is recorded, and no
+memory event occurred at 24 GiB), so the margin of a CLEAN unit under the shared 24 GiB is not established yet.
+
+By the code, a host with writable cgroup v1 controls refuses a capped command inside another one, so the probe is
+expected to reject such a host at admission, for every session and not only one that holds a CLEAN fit. This has
+not been observed on a host.
+
+Commands on the cgroup v2 and writable cgroup v1 backends, commands whose environment names their parent and
+commands without a parent run as before. No cap size, core count, thread count, device, command, seed or epoch
+changes.
+
+The CPU checks run the nesting through the real CLEAN fit path for the distance map, the training launcher and the
+export launcher, and through the probe. The same tests fail against the earlier helper with the refusal the host
+showed. Each of 32 single reverts of the correction made one of them fail. The campaign's CPU tests (73
+files) passed with **2,999 passes and 3 skips**, capped at two CPU cores and 3 GB. On a cgroup v2 kernel
+interface the whole probe, with the nested command, passed on the workstation. No CLEAN step has completed on a
+host with read-only controls yet: the first live proof is the probe at the next admission, and then the refused
+unit's second attempt, which is its last.
+
+`phase3.lane_gate` and `phase4.replay_cpu_logits` keep their pinned sources. No rule, unit, chain link or
+scientific file changes. The change is execution-only (A2-GOV-7 class (a)).
 
 ## Fold-0 ceiling (A2-D8)
 
